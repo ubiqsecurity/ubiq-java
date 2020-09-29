@@ -1,0 +1,39 @@
+plugins {
+    id "java"
+    id "application"
+}
+
+mainClassName = 'UbiqSample'
+
+jar {
+    baseName "ubiq-sample"
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+sourceCompatibility = 1.11
+targetCompatibility = 1.11
+
+dependencies {
+    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity', version: 'latest.release'
+    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.66'
+    implementation group: 'com.beust', name: 'jcommander', version: '1.78'
+}
+
+task copyToLib(type: Copy) {
+    into "$buildDir/deps/lib"
+    from configurations.default
+}
+build.dependsOn(copyToLib)
+
+build {
+   doLast {
+println('')
+println('To Run the sample application: ')
+println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample [options]')
+println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h')
+}
+}

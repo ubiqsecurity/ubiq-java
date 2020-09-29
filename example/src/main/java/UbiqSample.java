@@ -1,0 +1,244 @@
+//package example;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+
+import org.bouncycastle.crypto.InvalidCipherTextException;
+
+import com.ubiqsecurity.UbiqCredentials;
+import com.ubiqsecurity.UbiqDecrypt;
+import com.ubiqsecurity.UbiqEncrypt;
+import com.ubiqsecurity.UbiqFactory;
+
+public class UbiqSample {
+    public static void main(String[] args) throws Exception {
+
+        try {
+            ExampleArgs options = new ExampleArgs();
+            JCommander jCommander = JCommander.newBuilder().addObject(options).build();
+            jCommander.setProgramName("Ubiq Security Example");
+            jCommander.parse(args);
+
+            // System.out.println("--- applying scary JDK hack ---");
+            // allowHttpMethod("PATCH");
+
+            if (options.help) {
+                jCommander.usage();
+                System.exit(0);
+            }
+
+            // TODO: add support for --version
+
+            if (options.simple == options.piecewise) {
+                throw new IllegalArgumentException("simple or piecewise API option need to be specified but not both");
+            }
+
+            if (options.encrypt == options.decrypt) {
+                throw new IllegalArgumentException("Encryption or Decrytion have to be specified but not both");
+            }
+
+            File inputFile = new File(options.inputFile);
+            if (!inputFile.exists()) {
+                throw new IllegalArgumentException(String.format("Input file does not exist: %s", options.inputFile));
+            }
+
+            UbiqCredentials ubiqCredentials;
+            if (options.credentials == null) {
+                // no file specified, so fall back to ENV vars and default host, if any
+                ubiqCredentials = UbiqFactory.createCredentials(null, null, null, null);
+            } else {
+                // read credentials from caller-specified section of specified config file
+                ubiqCredentials = UbiqFactory.readCredentialsFromFile(options.credentials, options.profile);
+            }
+
+            // check input file size - we already know it exists
+            {
+                long maxSimpleSize = 50 * 0x100000; // 50MB
+                if (options.simple && (inputFile.length() > maxSimpleSize)) {
+                    System.out.println("NOTE: This is only for demonstration purposes and is designed to work on memory");
+                    System.out.println("      constrained devices.  Therefore, this sample application will switch to");
+                    System.out.println(String.format("      the piecewise APIs for files larger than %d bytes in order to reduce", maxSimpleSize));
+                    System.out.println("      excesive resource usages on resource constrained IoT devices");
+                    options.simple = false;
+                    options.piecewise = true;
+                }
+            }
+
+            if (options.simple) {
+                if (options.encrypt) {
+                    simpleEncryption(options.inputFile, options.outputFile, ubiqCredentials);
+                } else {
+                    simpleDecryption(options.inputFile, options.outputFile, ubiqCredentials);
+                }
+            } else {
+                if (options.encrypt) {
+                    piecewiseEncryption(options.inputFile, options.outputFile, ubiqCredentials);
+                } else {
+                    piecewiseDecryption(options.inputFile, options.outputFile, ubiqCredentials);
+                }
+            }
+
+            System.exit(0);
+        } catch (Exception ex) {
+            System.out.println(String.format("Exception: %s", ex.getMessage()));
+            ex.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    // // HACK ALERT - use reflection to *patch* the JDK HttpURLConnection class to
+    // // accept the HTTP "PATCH" verb
+    // // https://stackoverflow.com/questions/25163131/httpurlconnection-invalid-http-method-patch
+    // private static void allowHttpMethod(String method) {
+    //     try {
+    //         Field methodsField = HttpURLConnection.class.getDeclaredField("methods");
+
+    //         Field modifiersField = Field.class.getDeclaredField("modifiers");
+    //         modifiersField.setAccessible(true);
+    //         modifiersField.setInt(methodsField, methodsField.getModifiers() & ~Modifier.FINAL);
+
+    //         methodsField.setAccessible(true);
+
+    //         String[] oldMethods = (String[]) methodsField.get(null);
+    //         Set<String> methodsSet = new LinkedHashSet<>(Arrays.asList(oldMethods));
+    //         methodsSet.add(method);
+    //         String[] newMethods = methodsSet.toArray(new String[0]);
+
+    //         // 'null' indicates static field
+    //         methodsField.set(null, newMethods);
+    //     } catch (NoSuchFieldException | IllegalAccessException e) {
+    //         throw new IllegalStateException(e);
+    //     }
+    // }
+
+    private static void simpleEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
+            throws IOException, IllegalStateException, InvalidCipherTextException {
+        byte[] plainBytes = Files.readAllBytes(new File(inFile).toPath());
+        byte[] cipherBytes = UbiqEncrypt.encrypt(ubiqCredentials, plainBytes);
+        Files.write(new File(outFile).toPath(), cipherBytes);
+    }
+
+    private static void simpleDecryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
+            throws IOException, IllegalStateException, InvalidCipherTextException {
+        byte[] cipherBytes = Files.readAllBytes(new File(inFile).toPath());
+        byte[] plainBytes = UbiqDecrypt.decrypt(ubiqCredentials, cipherBytes);
+        Files.write(new File(outFile).toPath(), plainBytes);
+    }
+
+    private static void piecewiseEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
+            throws IOException, IllegalStateException, InvalidCipherTextException {
+        try (FileInputStream plainStream = new FileInputStream(inFile)) {
+            try (FileOutputStream cipherStream = new FileOutputStream(outFile)) {
+                try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
+                    byte[] cipherBytes = ubiqEncrypt.begin();
+                    cipherStream.write(cipherBytes);
+
+                    var plainBytes = new byte[0x20000];
+                    int bytesRead = 0;
+                    while ((bytesRead = plainStream.read(plainBytes, 0, plainBytes.length)) > 0) {
+                        cipherBytes = ubiqEncrypt.update(plainBytes, 0, bytesRead);
+                        cipherStream.write(cipherBytes);
+                    }
+
+                    cipherBytes = ubiqEncrypt.end();
+                    cipherStream.write(cipherBytes);
+                }
+            }
+        }
+    }
+
+    private static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
+            throws FileNotFoundException, IOException, IllegalStateException, InvalidCipherTextException {
+        try (FileInputStream cipherStream = new FileInputStream(inFile)) {
+            try (FileOutputStream plainStream = new FileOutputStream(outFile)) {
+                try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
+                    byte[] plainBytes = ubiqDecrypt.begin();
+                    plainStream.write(plainBytes);
+
+                    var cipherBytes = new byte[0x20000];
+                    int bytesRead = 0;
+                    while ((bytesRead = cipherStream.read(cipherBytes, 0, cipherBytes.length)) > 0) {
+                        plainBytes = ubiqDecrypt.update(cipherBytes, 0, bytesRead);
+                        plainStream.write(plainBytes);
+                    }
+
+                    plainBytes = ubiqDecrypt.end();
+                    plainStream.write(plainBytes);
+                }
+            }
+        }
+    }
+}
+
+class ExampleArgs {
+    @Parameter(
+        names = { "--encrypt", "-e" },
+        description = "Encrypt the contents of the input file and write the results to output file",
+        required = false)
+    boolean encrypt = false;
+
+    @Parameter(
+        names = { "--decrypt", "-d" },
+        description = "Decrypt the contents of the input file and write the results to output file",
+        required = false)
+    boolean decrypt = false;
+
+    @Parameter(
+        names = { "--simple", "-s" },
+        description = "Use the simple encryption / decryption interfaces",
+        required = false)
+    boolean simple = false;
+
+    @Parameter(
+        names = { "--piecewise", "-p" },
+        description = "Use the piecewise encryption / decryption interfaces",
+        required = false)
+    boolean piecewise = false;
+
+    @Parameter(
+        names = { "--in", "-i" },
+        description = "Set input file name",
+        arity = 1,
+        required = true)
+    String inputFile;
+
+    @Parameter(
+        names = { "--out", "-o" },
+        description = "Set output file name",
+        arity = 1,
+        required = true)
+    String outputFile;
+
+    @Parameter(
+        names = { "--help", "-h" },
+        description = "Print app parameter summary",
+        help = true)
+    boolean help = false;
+
+    @Parameter(
+        names = { "--version", "-v" },
+        description = "Print the app version",
+        required = false)
+    boolean version;
+
+    @Parameter(
+        names = { "--creds", "-c" },
+        description = "Set the file name with the API credentials",
+        arity = 1,
+        required = false)
+    String credentials = null;
+
+    @Parameter(
+        names = { "--profile", "-P" },
+        description = "Identify the profile within the credentials file",
+        arity = 1,
+        required = false)
+    String profile = "default";
+}
