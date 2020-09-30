@@ -12,7 +12,7 @@ See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
 Use gradlew to compile the sample application
 
 ```sh
-./gradlew build
+./gradlew assemble build
 ```
 
 ## Credentials file

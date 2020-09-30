@@ -187,7 +187,7 @@ class UbiqWebServices {
         HttpClient httpClient = HttpClient.newBuilder().build();
         HttpResponse<String> httpResponse = httpClient.send(httpRequest, BodyHandlers.ofString());
 
-        System.out.println("httpResponse.statusCode() = " + httpResponse.statusCode());
+//        System.out.println("httpResponse.statusCode() = " + httpResponse.statusCode());
 
         String responseString = httpResponse.body();
 

@@ -41,7 +41,7 @@ You'll need to manually install the following JARs:
 
 Use following command to use gradlew to build the JAR file
 ```sh
-./gradlew build
+./gradlew assemble build
 ```
 
 ## Requirements

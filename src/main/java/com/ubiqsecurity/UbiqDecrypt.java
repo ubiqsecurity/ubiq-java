@@ -177,8 +177,8 @@ public class UbiqDecrypt implements AutoCloseable {
         if (decryptionKey != null) {
             if (decryptionKey.KeyUseCount > 0) {
                 // report key usage to server
-                System.out.println(
-                        String.format("UbiqDecrypt.reset: reporting key count: %d", this.decryptionKey.KeyUseCount));
+//                System.out.println(
+//                        String.format("UbiqDecrypt.reset: reporting key count: %d", this.decryptionKey.KeyUseCount));
 
                 this.ubiqWebServices.updateDecryptionKeyUsage(this.decryptionKey.KeyUseCount,
                         this.decryptionKey.KeyFingerprint, this.decryptionKey.EncryptionSession);
