@@ -51,6 +51,7 @@ class UbiqWebServices {
 
     private UbiqCredentials ubiqCredentials;
     private String baseUrl;
+    private static final String version;
 
     UbiqWebServices(UbiqCredentials ubiqCredentials) {
         this.ubiqCredentials = ubiqCredentials;
@@ -60,6 +61,13 @@ class UbiqWebServices {
         } else {
             this.baseUrl = this.ubiqCredentials.getHost();
         }
+    }
+
+    // Only needs to be run once when package is class is loaded.
+    static 
+    {
+        Package pkg = UbiqWebServices.class.getPackage();
+        version = pkg.getImplementationVersion();
     }
 
     EncryptionKeyResponse getEncryptionKey(int uses) {
@@ -170,7 +178,7 @@ class UbiqWebServices {
         headerFields.put("Content-Length", String.valueOf(bodyPublisher.contentLength()));
         headerFields.put("Content-Type", this.applicationJson);
         headerFields.put("Accept", this.applicationJson);
-        headerFields.put("User-Agent", "ubiq-java/0.0.0"); // TODO: replace with actual package version
+        headerFields.put("User-Agent", "ubiq-java/" + version);
         String host = url.getHost();
         // If port is specified, it needs to be included
         if (url.getPort() != -1) {
