@@ -1,3 +1,21 @@
+/*
+ * Copyright 2020 Ubiq Security, Inc., Proprietary and All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property
+ * of Ubiq Security, Inc. The intellectual and technical concepts contained
+ * herein are proprietary to Ubiq Security, Inc. and its suppliers and may be
+ * covered by U.S. and Foreign Patents, patents in process, and are
+ * protected by trade secret or copyright law. Dissemination of this
+ * information or reproduction of this material is strictly forbidden
+ * unless prior written permission is obtained from Ubiq Security, Inc.
+ *
+ * Your use of the software is expressly conditioned upon the terms
+ * and conditions available at:
+ *
+ *     https://ubiqsecurity.com/legal
+ *
+ */
+
 package com.ubiqsecurity;
 
 import java.io.ByteArrayInputStream;
@@ -24,7 +42,6 @@ public class UbiqDecrypt implements AutoCloseable {
             // reports decryption key usage to server, if applicable
             reset();
 
-            // this.ubiqWebServices.close();
             this.ubiqWebServices = null;
         }
     }
@@ -45,19 +62,19 @@ public class UbiqDecrypt implements AutoCloseable {
         return new byte[0];
     }
 
-    // each encryption has a header on it that identifies the algorithm
+    // Each encryption has a header on it that identifies the algorithm
     // used and an encryption of the data key that was used to encrypt
-    // the original plain text. there is no guarantee how much of that
+    // the original plain text. There is no guarantee how much of that
     // data will be passed to this function or how many times this
     // function will be called to process all of the data. to that end,
     // this function buffers data internally, when it is unable to
     // process it.
 
-    // the function buffers data internally until the entire header is
-    // received. once the header has been received, the encrypted data
-    // key is sent to the server for decryption. after the header has
+    // The function buffers data internally until the entire header is
+    // received. Once the header has been received, the encrypted data
+    // key is sent to the server for decryption. After the header has
     // been successfully handled, this function always decrypts all of
-    // the data in its internal buffer
+    // the data in its internal buffer.
     public byte[] update(byte[] cipherBytes, int offset, int count) {
         if (this.ubiqWebServices == null) {
             throw new IllegalStateException("object closed");
@@ -176,10 +193,6 @@ public class UbiqDecrypt implements AutoCloseable {
 
         if (decryptionKey != null) {
             if (decryptionKey.KeyUseCount > 0) {
-                // report key usage to server
-//                System.out.println(
-//                        String.format("UbiqDecrypt.reset: reporting key count: %d", this.decryptionKey.KeyUseCount));
-
                 this.ubiqWebServices.updateDecryptionKeyUsage(this.decryptionKey.KeyUseCount,
                         this.decryptionKey.KeyFingerprint, this.decryptionKey.EncryptionSession);
             }

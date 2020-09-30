@@ -1,3 +1,21 @@
+/*
+ * Copyright 2020 Ubiq Security, Inc., Proprietary and All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property
+ * of Ubiq Security, Inc. The intellectual and technical concepts contained
+ * herein are proprietary to Ubiq Security, Inc. and its suppliers and may be
+ * covered by U.S. and Foreign Patents, patents in process, and are
+ * protected by trade secret or copyright law. Dissemination of this
+ * information or reproduction of this material is strictly forbidden
+ * unless prior written permission is obtained from Ubiq Security, Inc.
+ *
+ * Your use of the software is expressly conditioned upon the terms
+ * and conditions available at:
+ *
+ *     https://ubiqsecurity.com/legal
+ *
+ */
+
 package com.ubiqsecurity;
 
 import java.io.IOException;
@@ -57,7 +75,6 @@ class DecryptionKeyResponse {
             Security.addProvider(new BouncyCastleProvider());
         }
 
-        //System.out.println("DecryptionKeyResponse.postProcess: calling PEMParser...");
         try (PEMParser pemParser = new PEMParser(new StringReader(EncryptedPrivateKey))) {
             Object object = pemParser.readObject();
             if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
@@ -75,7 +92,6 @@ class DecryptionKeyResponse {
                 if (privateKey instanceof BCRSAPrivateCrtKey) {
                     // now that we've decrypted the server-provided empheral key, we can
                     // decrypt the key to be used for local decryption
-                    //System.out.println("DecryptionKeyResponse.postProcess: decrypting WrappedDataKey...");
 
                     // TODO: is there a better way?
                     BCRSAPrivateCrtKey rsaPrivateKey = (BCRSAPrivateCrtKey) privateKey;
@@ -92,7 +108,6 @@ class DecryptionKeyResponse {
                     // 'UnwrappedDataKey' is used for local decryptions
                     byte[] wrappedDataKeyBytes = Base64.getDecoder().decode(WrappedDataKey);
                     UnwrappedDataKey = rsaEngine.processBlock(wrappedDataKeyBytes, 0, wrappedDataKeyBytes.length);
-                    //System.out.println("DecryptionKeyResponse.postProcess: WrappedDataKey unwrappped!");
                 }
             }
         }

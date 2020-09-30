@@ -1,4 +1,20 @@
-//package example;
+/*
+ * Copyright 2020 Ubiq Security, Inc., Proprietary and All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property
+ * of Ubiq Security, Inc. The intellectual and technical concepts contained
+ * herein are proprietary to Ubiq Security, Inc. and its suppliers and may be
+ * covered by U.S. and Foreign Patents, patents in process, and are
+ * protected by trade secret or copyright law. Dissemination of this
+ * information or reproduction of this material is strictly forbidden
+ * unless prior written permission is obtained from Ubiq Security, Inc.
+ *
+ * Your use of the software is expressly conditioned upon the terms
+ * and conditions available at:
+ *
+ *     https://ubiqsecurity.com/legal
+ *
+ */
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,9 +41,6 @@ public class UbiqSample {
             JCommander jCommander = JCommander.newBuilder().addObject(options).build();
             jCommander.setProgramName("Ubiq Security Example");
             jCommander.parse(args);
-
-            // System.out.println("--- applying scary JDK hack ---");
-            // allowHttpMethod("PATCH");
 
             if (options.help) {
                 jCommander.usage();
@@ -92,31 +105,6 @@ public class UbiqSample {
             System.exit(1);
         }
     }
-
-    // // HACK ALERT - use reflection to *patch* the JDK HttpURLConnection class to
-    // // accept the HTTP "PATCH" verb
-    // // https://stackoverflow.com/questions/25163131/httpurlconnection-invalid-http-method-patch
-    // private static void allowHttpMethod(String method) {
-    //     try {
-    //         Field methodsField = HttpURLConnection.class.getDeclaredField("methods");
-
-    //         Field modifiersField = Field.class.getDeclaredField("modifiers");
-    //         modifiersField.setAccessible(true);
-    //         modifiersField.setInt(methodsField, methodsField.getModifiers() & ~Modifier.FINAL);
-
-    //         methodsField.setAccessible(true);
-
-    //         String[] oldMethods = (String[]) methodsField.get(null);
-    //         Set<String> methodsSet = new LinkedHashSet<>(Arrays.asList(oldMethods));
-    //         methodsSet.add(method);
-    //         String[] newMethods = methodsSet.toArray(new String[0]);
-
-    //         // 'null' indicates static field
-    //         methodsField.set(null, newMethods);
-    //     } catch (NoSuchFieldException | IllegalAccessException e) {
-    //         throw new IllegalStateException(e);
-    //     }
-    // }
 
     private static void simpleEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
             throws IOException, IllegalStateException, InvalidCipherTextException {

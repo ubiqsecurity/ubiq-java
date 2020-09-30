@@ -1,3 +1,21 @@
+/*
+ * Copyright 2020 Ubiq Security, Inc., Proprietary and All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property
+ * of Ubiq Security, Inc. The intellectual and technical concepts contained
+ * herein are proprietary to Ubiq Security, Inc. and its suppliers and may be
+ * covered by U.S. and Foreign Patents, patents in process, and are
+ * protected by trade secret or copyright law. Dissemination of this
+ * information or reproduction of this material is strictly forbidden
+ * unless prior written permission is obtained from Ubiq Security, Inc.
+ *
+ * Your use of the software is expressly conditioned upon the terms
+ * and conditions available at:
+ *
+ *     https://ubiqsecurity.com/legal
+ *
+ */
+
 package com.ubiqsecurity;
 
 import java.io.ByteArrayOutputStream;
@@ -103,7 +121,6 @@ class UbiqWebServices {
 
             // submit HTTP request + expect HTTP response w/ status 'OK' (200)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
-            //System.out.println(jsonResponse);
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -154,9 +171,8 @@ class UbiqWebServices {
         headerFields.put("Content-Type", this.applicationJson);
         headerFields.put("Accept", this.applicationJson);
         headerFields.put("User-Agent", "ubiq-java/0.0.0"); // TODO: replace with actual package version
-//        headerFields.put("Date", buildDateValue());
         String host = url.getHost();
-	// If port is specified, it needs to be included
+        // If port is specified, it needs to be included
         if (url.getPort() != -1) {
         	host += ":" + url.getPort();
         }
@@ -174,7 +190,6 @@ class UbiqWebServices {
         headerFields.remove("Host");
 
         for (String fieldName : headerFields.keySet()) {
-            //System.out.println("header[" + fieldName + "] = " + headerFields.get(fieldName));
             builder.header(fieldName, headerFields.get(fieldName));
         }
 
@@ -186,8 +201,6 @@ class UbiqWebServices {
             throws IOException, InterruptedException {
         HttpClient httpClient = HttpClient.newBuilder().build();
         HttpResponse<String> httpResponse = httpClient.send(httpRequest, BodyHandlers.ofString());
-
-//        System.out.println("httpResponse.statusCode() = " + httpResponse.statusCode());
 
         String responseString = httpResponse.body();
 
@@ -226,9 +239,7 @@ class UbiqWebServices {
         try (ByteArrayOutputStream hashStream = new ByteArrayOutputStream()) {
             writeHashableBytes(hashStream, "(created)", unixTimeString);
             writeHashableBytes(hashStream, "(request-target)", requestTarget);
-//            writeHashableBytes(hashStream, "Content-Length", headerFields.get("Content-Length"));
             writeHashableBytes(hashStream, "Content-Type", headerFields.get("Content-Type"));
-//            writeHashableBytes(hashStream, "Date", headerFields.get("Date"));
             writeHashableBytes(hashStream, "Digest", headerFields.get("Digest"));
             writeHashableBytes(hashStream, "Host", headerFields.get("Host"));
 
@@ -258,8 +269,6 @@ class UbiqWebServices {
     private static void writeHashableBytes(ByteArrayOutputStream hashStream, String name, String value) {
         // build hashable string
         String hashableString = name.toLowerCase() + ": " + value + "\n";
-
-        // System.out.println("hashableString: " + hashableString);
 
         // convert to UTF-8 byte array
         byte[] hashableBytes = hashableString.getBytes(StandardCharsets.UTF_8);
