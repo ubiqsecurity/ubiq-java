@@ -67,7 +67,7 @@ Usage: Ubiq Security Example [options]
 </pre>
 
 
-#### Demonstrate using the simple (-s / --simple) API interface to encrypt this README.md file and write the encrypted data to README.enc
+#### Demonstrate using the simple (-s / --simple) API interface to encrypt this README.md file and write the encrypted data to /tmp/readme.enc
 
 <pre>
 java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i README.md -o /tmp/readme.enc -e -s -c credentials
