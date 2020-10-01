@@ -120,8 +120,6 @@ class UbiqWebServices {
             		encryptionKeyResponse.WrappedDataKey,
             		this.ubiqCredentials.getSecretCryptoAccessKey());
             
-//            encryptionKeyResponse.postProcess(this.ubiqCredentials.getSecretCryptoAccessKey());
-            
             encryptionKeyResponse.EncryptedDataKeyBytes = Base64.getDecoder().decode(encryptionKeyResponse.EncryptedDataKey);
             
             return encryptionKeyResponse;
@@ -170,14 +168,10 @@ class UbiqWebServices {
 
             // decrypt the server-provided encryption key
             decryptionKeyResponse.UnwrappedDataKey = unwrapKey(
-            		decryptionKeyResponse.EncryptedPrivateKey,
-            		decryptionKeyResponse.WrappedDataKey,
-            		this.ubiqCredentials.getSecretCryptoAccessKey());
-            		
-//            decryptionKeyResponse.postProcess(this.ubiqCredentials.getSecretCryptoAccessKey());
-            
-//            decryptionKeyResponse.WrappedDataKey = null;
-            
+                    decryptionKeyResponse.EncryptedPrivateKey,
+                    decryptionKeyResponse.WrappedDataKey,
+                    this.ubiqCredentials.getSecretCryptoAccessKey());
+
             return decryptionKeyResponse;
         } catch (Exception ex) {
             System.out.println(String.format("getDecryptionKey exception: %s", ex.getMessage()));
@@ -249,7 +243,7 @@ class UbiqWebServices {
     
     // reference:
     // https://stackoverflow.com/questions/22920131/read-an-encrypted-private-key-with-bouncycastle-spongycastle
-    byte[] unwrapKey(String encryptedPrivateKey, 
+    private byte[] unwrapKey(String encryptedPrivateKey, 
     		String wrappedDataKey, String secretCryptoAccessKey)
             throws IOException, OperatorCreationException, PKCSException, InvalidCipherTextException {
 
@@ -258,47 +252,48 @@ class UbiqWebServices {
             Security.addProvider(new BouncyCastleProvider());
         }
 
-        //System.out.println("EncryptionKeyResponse.postProcess: calling PEMParser...");
         try (PEMParser pemParser = new PEMParser(new StringReader(encryptedPrivateKey))) {
         	
             Object object = pemParser.readObject();
-            if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
-            	
-                JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider("BC");
-
-                // Decrypt the private key using our secret key
-                InputDecryptorProvider decryptProvider  = builder.build(secretCryptoAccessKey.toCharArray());
-
-                PKCS8EncryptedPrivateKeyInfo keyInfo = (PKCS8EncryptedPrivateKeyInfo) object;
-                PrivateKeyInfo privateKeyInfo = keyInfo.decryptPrivateKeyInfo(decryptProvider);
-                
-                JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider("BC");
-                PrivateKey privateKey = keyConverter.getPrivateKey(privateKeyInfo);
-                
-                if (privateKey instanceof BCRSAPrivateCrtKey) {
-                	BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
-                	
-                    // now that we've decrypted the server-provided empheral key, we can 
-                    // decrypt the key to be used for local encryption
-
-                	RSAKeyParameters cipherParams = new RSAKeyParameters(
-                			true, 
-                			rsaPrivateKey.getModulus(),
-                			rsaPrivateKey.getPrivateExponent());
-                	
-                    OAEPEncoding rsaEngine = new OAEPEncoding(
-                        new RSAEngine(),
-                        new SHA1Digest(),
-                        new SHA1Digest(),
-                        null);
-                    
-                    rsaEngine.init(false, cipherParams);
-
-                    // 'UnwrappedDataKey' is used for local encryptions
-                    byte[] wrappedDataKeyBytes = Base64.getDecoder().decode(wrappedDataKey);
-                    unwrappedDataKey = rsaEngine.processBlock(wrappedDataKeyBytes, 0, wrappedDataKeyBytes.length);
-                }
+            if (!(object instanceof PKCS8EncryptedPrivateKeyInfo)) {
+                throw new RuntimeException("Unrecognized Encrypted Private Key format");
             }
+            	
+            JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider("BC");
+
+            // Decrypt the private key using our secret key
+            InputDecryptorProvider decryptProvider  = builder.build(secretCryptoAccessKey.toCharArray());
+
+            PKCS8EncryptedPrivateKeyInfo keyInfo = (PKCS8EncryptedPrivateKeyInfo) object;
+            PrivateKeyInfo privateKeyInfo = keyInfo.decryptPrivateKeyInfo(decryptProvider);
+                
+            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider("BC");
+            PrivateKey privateKey = keyConverter.getPrivateKey(privateKeyInfo);
+                
+            if (!(privateKey instanceof BCRSAPrivateCrtKey)) {
+                throw new RuntimeException("Unrecognized Private Key format");
+            }
+            BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
+                	
+            // now that we've decrypted the server-provided empheral key, we can 
+            // decrypt the key to be used for local encryption
+
+            RSAKeyParameters cipherParams = new RSAKeyParameters(
+                    true, 
+                    rsaPrivateKey.getModulus(),
+                    rsaPrivateKey.getPrivateExponent());
+
+            OAEPEncoding rsaEngine = new OAEPEncoding(
+                    new RSAEngine(),
+                    new SHA1Digest(),
+                    new SHA1Digest(),
+                    null);
+
+            rsaEngine.init(false, cipherParams);
+
+            // 'UnwrappedDataKey' is used for local encryptions
+            byte[] wrappedDataKeyBytes = Base64.getDecoder().decode(wrappedDataKey);
+            unwrappedDataKey = rsaEngine.processBlock(wrappedDataKeyBytes, 0, wrappedDataKeyBytes.length);
         }
 
         return unwrappedDataKey;
