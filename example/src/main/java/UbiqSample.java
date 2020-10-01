@@ -47,8 +47,6 @@ public class UbiqSample {
                 System.exit(0);
             }
 
-            // TODO: add support for --version
-
             if (options.simple == options.piecewise) {
                 throw new IllegalArgumentException("simple or piecewise API option need to be specified but not both");
             }
@@ -74,7 +72,7 @@ public class UbiqSample {
             // check input file size - we already know it exists
             {
                 long maxSimpleSize = 50 * 0x100000; // 50MB
-                if (options.simple && (inputFile.length() > maxSimpleSize)) {
+                if (Boolean.TRUE.equals(options.simple) && (inputFile.length() > maxSimpleSize)) {
                     System.out.println("NOTE: This is only for demonstration purposes and is designed to work on memory");
                     System.out.println("      constrained devices.  Therefore, this sample application will switch to");
                     System.out.println(String.format("      the piecewise APIs for files larger than %d bytes in order to reduce", maxSimpleSize));
@@ -84,14 +82,14 @@ public class UbiqSample {
                 }
             }
 
-            if (options.simple) {
-                if (options.encrypt) {
+            if (Boolean.TRUE.equals(options.simple)) {
+                if (Boolean.TRUE.equals(options.encrypt)) {
                     simpleEncryption(options.inputFile, options.outputFile, ubiqCredentials);
                 } else {
                     simpleDecryption(options.inputFile, options.outputFile, ubiqCredentials);
                 }
             } else {
-                if (options.encrypt) {
+                if (Boolean.TRUE.equals(options.encrypt)) {
                     piecewiseEncryption(options.inputFile, options.outputFile, ubiqCredentials);
                 } else {
                     piecewiseDecryption(options.inputFile, options.outputFile, ubiqCredentials);
@@ -170,25 +168,25 @@ class ExampleArgs {
         names = { "--encrypt", "-e" },
         description = "Encrypt the contents of the input file and write the results to output file",
         required = false)
-    boolean encrypt = false;
+    Boolean encrypt = null;
 
     @Parameter(
         names = { "--decrypt", "-d" },
         description = "Decrypt the contents of the input file and write the results to output file",
         required = false)
-    boolean decrypt = false;
+    Boolean decrypt = null;
 
     @Parameter(
         names = { "--simple", "-s" },
         description = "Use the simple encryption / decryption interfaces",
         required = false)
-    boolean simple = false;
+    Boolean simple = null;
 
     @Parameter(
         names = { "--piecewise", "-p" },
         description = "Use the piecewise encryption / decryption interfaces",
         required = false)
-    boolean piecewise = false;
+    Boolean piecewise = null;
 
     @Parameter(
         names = { "--in", "-i" },
@@ -209,12 +207,6 @@ class ExampleArgs {
         description = "Print app parameter summary",
         help = true)
     boolean help = false;
-
-    @Parameter(
-        names = { "--version", "-v" },
-        description = "Print the app version",
-        required = false)
-    boolean version;
 
     @Parameter(
         names = { "--creds", "-c" },
