@@ -25,7 +25,6 @@ import java.nio.ByteBuffer;
 // The first six bytes form a fixed-length record, which indicates the length
 // of two variable-length fields that follow
 
-// TODO: what is the naming convention for Java member vars without getter/setter?
 class CipherHeader {
     // Definitions for the 'flags' bit field.
     static final byte FLAGS_AAD_ENABLED = (byte)0x01;
@@ -87,7 +86,8 @@ class CipherHeader {
             throw new IllegalArgumentException("invalid encryption header version");
         }
 
-        // assume two-byte big-endian value
+        // Header values are in Network order (Big Endian)
+        // Java variables are Big Endian, so this should work for all platforms
         ByteBuffer shortBytes = ByteBuffer.allocate(2);
         shortBytes.put(fixedBytes[4]);
         shortBytes.put(fixedBytes[5]);
@@ -118,7 +118,8 @@ class CipherHeader {
         headerBytes.put(flags);
         headerBytes.put(algorithmId);
         headerBytes.put(initVectorLength);
-        // tricky: write two-byte value in big-endian order
+        // Header values are in Network order (Big Endian)
+        // Java variables are Big Endian, so this should work for all platforms
         headerBytes.putShort(encryptedDataKeyLength);
 
         // write randomly-generated init vector
