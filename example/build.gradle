@@ -23,6 +23,8 @@ dependencies {
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
 }
 
+// Copy the JAR files into a local build directory to make it easier to run
+// the application from the command line 
 task copyToLib(type: Copy) {
     into "$buildDir/deps/lib"
     from configurations.default
@@ -31,9 +33,9 @@ build.dependsOn(copyToLib)
 
 build {
    doLast {
-println('')
-println('To Run the sample application: ')
-println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample [options]')
-println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h')
-}
+      println('')
+      println('To Run the sample application: ')
+      println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample [options]')
+      println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h')
+   }
 }

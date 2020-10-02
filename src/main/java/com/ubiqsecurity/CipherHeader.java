@@ -1,13 +1,30 @@
+/*
+ * Copyright 2020 Ubiq Security, Inc., Proprietary and All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property
+ * of Ubiq Security, Inc. The intellectual and technical concepts contained
+ * herein are proprietary to Ubiq Security, Inc. and its suppliers and may be
+ * covered by U.S. and Foreign Patents, patents in process, and are
+ * protected by trade secret or copyright law. Dissemination of this
+ * information or reproduction of this material is strictly forbidden
+ * unless prior written permission is obtained from Ubiq Security, Inc.
+ *
+ * Your use of the software is expressly conditioned upon the terms
+ * and conditions available at:
+ *
+ *     https://ubiqsecurity.com/legal
+ *
+ */
+
 package com.ubiqsecurity;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
-
+import java.nio.ByteOrder;
 // Binary header for Ubiq ciphertext.
 // The first six bytes form a fixed-length record, which indicates the length
 // of two variable-length fields that follow
 
-// TODO: what is the naming convention for Java member vars without getter/setter?
 class CipherHeader {
     // Definitions for the 'flags' bit field.
     static final byte FLAGS_AAD_ENABLED = (byte)0x01;
@@ -69,8 +86,11 @@ class CipherHeader {
             throw new IllegalArgumentException("invalid encryption header version");
         }
 
-        // assume two-byte big-endian value
+        // Header values are in Network order (Big Endian)
+        // Java variables are Big Endian but make sure byte buffer is also 
+        // Big Endian
         ByteBuffer shortBytes = ByteBuffer.allocate(2);
+        shortBytes.order(ByteOrder.BIG_ENDIAN);
         shortBytes.put(fixedBytes[4]);
         shortBytes.put(fixedBytes[5]);
         cipherHeader.encryptedDataKeyLength = shortBytes.getShort(0);
@@ -95,12 +115,17 @@ class CipherHeader {
     }
 
     byte[] serialize() {
+        // Header values are in Network order (Big Endian)
+        // Java variables are Big Endian but make sure byte buffer is also 
+        // Big Endian
         ByteBuffer headerBytes = ByteBuffer.allocate(calcLength());
+        headerBytes.order(ByteOrder.BIG_ENDIAN);
         headerBytes.put(version);
         headerBytes.put(flags);
         headerBytes.put(algorithmId);
         headerBytes.put(initVectorLength);
-        // tricky: write two-byte value in big-endian order
+        // Header values are in Network order (Big Endian)
+        // Java variables are Big Endian, so this should work for all platforms
         headerBytes.putShort(encryptedDataKeyLength);
 
         // write randomly-generated init vector

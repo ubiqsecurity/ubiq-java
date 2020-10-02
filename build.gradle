@@ -16,6 +16,7 @@ targetCompatibility = 1.11
 
 group = GROUP
 version = VERSION_NAME
+
 dependencies {
     implementation group: 'org.bouncycastle', name: 'bcprov-ext-jdk15on', version: '1.66'
     implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.66'
@@ -68,14 +69,13 @@ uploadArchives {
         authentication(userName: SONATYPE_NEXUS_USERNAME, password: SONATYPE_NEXUS_PASSWORD)
       }
 
-                pom.groupId = GROUP
-                pom.artifactId = POM_ARTIFACT_ID
-                pom.version = VERSION_NAME
+      pom.groupId = GROUP
+      pom.artifactId = POM_ARTIFACT_ID
+      pom.version = VERSION_NAME
 
       pom.project {
         name POM_NAME
         packaging POM_PACKAGING
-        // optionally artifactId can be defined here 
         description POM_DESCRIPTION
         url POM_URL
 
@@ -99,10 +99,11 @@ uploadArchives {
             email POM_DEVELOPER_EMAIL
           }
         }
-                    organization {
-                        name POM_DEVELOPER_NAME
-                        url POM_ORGANIZATION_URL
-                    }
+
+        organization {
+          name POM_DEVELOPER_NAME
+         url POM_ORGANIZATION_URL
+        }
 
       }
     }
