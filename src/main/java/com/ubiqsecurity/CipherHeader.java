@@ -20,7 +20,7 @@ package com.ubiqsecurity;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
-
+import java.nio.ByteOrder;
 // Binary header for Ubiq ciphertext.
 // The first six bytes form a fixed-length record, which indicates the length
 // of two variable-length fields that follow
@@ -87,8 +87,10 @@ class CipherHeader {
         }
 
         // Header values are in Network order (Big Endian)
-        // Java variables are Big Endian, so this should work for all platforms
+        // Java variables are Big Endian but make sure byte bufer is also 
+        // Big Endian
         ByteBuffer shortBytes = ByteBuffer.allocate(2);
+        shortBytes.order(ByteOrder.BIG_ENDIAN);
         shortBytes.put(fixedBytes[4]);
         shortBytes.put(fixedBytes[5]);
         cipherHeader.encryptedDataKeyLength = shortBytes.getShort(0);
@@ -113,7 +115,11 @@ class CipherHeader {
     }
 
     byte[] serialize() {
+        // Header values are in Network order (Big Endian)
+        // Java variables are Big Endian but make sure byte bufer is also 
+        // Big Endian
         ByteBuffer headerBytes = ByteBuffer.allocate(calcLength());
+        headerBytes.order(ByteOrder.BIG_ENDIAN);
         headerBytes.put(version);
         headerBytes.put(flags);
         headerBytes.put(algorithmId);

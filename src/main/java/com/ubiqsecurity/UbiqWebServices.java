@@ -112,7 +112,8 @@ class UbiqWebServices {
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            EncryptionKeyResponse encryptionKeyResponse = gson.fromJson(jsonResponse, EncryptionKeyResponse.class);
+            EncryptionKeyResponse encryptionKeyResponse = 
+                    gson.fromJson(jsonResponse, EncryptionKeyResponse.class);
 
             // decrypt the server-provided encryption key
             encryptionKeyResponse.UnwrappedDataKey = unwrapKey(
@@ -120,7 +121,8 @@ class UbiqWebServices {
             		encryptionKeyResponse.WrappedDataKey,
             		this.ubiqCredentials.getSecretCryptoAccessKey());
             
-            encryptionKeyResponse.EncryptedDataKeyBytes = Base64.getDecoder().decode(encryptionKeyResponse.EncryptedDataKey);
+            encryptionKeyResponse.EncryptedDataKeyBytes = 
+                    Base64.getDecoder().decode(encryptionKeyResponse.EncryptedDataKey);
             
             return encryptionKeyResponse;
         } catch (Exception ex) {
