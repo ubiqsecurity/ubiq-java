@@ -39,11 +39,15 @@ You'll need to manually install the following JARs:
 
 #### Building from source:
 
-Use following command to use gradlew to build the JAR file
+Use following command to use [gradlew] to build the JAR file
 ```sh
+#Linux / Mac
 ./gradlew assemble build
 ```
-
+```dos
+# windows
+.\gradlew assemble build
+```
 ## Requirements
 
 -   OpenJDK 11 or later 
@@ -201,3 +205,4 @@ static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials u
 
 [dashboard]:https://dashboard.ubiqsecurity.com/
 [credentials]:https://dev.ubiqsecurity.com/docs/how-to-create-api-keys
+[gradlew]:https://docs.gradle.org/current/userguide/gradle_wrapper.html

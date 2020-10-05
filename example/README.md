@@ -12,7 +12,12 @@ See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
 Use gradlew to compile the sample application
 
 ```sh
+#Linux / Mac
 ./gradlew assemble build
+```
+```dos
+# Windows
+.\gradlew assemble build
 ```
 
 ## Credentials file
@@ -30,7 +35,12 @@ SECRET_CRYPTO_ACCESS_KEY = ...
 From within the example directory, use the ```java ``` command to execute the sample application
 
 <pre>
+# Linux / Mac
 java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h 
+</pre>
+<pre>
+# Windows
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -h 
 </pre>
 
 <pre>
@@ -67,28 +77,48 @@ Usage: Ubiq Security Example [options]
 </pre>
 
 
-#### Demonstrate using the simple (-s / --simple) API interface to encrypt this README.md file and write the encrypted data to /tmp/readme.enc
+#### Demonstrate using the simple (-s / --simple) API interface to encrypt this README.md file and write the encrypted data to readme.enc
 
 <pre>
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i README.md -o /tmp/readme.enc -e -s -c credentials
+# Linux / Mac
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i README.md -o readme.enc -e -s -c credentials
+</pre>
+<pre>
+# Windows
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i README.md -o readme.enc -e -s -c credentials
 </pre>
 
-#### Demonstrate using the simple (-s / --simple) API interface to decrypt the /tmp/readme.enc file and write the decrypted output to /tmp/README.out
+#### Demonstrate using the simple (-s / --simple) API interface to decrypt the readme.enc file and write the decrypted output to README.out
 
 <pre>
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i /tmp/readme.enc -o /tmp/README.out -d -s -c credentials
+# Linux / Mac
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -s -c credentials
+</pre>
+<pre>
+# Windows
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -s -c credentials
 </pre>
 
-#### Demonstrate using the piecewise (-ps / --piecewise) API interface to encrypt this README.md file and write the encrypted data to /tmp/readme.enc
+#### Demonstrate using the piecewise (-p / --piecewise) API interface to encrypt this README.md file and write the encrypted data to readme.enc
 
 <pre>
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i README.md -o /tmp/readme.enc -e -p -c credentials
+# Linux / Mac
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i README.md -o readme.enc -e -p -c credentials
+</pre>
+<pre>
+# Windows
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i README.md -o readme.enc -e -p -c credentials
 </pre>
 
-#### Demonstrate using the piecewise (-p / --piecewise) API interface to decrypt the /tmp/readme.enc file and write the decrypted output to /tmp/README.out
+#### Demonstrate using the piecewise (-p / --piecewise) API interface to decrypt the readme.enc file and write the decrypted output to README.out
 
 <pre>
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i /tmp/readme.enc -o /tmp/README.out -d -p -c credentials 
+# Linux / Mac
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -p -c credentials 
+</pre>
+<pre>
+# Windows
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -p -c credentials 
 </pre>
 
 
