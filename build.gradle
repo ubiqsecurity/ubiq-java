@@ -38,7 +38,9 @@ artifacts {
 }
 
 signing {
-    sign configurations.archives
+   required {
+   (gradle.taskGraph.hasTask("uploadArchives") || gradle.taskGraph.hasTask("publish"))}
+     sign configurations.archives
 }
 
 jar {
@@ -55,6 +57,14 @@ jar {
 
 }
 
+def getRepositoryUsername() {
+    return hasProperty("SONATYPE_NEXUS_USERNAME") ? SONATYPE_NEXUS_USERNAME : ""
+}
+
+def getRepositoryPassword() {
+    return hasProperty("SONATYPE_NEXUS_PASSWORD") ? SONATYPE_NEXUS_PASSWORD: ""
+}
+
 
 uploadArchives {
   repositories {
@@ -62,11 +72,11 @@ uploadArchives {
       beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
       repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-        authentication(userName: SONATYPE_NEXUS_USERNAME, password: SONATYPE_NEXUS_PASSWORD)
+        authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
       }
 
       snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-        authentication(userName: SONATYPE_NEXUS_USERNAME, password: SONATYPE_NEXUS_PASSWORD)
+        authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
       }
 
       pom.groupId = GROUP
