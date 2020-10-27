@@ -72,7 +72,7 @@ class UbiqWebServices {
     }
 
     // Only needs to be run once when package is class is loaded.
-    static 
+    static
     {
         Package pkg = UbiqWebServices.class.getPackage();
         version = pkg.getImplementationVersion();
@@ -94,18 +94,18 @@ class UbiqWebServices {
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            EncryptionKeyResponse encryptionKeyResponse = 
+            EncryptionKeyResponse encryptionKeyResponse =
                     gson.fromJson(jsonResponse, EncryptionKeyResponse.class);
 
             // decrypt the server-provided encryption key
             encryptionKeyResponse.UnwrappedDataKey = unwrapKey(
-            		encryptionKeyResponse.EncryptedPrivateKey,
-            		encryptionKeyResponse.WrappedDataKey,
-            		this.ubiqCredentials.getSecretCryptoAccessKey());
-            
-            encryptionKeyResponse.EncryptedDataKeyBytes = 
+                        encryptionKeyResponse.EncryptedPrivateKey,
+                        encryptionKeyResponse.WrappedDataKey,
+                        this.ubiqCredentials.getSecretCryptoAccessKey());
+
+            encryptionKeyResponse.EncryptedDataKeyBytes =
                     Base64.getDecoder().decode(encryptionKeyResponse.EncryptedDataKey);
-            
+
             return encryptionKeyResponse;
         } catch (Exception ex) {
             System.out.println(String.format("getEncryptionKey exception: %s", ex.getMessage()));
@@ -202,7 +202,7 @@ class UbiqWebServices {
         String host = url.getHost();
         // If port is specified, it needs to be included
         if (url.getPort() != -1) {
-        	host += ":" + url.getPort();
+                host += ":" + url.getPort();
         }
         headerFields.put("Host", host);
         headerFields.put("Digest", buildDigestValue(jsonRequest.getBytes(StandardCharsets.UTF_8)));
@@ -224,25 +224,25 @@ class UbiqWebServices {
         HttpRequest httpRequest = builder.build();
         return httpRequest;
     }
-    
+
     // reference:
     // https://stackoverflow.com/questions/22920131/read-an-encrypted-private-key-with-bouncycastle-spongycastle
-    private byte[] unwrapKey(String encryptedPrivateKey, 
-    		String wrappedDataKey, String secretCryptoAccessKey)
+    private byte[] unwrapKey(String encryptedPrivateKey,
+                String wrappedDataKey, String secretCryptoAccessKey)
             throws IOException, OperatorCreationException, PKCSException, InvalidCipherTextException {
 
-    	byte[] unwrappedDataKey = null;
+        byte[] unwrappedDataKey = null;
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
 
         try (PEMParser pemParser = new PEMParser(new StringReader(encryptedPrivateKey))) {
-        	
+
             Object object = pemParser.readObject();
             if (!(object instanceof PKCS8EncryptedPrivateKeyInfo)) {
                 throw new RuntimeException("Unrecognized Encrypted Private Key format");
             }
-            	
+
             JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider("BC");
 
             // Decrypt the private key using our secret key
@@ -250,20 +250,20 @@ class UbiqWebServices {
 
             PKCS8EncryptedPrivateKeyInfo keyInfo = (PKCS8EncryptedPrivateKeyInfo) object;
             PrivateKeyInfo privateKeyInfo = keyInfo.decryptPrivateKeyInfo(decryptProvider);
-                
+
             JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider("BC");
             PrivateKey privateKey = keyConverter.getPrivateKey(privateKeyInfo);
-                
+
             if (!(privateKey instanceof BCRSAPrivateCrtKey)) {
                 throw new RuntimeException("Unrecognized Private Key format");
             }
             BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
-                	
-            // now that we've decrypted the server-provided empheral key, we can 
+
+            // now that we've decrypted the server-provided empheral key, we can
             // decrypt the key to be used for local encryption
 
             RSAKeyParameters cipherParams = new RSAKeyParameters(
-                    true, 
+                    true,
                     rsaPrivateKey.getModulus(),
                     rsaPrivateKey.getPrivateExponent());
 
