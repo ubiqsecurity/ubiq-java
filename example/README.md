@@ -7,16 +7,22 @@ This sample application will demonstrate how to encrypt and decrypt data using t
 
 See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
 
+## Installation
+
+Install or build the library as described [here](/README.md#installation).
+
 ## Build From Source
 
 Use gradlew to compile the sample application
 
 ```sh
 #Linux / Mac
+cd example
 ./gradlew assemble build
 ```
 ```dos
 # Windows
+cd example
 .\gradlew assemble build
 ```
 
