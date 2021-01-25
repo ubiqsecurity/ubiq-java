@@ -58,7 +58,7 @@ public class UbiqSample {
                     System.out.println("NOTE: This is only for demonstration purposes and is designed to work on memory");
                     System.out.println("      constrained devices.  Therefore, this sample application will switch to");
                     System.out.println(String.format("      the piecewise APIs for files larger than %d bytes in order to reduce", maxSimpleSize));
-                    System.out.println("      excesive resource usages on resource constrained IoT devices");
+                    System.out.println("      excessive resource usages on resource constrained IoT devices");
                     options.simple = false;
                     options.piecewise = true;
                 }
