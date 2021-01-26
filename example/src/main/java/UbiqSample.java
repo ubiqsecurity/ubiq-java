@@ -29,6 +29,11 @@ public class UbiqSample {
                 System.exit(0);
             }
 
+            if (options.version) {
+                System.out.println("ubiq-java 1.0.0");
+                System.exit(0);
+            }
+
             if (options.simple == options.piecewise) {
                 throw new IllegalArgumentException("simple or piecewise API option need to be specified but not both");
             }
@@ -203,4 +208,10 @@ class ExampleArgs {
         arity = 1,
         required = false)
     String profile = "default";
+
+    @Parameter(
+        names = { "--version", "-V" },
+        description = "Show program's version number and exit",
+        help = true)
+    boolean version = false;
 }
