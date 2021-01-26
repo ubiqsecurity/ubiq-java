@@ -19,7 +19,7 @@ targetCompatibility = 1.11
 
 dependencies {
     implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity', version: "latest.release"
-    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15to18', version: '1.68'
+    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.68'
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
 }
 
