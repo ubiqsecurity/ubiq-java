@@ -18,12 +18,12 @@ Use gradlew to compile the sample application
 ```sh
 #Linux / Mac
 cd example
-./gradlew assemble build
+./gradlew clean assemble build --refresh-dependencies
 ```
 ```dos
 # Windows
 cd example
-.\gradlew assemble build
+.\gradlew clean assemble build --refresh-dependencies
 ```
 
 ## Credentials file
