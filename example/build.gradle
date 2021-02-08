@@ -1,3 +1,4 @@
+import org.apache.tools.ant.taskdefs.condition.Os
 plugins {
     id "java"
     id "application"
@@ -35,7 +36,12 @@ build {
    doLast {
       println('')
       println('To Run the sample application: ')
-      println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample [options]')
-      println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h')
+      if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+         println('                               java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample [options]')
+         println('                      Example: java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -h')
+      } else {
+         println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample [options]')
+         println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h')
+      }
    }
 }
