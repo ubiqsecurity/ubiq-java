@@ -9,6 +9,9 @@ plugins {
 repositories {
     mavenCentral()
     jcenter()
+    flatDir {
+        dirs '../../ubiq-fpe-java/lib/build/libs'
+    }
 }
 
 sourceCompatibility = 1.11
@@ -21,6 +24,7 @@ dependencies {
     implementation group: 'org.bouncycastle', name: 'bcprov-ext-jdk15on', version: '1.68'
     implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.68'
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.6'
+    implementation files("../ubiq-fpe-java/lib/build/libs/lib.jar")
 }
 
 task javadocJar(type: Jar) {
