@@ -1,42 +1,34 @@
 package com.ubiqsecurity;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.SecureRandom;
-
-
-
 import java.util.Arrays;
+
+
 import ubiqsecurity.fpe.FF1;
 import ubiqsecurity.fpe.FF3_1;
 
 
+
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
-public class UbiqFPEEncrypt implements AutoCloseable {
-    private int usesRequested;
+public class UbiqFPEDecrypt implements AutoCloseable {
+    private UbiqWebServices ubiqWebServices; // null on close
 
-    private UbiqWebServices ubiqWebServices; // null when closed
-    private int useCount;
-    private EncryptionKeyResponse encryptionKey;
+    private CipherHeader cipherHeader; // extracted from beginning of ciphertext
+    private ByteQueue byteQueue;
+    private DecryptionKeyResponse decryptionKey;
     private AesGcmBlockCipher aesGcmBlockCipher;
 
-    public UbiqFPEEncrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
-        this.usesRequested = usesRequested;
+    public UbiqFPEDecrypt(UbiqCredentials ubiqCredentials) {
         this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
     }
 
     public void close() {
         if (this.ubiqWebServices != null) {
-            if (this.encryptionKey != null) {
-                // if key was used less times than requested, notify the server.
-                if (this.useCount < this.usesRequested) {
-                    System.out.println(String.format("UbiqFPEEncrypt.close: reporting key usage: %d of %d", this.useCount,
-                            this.usesRequested));
-                    this.ubiqWebServices.updateEncryptionKeyUsage(this.useCount, this.usesRequested,
-                            this.encryptionKey.KeyFingerprint, this.encryptionKey.EncryptionSession);
-                }
-            }
+            // reports decryption key usage to server, if applicable
+            reset();
 
             this.ubiqWebServices = null;
         }
@@ -45,7 +37,32 @@ public class UbiqFPEEncrypt implements AutoCloseable {
 
 
 
-    public static String encryptFF1(UbiqCredentials ubiqCredentials, byte[] tweek, int radix, String PlainText)
+
+
+
+    // Reset the internal state of the decryption object.
+    // This function can be called at any time to abort an existing
+    // decryption operation.  It is also called by internal functions
+    // when a new decryption requires a different key than the one
+    // used by the previous decryption.
+    private void reset() {
+        assert this.ubiqWebServices != null;
+
+        if (decryptionKey != null) {
+            if (decryptionKey.KeyUseCount > 0) {
+                this.ubiqWebServices.updateDecryptionKeyUsage(this.decryptionKey.KeyUseCount,
+                        this.decryptionKey.KeyFingerprint, this.decryptionKey.EncryptionSession);
+            }
+
+            this.decryptionKey = null;
+        }
+
+        this.aesGcmBlockCipher = null;
+    }
+    
+ 
+ 
+     public static String decryptFF1(UbiqCredentials ubiqCredentials, byte[] tweek, int radix, String CipherText)
             throws IllegalStateException, InvalidCipherTextException {
             
             
@@ -66,24 +83,26 @@ public class UbiqFPEEncrypt implements AutoCloseable {
         final long twkmax= 0;
         
             
-
-        try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
+        //try (UbiqFPEDecrypt ubiqDecrypt = new UbiqFPEDecrypt(ubiqCredentials)) {
+        try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
             FF1 ctx;
             ctx = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix); 
-            String cipher = ctx.encrypt(PlainText);
+            String output = ctx.decrypt(CipherText);
         
-            System.out.println("encryptFF1 PlainText= " + PlainText);
-            System.out.println("encryptFF1 cipher= " + cipher);
+            System.out.println("decryptFF1 CipherText= " + CipherText);
+            System.out.println("decryptFF1 output= " + output);
         
         
-            return cipher;
+            return output;
         }
     }
     
     
     
+    
 
-    public static String encryptFF3_1(UbiqCredentials ubiqCredentials, byte[] tweek, int radix, String PlainText)
+
+     public static String decryptFF3_1(UbiqCredentials ubiqCredentials, byte[] tweek, int radix, String CipherText)
             throws IllegalStateException, InvalidCipherTextException {
             
             
@@ -99,27 +118,26 @@ public class UbiqFPEEncrypt implements AutoCloseable {
             (byte)0x39, (byte)0x1b, (byte)0x27, (byte)0xf7,
         };
         
-
-        try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
+            
+        //try (UbiqFPEDecrypt ubiqDecrypt = new UbiqFPEDecrypt(ubiqCredentials)) {
+        try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
             FF3_1 ctx;
             ctx = new FF3_1(Arrays.copyOf(key, 16), tweek, radix); 
-            String cipher = ctx.encrypt(PlainText);
+            String output = ctx.decrypt(CipherText);
         
-            System.out.println("encryptFF3_1 PlainText= " + PlainText);
-            System.out.println("encryptFF3_1 cipher= " + cipher);
+            System.out.println("decryptFF3_1 CipherText= " + CipherText);
+            System.out.println("decryptFF3_1 output= " + output);
         
         
-            return cipher;
+            return output;
         }
     }
     
     
-    
-    
-    
         
     
-//     public static String encryptFF1(String PlainText) {
+    
+//     public static String decryptFF1(String CipherText) {
 //         final byte[] key = {
 //             (byte)0x2b, (byte)0x7e, (byte)0x15, (byte)0x16,
 //             (byte)0x28, (byte)0xae, (byte)0xd2, (byte)0xa6,
@@ -141,23 +159,20 @@ public class UbiqFPEEncrypt implements AutoCloseable {
 //         
 //         FF1 ctx;
 //         ctx = new FF1(Arrays.copyOf(key, 16), twk, twkmin, twkmax, radix); 
-//         String cipher = ctx.encrypt(PlainText);
+//         String output = ctx.decrypt(CipherText);
 //         
 //         
 //         
-//         System.out.println("encryptFF1 PlainText= " + PlainText);
-//         System.out.println("encryptFF1 cipher= " + cipher);
+//         System.out.println("decryptFF1 CipherText= " + CipherText);
+//         System.out.println("decryptFF1 output= " + output);
 //         
 //         
-//         return cipher;
+//         return output;
 //     }
 //     
 //     
 //     
-// 
-// 
-// 
-//     public static String encryptFF3_1(String PlainText) {
+//     public static String decryptFF3_1(String CipherText) {
 //         final byte[] key = {
 //             (byte)0xef, (byte)0x43, (byte)0x59, (byte)0xd8,
 //             (byte)0xd5, (byte)0x80, (byte)0xaa, (byte)0x4f,
@@ -176,20 +191,18 @@ public class UbiqFPEEncrypt implements AutoCloseable {
 //         
 //         FF3_1 ctx;
 //         ctx = new FF3_1(Arrays.copyOf(key, 16), twk, radix); 
-//         String cipher = ctx.encrypt(PlainText);
+//         String output = ctx.decrypt(CipherText);
 //         
 //         
 //         
-//         System.out.println("encryptFF3_1 PlainText= " + PlainText);
-//         System.out.println("encryptFF3_1 cipher= " + cipher);
+//         System.out.println("decryptFF3_1 CipherText= " + CipherText);
+//         System.out.println("decryptFF3_1 output= " + output);
 //         
 //         
-//         return cipher;
+//         return output;
 //     }
-    
-    
-    
-        
+//     
+//     
     
     
     

@@ -11,8 +11,9 @@ import com.beust.jcommander.Parameter;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
 import com.ubiqsecurity.UbiqCredentials;
-import com.ubiqsecurity.UbiqDecrypt;
+//import com.ubiqsecurity.UbiqDecrypt;
 //import com.ubiqsecurity.UbiqEncrypt;
+import com.ubiqsecurity.UbiqFPEDecrypt;
 import com.ubiqsecurity.UbiqFPEEncrypt;
 import com.ubiqsecurity.UbiqFactory;
 
@@ -32,11 +33,6 @@ public class UbiqSampleFPE {
             jCommander.setProgramName("Ubiq Security Example");
             jCommander.parse(args);
             
-////// TESTING
-BigInteger r1 = Bn.__bigint_set_str("100", "0123456789");
-System.out.println("@@@@@@@@@    r1= " + r1); 
-
-
             
 
             if (options.help) {
@@ -62,6 +58,8 @@ System.out.println("@@@@@@@@@    r1= " + r1);
                 throw new IllegalArgumentException(String.format("Input file does not exist: %s", options.inputFile));
             }
 
+
+
             UbiqCredentials ubiqCredentials;
             if (options.credentials == null) {
                 // no file specified, so fall back to ENV vars and default host, if any
@@ -83,7 +81,7 @@ System.out.println("@@@@@@@@@    r1= " + r1);
                     options.piecewise = true;
                 }
             }
-
+/*
             if (Boolean.TRUE.equals(options.simple)) {
                 if (Boolean.TRUE.equals(options.encrypt)) {
                     simpleEncryption(options.inputFile, options.outputFile, ubiqCredentials);
@@ -97,6 +95,51 @@ System.out.println("@@@@@@@@@    r1= " + r1);
                     piecewiseDecryption(options.inputFile, options.outputFile, ubiqCredentials);
                 }
             }
+*/
+
+
+
+ 
+
+
+
+
+////// TESTING
+// BigInteger r1 = Bn.__bigint_set_str("100", "0123456789");
+// System.out.println("@@@@@@@@@    r1= " + r1); 
+// 
+// 
+// System.out.println("\n@@@@@@@@@    Testing FF1"); 
+// String output = UbiqFPEEncrypt.encryptFF1("0123456789");
+// String decrypt = UbiqFPEDecrypt.decryptFF1(output);
+// 
+// System.out.println("\n@@@@@@@@@    Testing FF3_1");
+// output = UbiqFPEEncrypt.encryptFF3_1("890121234567890000");
+// decrypt = UbiqFPEDecrypt.decryptFF3_1(output);
+
+
+            System.out.println("\n@@@@@@@@@    simpleEncryptionFF1");
+            String cipher = simpleEncryptionFF1("0123456789", ubiqCredentials);
+            System.out.println("    cipher= " + cipher);
+
+            System.out.println("\n@@@@@@@@@    simpleDecryptionFF1");
+            String plaintext = simpleDecryptionFF1(cipher, ubiqCredentials);
+            System.out.println("    plaintext= " + plaintext);
+
+
+
+            System.out.println("\n@@@@@@@@@    simpleEncryptionFF3_1");
+            cipher = simpleEncryptionFF3_1("890121234567890000", ubiqCredentials);
+            System.out.println("    cipher= " + cipher);
+
+            System.out.println("\n@@@@@@@@@    simpleDecryptionFF3_1");
+            plaintext = simpleDecryptionFF3_1(cipher, ubiqCredentials);
+            System.out.println("    plaintext= " + plaintext);
+
+
+
+
+
 
             System.exit(0);
         } catch (Exception ex) {
@@ -105,7 +148,87 @@ System.out.println("@@@@@@@@@    r1= " + r1);
             System.exit(1);
         }
     }
+    
+    
+    
+    
+    
+    
+    private static String simpleEncryptionFF1(String PlainText, UbiqCredentials ubiqCredentials)
+            throws IOException, IllegalStateException, InvalidCipherTextException {
+        
+        // tweek
+        final byte[] tweek = {
+            (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+            (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+            (byte)0x31, (byte)0x30,
+        };
+        
+        final int radix= 10;
+        
+        String cipher = UbiqFPEEncrypt.encryptFF1(ubiqCredentials, tweek, radix, PlainText);
+        
+        return cipher;
+    }    
+    
+    
+    private static String simpleDecryptionFF1(String CipherText, UbiqCredentials ubiqCredentials)
+            throws IOException, IllegalStateException, InvalidCipherTextException {
+        
+        // tweek
+        final byte[] tweek = {
+            (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+            (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+            (byte)0x31, (byte)0x30,
+        };
+        
+        final int radix= 10;
+        
+        String plaintext = UbiqFPEDecrypt.decryptFF1(ubiqCredentials, tweek, radix, CipherText);
+        
+        return plaintext;
+    }    
 
+
+    
+     private static String simpleEncryptionFF3_1(String PlainText, UbiqCredentials ubiqCredentials)
+            throws IOException, IllegalStateException, InvalidCipherTextException {
+        
+        // tweek
+        final byte[] tweek = {
+            (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
+            (byte)0x00, (byte)0x00, (byte)0x00,
+        };
+        
+        final int radix= 10;
+        
+        String cipher = UbiqFPEEncrypt.encryptFF3_1(ubiqCredentials, tweek, radix, PlainText);
+        
+        return cipher;
+    }     
+    
+    
+    private static String simpleDecryptionFF3_1(String PlainText, UbiqCredentials ubiqCredentials)
+            throws IOException, IllegalStateException, InvalidCipherTextException {
+        
+        // tweek
+        final byte[] tweek = {
+            (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
+            (byte)0x00, (byte)0x00, (byte)0x00,
+        };
+        
+        final int radix= 10;
+        
+        String cipher = UbiqFPEDecrypt.decryptFF3_1(ubiqCredentials, tweek, radix, PlainText);
+        
+        return cipher;
+    }    
+    
+    
+    
+    
+
+/*
     private static void simpleEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
             throws IOException, IllegalStateException, InvalidCipherTextException {
         byte[] plainBytes = Files.readAllBytes(new File(inFile).toPath());
@@ -116,7 +239,7 @@ System.out.println("@@@@@@@@@    r1= " + r1);
     private static void simpleDecryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
             throws IOException, IllegalStateException, InvalidCipherTextException {
         byte[] cipherBytes = Files.readAllBytes(new File(inFile).toPath());
-        byte[] plainBytes = UbiqDecrypt.decrypt(ubiqCredentials, cipherBytes);
+        byte[] plainBytes = UbiqFPEDecrypt.decrypt(ubiqCredentials, cipherBytes);
         Files.write(new File(outFile).toPath(), plainBytes);
     }
 
@@ -146,7 +269,7 @@ System.out.println("@@@@@@@@@    r1= " + r1);
             throws FileNotFoundException, IOException, IllegalStateException, InvalidCipherTextException {
         try (FileInputStream cipherStream = new FileInputStream(inFile)) {
             try (FileOutputStream plainStream = new FileOutputStream(outFile)) {
-                try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
+                try (UbiqFPEDecrypt ubiqDecrypt = new UbiqFPEDecrypt(ubiqCredentials)) {
                     byte[] plainBytes = ubiqDecrypt.begin();
                     plainStream.write(plainBytes);
 
@@ -163,6 +286,8 @@ System.out.println("@@@@@@@@@    r1= " + r1);
             }
         }
     }
+*/    
+    
 }
 
 class ExampleArgsFPE {
