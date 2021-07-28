@@ -20,6 +20,27 @@ public class UbiqFPEEncryptTest
         FF1 ctx;
 
         assertEquals(PT.length(), CT.length());
+        
+        
+//         UbiqCredentials ubiqCredentials;
+//         if (options.credentials == null) {
+//             // no file specified, so fall back to ENV vars and default host, if any
+//             ubiqCredentials = UbiqFactory.createCredentials(null, null, null, null);
+//         } else {
+//             // read credentials from caller-specified section of specified config file
+//             ubiqCredentials = UbiqFactory.readCredentialsFromFile(options.credentials, options.profile);
+//         }
+            
+//         System.out.println("\n@@@@@@@@@    simpleEncryptionFF1");
+//         String cipher = simpleEncryptionFF1("0123456789", ubiqCredentials);
+//         System.out.println("    cipher= " + cipher);
+// 
+//         System.out.println("\n@@@@@@@@@    simpleDecryptionFF1");
+//         String plaintext = simpleDecryptionFF1(cipher, ubiqCredentials);
+//         System.out.println("    plaintext= " + plaintext);
+            
+            
+            
 
         ctx = new FF1(key, twk, 0, 0, radix);
 

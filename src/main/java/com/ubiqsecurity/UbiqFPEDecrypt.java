@@ -62,147 +62,85 @@ public class UbiqFPEDecrypt implements AutoCloseable {
     
  
  
-     public static String decryptFF1(UbiqCredentials ubiqCredentials, byte[] tweek, int radix, String CipherText)
-            throws IllegalStateException, InvalidCipherTextException {
+ 
+ 
+    public static String decryptFPE(UbiqCredentials ubiqCredentials, String FPEType, String CipherText, byte[] tweek, String LDAP) 
+        throws IllegalStateException, InvalidCipherTextException {
+        
+        
+            String PlainText = "";
+        
+            // STUB - For now, hardcode a key    
+            final byte[] keyFF1 = {
+                (byte)0x2b, (byte)0x7e, (byte)0x15, (byte)0x16,
+                (byte)0x28, (byte)0xae, (byte)0xd2, (byte)0xa6,
+                (byte)0xab, (byte)0xf7, (byte)0x15, (byte)0x88,
+                (byte)0x09, (byte)0xcf, (byte)0x4f, (byte)0x3c,
+                (byte)0xef, (byte)0x43, (byte)0x59, (byte)0xd8,
+                (byte)0xd5, (byte)0x80, (byte)0xaa, (byte)0x4f,
+                (byte)0x7f, (byte)0x03, (byte)0x6d, (byte)0x6f,
+                (byte)0x04, (byte)0xfc, (byte)0x6a, (byte)0x94,
+            };
+            final byte[] keyFF3_1 = {
+                (byte)0xef, (byte)0x43, (byte)0x59, (byte)0xd8,
+                (byte)0xd5, (byte)0x80, (byte)0xaa, (byte)0x4f,
+                (byte)0x7f, (byte)0x03, (byte)0x6d, (byte)0x6f,
+                (byte)0x04, (byte)0xfc, (byte)0x6a, (byte)0x94,
+                (byte)0x3b, (byte)0x80, (byte)0x6a, (byte)0xeb,
+                (byte)0x63, (byte)0x08, (byte)0x27, (byte)0x1f,
+                (byte)0x65, (byte)0xcf, (byte)0x33, (byte)0xc7,
+                (byte)0x39, (byte)0x1b, (byte)0x27, (byte)0xf7,
+            };        
+            // STUB - tweek ranges
+            final long twkmin= 0;
+            final long twkmax= 10;
+            int radix = 10;
+        
+        
+        
+            try (UbiqFPEDecrypt ubiqDecrypt = new UbiqFPEDecrypt(ubiqCredentials)) {
+                // Obtain encryption key information
+                if (ubiqDecrypt.ubiqWebServices == null) {
+                    throw new IllegalStateException("object closed");
+                } else if (ubiqDecrypt.aesGcmBlockCipher != null) {
+                    throw new IllegalStateException("decryption in progress");
+                }
+            
+             
             
             
-        // STUB - For now, hardcode a key    
-        final byte[] key = {
-            (byte)0x2b, (byte)0x7e, (byte)0x15, (byte)0x16,
-            (byte)0x28, (byte)0xae, (byte)0xd2, (byte)0xa6,
-            (byte)0xab, (byte)0xf7, (byte)0x15, (byte)0x88,
-            (byte)0x09, (byte)0xcf, (byte)0x4f, (byte)0x3c,
-            (byte)0xef, (byte)0x43, (byte)0x59, (byte)0xd8,
-            (byte)0xd5, (byte)0x80, (byte)0xaa, (byte)0x4f,
-            (byte)0x7f, (byte)0x03, (byte)0x6d, (byte)0x6f,
-            (byte)0x04, (byte)0xfc, (byte)0x6a, (byte)0x94,
-        };
-        
-        // STUB - tweek ranges
-        final long twkmin= 0;
-        final long twkmax= 0;
-        
+                // encrypt based on the specified cipher
+                switch(FPEType) {
+                    case "FF1":
+                        FF1 ctxFF1 = new FF1(Arrays.copyOf(keyFF1, 16), tweek, twkmin, twkmax, radix); 
+                        PlainText = ctxFF1.decrypt(CipherText);
+                    break;
+                    case "FF3_1":
+                        FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(keyFF3_1, 16), tweek, radix); 
+                        PlainText = ctxFF3_1.decrypt(CipherText);
+                    break;
+                    default:
+                        throw new RuntimeException("Unknown FPEType: " + FPEType);
+                }
             
-        //try (UbiqFPEDecrypt ubiqDecrypt = new UbiqFPEDecrypt(ubiqCredentials)) {
-        try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
-            FF1 ctx;
-            ctx = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix); 
-            String output = ctx.decrypt(CipherText);
+            
+            
+            
+            }  // try        
         
-            System.out.println("decryptFF1 CipherText= " + CipherText);
-            System.out.println("decryptFF1 output= " + output);
-        
-        
-            return output;
-        }
+        return PlainText;
     }
+
+
+
+
+    
+    
     
     
     
     
 
-
-     public static String decryptFF3_1(UbiqCredentials ubiqCredentials, byte[] tweek, int radix, String CipherText)
-            throws IllegalStateException, InvalidCipherTextException {
-            
-            
-        // STUB - For now, hardcode a key    
-        final byte[] key = {
-            (byte)0xef, (byte)0x43, (byte)0x59, (byte)0xd8,
-            (byte)0xd5, (byte)0x80, (byte)0xaa, (byte)0x4f,
-            (byte)0x7f, (byte)0x03, (byte)0x6d, (byte)0x6f,
-            (byte)0x04, (byte)0xfc, (byte)0x6a, (byte)0x94,
-            (byte)0x3b, (byte)0x80, (byte)0x6a, (byte)0xeb,
-            (byte)0x63, (byte)0x08, (byte)0x27, (byte)0x1f,
-            (byte)0x65, (byte)0xcf, (byte)0x33, (byte)0xc7,
-            (byte)0x39, (byte)0x1b, (byte)0x27, (byte)0xf7,
-        };
-        
-            
-        //try (UbiqFPEDecrypt ubiqDecrypt = new UbiqFPEDecrypt(ubiqCredentials)) {
-        try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
-            FF3_1 ctx;
-            ctx = new FF3_1(Arrays.copyOf(key, 16), tweek, radix); 
-            String output = ctx.decrypt(CipherText);
-        
-            System.out.println("decryptFF3_1 CipherText= " + CipherText);
-            System.out.println("decryptFF3_1 output= " + output);
-        
-        
-            return output;
-        }
-    }
-    
-    
-        
-    
-    
-//     public static String decryptFF1(String CipherText) {
-//         final byte[] key = {
-//             (byte)0x2b, (byte)0x7e, (byte)0x15, (byte)0x16,
-//             (byte)0x28, (byte)0xae, (byte)0xd2, (byte)0xa6,
-//             (byte)0xab, (byte)0xf7, (byte)0x15, (byte)0x88,
-//             (byte)0x09, (byte)0xcf, (byte)0x4f, (byte)0x3c,
-//             (byte)0xef, (byte)0x43, (byte)0x59, (byte)0xd8,
-//             (byte)0xd5, (byte)0x80, (byte)0xaa, (byte)0x4f,
-//             (byte)0x7f, (byte)0x03, (byte)0x6d, (byte)0x6f,
-//             (byte)0x04, (byte)0xfc, (byte)0x6a, (byte)0x94,
-//         };
-//         final byte[] twk = {
-//             (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
-//             (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
-//             (byte)0x31, (byte)0x30,
-//         };
-//         final long twkmin= 0;
-//         final long twkmax= 0;
-//         final int radix= 10;
-//         
-//         FF1 ctx;
-//         ctx = new FF1(Arrays.copyOf(key, 16), twk, twkmin, twkmax, radix); 
-//         String output = ctx.decrypt(CipherText);
-//         
-//         
-//         
-//         System.out.println("decryptFF1 CipherText= " + CipherText);
-//         System.out.println("decryptFF1 output= " + output);
-//         
-//         
-//         return output;
-//     }
-//     
-//     
-//     
-//     public static String decryptFF3_1(String CipherText) {
-//         final byte[] key = {
-//             (byte)0xef, (byte)0x43, (byte)0x59, (byte)0xd8,
-//             (byte)0xd5, (byte)0x80, (byte)0xaa, (byte)0x4f,
-//             (byte)0x7f, (byte)0x03, (byte)0x6d, (byte)0x6f,
-//             (byte)0x04, (byte)0xfc, (byte)0x6a, (byte)0x94,
-//             (byte)0x3b, (byte)0x80, (byte)0x6a, (byte)0xeb,
-//             (byte)0x63, (byte)0x08, (byte)0x27, (byte)0x1f,
-//             (byte)0x65, (byte)0xcf, (byte)0x33, (byte)0xc7,
-//             (byte)0x39, (byte)0x1b, (byte)0x27, (byte)0xf7,
-//         };
-//         final byte[] twk = {
-//             (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
-//             (byte)0x00, (byte)0x00, (byte)0x00,
-//         };
-//         final int radix= 10;
-//         
-//         FF3_1 ctx;
-//         ctx = new FF3_1(Arrays.copyOf(key, 16), twk, radix); 
-//         String output = ctx.decrypt(CipherText);
-//         
-//         
-//         
-//         System.out.println("decryptFF3_1 CipherText= " + CipherText);
-//         System.out.println("decryptFF3_1 output= " + output);
-//         
-//         
-//         return output;
-//     }
-//     
-//     
     
     
     

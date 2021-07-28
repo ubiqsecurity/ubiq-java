@@ -118,22 +118,36 @@ public class UbiqSampleFPE {
 // decrypt = UbiqFPEDecrypt.decryptFF3_1(output);
 
 
+
+
+
+
+            final byte[] tweekFF1 = {
+                (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+                (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30,
+            };
             System.out.println("\n@@@@@@@@@    simpleEncryptionFF1");
-            String cipher = simpleEncryptionFF1("0123456789", ubiqCredentials);
-            System.out.println("    cipher= " + cipher);
+            String plainText = "0123456789";
+            String cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF1", plainText, tweekFF1, "LDAP"); 
+            System.out.println("    plainText= " + plainText + "    cipher= " + cipher);
 
             System.out.println("\n@@@@@@@@@    simpleDecryptionFF1");
-            String plaintext = simpleDecryptionFF1(cipher, ubiqCredentials);
+            String plaintext = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF1", cipher, tweekFF1, "LDAP");
             System.out.println("    plaintext= " + plaintext);
 
 
-
+            final byte[] tweekFF3_1 = {
+                 (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
+                 (byte)0x00, (byte)0x00, (byte)0x00,
+            };
             System.out.println("\n@@@@@@@@@    simpleEncryptionFF3_1");
-            cipher = simpleEncryptionFF3_1("890121234567890000", ubiqCredentials);
-            System.out.println("    cipher= " + cipher);
+            plainText = "890121234567890000";
+            cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF3_1", plainText, tweekFF3_1, "LDAP"); 
+            System.out.println("    plainText= " + plainText + "    cipher= " + cipher);
 
             System.out.println("\n@@@@@@@@@    simpleDecryptionFF3_1");
-            plaintext = simpleDecryptionFF3_1(cipher, ubiqCredentials);
+            plaintext = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF3_1", cipher, tweekFF3_1, "LDAP");
             System.out.println("    plaintext= " + plaintext);
 
 
@@ -151,80 +165,9 @@ public class UbiqSampleFPE {
     
     
     
-    
-    
-    
-    private static String simpleEncryptionFF1(String PlainText, UbiqCredentials ubiqCredentials)
-            throws IOException, IllegalStateException, InvalidCipherTextException {
-        
-        // tweek
-        final byte[] tweek = {
-            (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
-            (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
-            (byte)0x31, (byte)0x30,
-        };
-        
-        final int radix= 10;
-        
-        String cipher = UbiqFPEEncrypt.encryptFF1(ubiqCredentials, tweek, radix, PlainText);
-        
-        return cipher;
-    }    
-    
-    
-    private static String simpleDecryptionFF1(String CipherText, UbiqCredentials ubiqCredentials)
-            throws IOException, IllegalStateException, InvalidCipherTextException {
-        
-        // tweek
-        final byte[] tweek = {
-            (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
-            (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
-            (byte)0x31, (byte)0x30,
-        };
-        
-        final int radix= 10;
-        
-        String plaintext = UbiqFPEDecrypt.decryptFF1(ubiqCredentials, tweek, radix, CipherText);
-        
-        return plaintext;
-    }    
-
 
     
-     private static String simpleEncryptionFF3_1(String PlainText, UbiqCredentials ubiqCredentials)
-            throws IOException, IllegalStateException, InvalidCipherTextException {
-        
-        // tweek
-        final byte[] tweek = {
-            (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
-            (byte)0x00, (byte)0x00, (byte)0x00,
-        };
-        
-        final int radix= 10;
-        
-        String cipher = UbiqFPEEncrypt.encryptFF3_1(ubiqCredentials, tweek, radix, PlainText);
-        
-        return cipher;
-    }     
-    
-    
-    private static String simpleDecryptionFF3_1(String PlainText, UbiqCredentials ubiqCredentials)
-            throws IOException, IllegalStateException, InvalidCipherTextException {
-        
-        // tweek
-        final byte[] tweek = {
-            (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
-            (byte)0x00, (byte)0x00, (byte)0x00,
-        };
-        
-        final int radix= 10;
-        
-        String cipher = UbiqFPEDecrypt.decryptFF3_1(ubiqCredentials, tweek, radix, PlainText);
-        
-        return cipher;
-    }    
-    
-    
+
     
     
 
