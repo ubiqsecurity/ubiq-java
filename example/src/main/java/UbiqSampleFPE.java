@@ -102,27 +102,10 @@ public class UbiqSampleFPE {
 
  
 
+ 
 
 
-
-////// TESTING
-// BigInteger r1 = Bn.__bigint_set_str("100", "0123456789");
-// System.out.println("@@@@@@@@@    r1= " + r1); 
-// 
-// 
-// System.out.println("\n@@@@@@@@@    Testing FF1"); 
-// String output = UbiqFPEEncrypt.encryptFF1("0123456789");
-// String decrypt = UbiqFPEDecrypt.decryptFF1(output);
-// 
-// System.out.println("\n@@@@@@@@@    Testing FF3_1");
-// output = UbiqFPEEncrypt.encryptFF3_1("890121234567890000");
-// decrypt = UbiqFPEDecrypt.decryptFF3_1(output);
-
-
-
-
-
-
+            ////// TEST 1 - ENCRYPT AND DECRYPT
             final byte[] tweekFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
@@ -138,6 +121,8 @@ public class UbiqSampleFPE {
             System.out.println("    plaintext= " + plaintext);
 
 
+
+            ////// TEST 2 - ENCRYPT AND DECRYPT
             final byte[] tweekFF3_1 = {
                  (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
                  (byte)0x00, (byte)0x00, (byte)0x00,

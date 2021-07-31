@@ -60,23 +60,21 @@ public class UbiqFPEEncrypt implements AutoCloseable {
             .build(new CacheLoader<String, FFS>() {  // build the cacheloader
 
                 @Override
-                public FFS load(String encryption_algorithm) throws Exception {
+                public FFS load(String cachingKey) throws Exception {
                    //make the expensive call
-                   return getFFSFromDatabase(encryption_algorithm);
+                   return getFFSFromCloudAPI(cachingKey);
                 } 
          });
          
          
     }
     
-    private  FFS getFFSFromDatabase(String encryption_algorithm) {
-//         String jsonStr= "{'encryption_algorithm': 'FF1'}";
-//         Gson gson = FFSdata;        
-//         FFS ffs = gson.fromJson(jsonStr, FFS.class);
+    // called when FFS is not in cache and need to make remote call
+    private  FFS getFFSFromCloudAPI(String encryption_algorithm) {
         
-        FFS ffs = TEMP_preloadFFSwithData1();
+        FFS ffs = TEMP_getFFSdataFromCloud_1();
         
-        System.out.println("----- getFFSFromDatabase");
+        System.out.println("----- getFFSFromCloudAPI");
         
         return ffs;
     }
@@ -101,6 +99,7 @@ public class UbiqFPEEncrypt implements AutoCloseable {
 
 
     // STUB - temporary key
+    // The cipher API requires an encryption key. For now lets hardcode here but later comes from backend
     public byte[] TEMP_getAKey(FFS ffs) {
        final byte[] keyFF1 = {
             (byte)0x2b, (byte)0x7e, (byte)0x15, (byte)0x16,
@@ -139,10 +138,12 @@ public class UbiqFPEEncrypt implements AutoCloseable {
     }
 
 
-    // STUB - FFS data
-    public FFS TEMP_preloadFFSwithData1() {
-        System.out.println("----- TEMP_preloadFFSwithData1");
+    // STUB - Get fresh FFS data
+    public FFS TEMP_getFFSdataFromCloud_1() {
+        System.out.println("----- TEMP_getFFSdataFromCloud_1");
         
+        
+        // TODO - pull this data from an API call instead of hardcoding it here
         String jsonStr= "{'encryption_algorithm': 'FF1'}";
         Gson gson = FFSdata;        
         FFS ffs = gson.fromJson(jsonStr, FFS.class);
@@ -159,10 +160,12 @@ public class UbiqFPEEncrypt implements AutoCloseable {
 
 
 
-    // STUB - FFS data
-    public FFS TEMP_preloadFFSwithData2() {
-        System.out.println("----- TEMP_preloadFFSwithData2");
+    // STUB - Get fresh FFS data
+    public FFS TEMP_getFFSdataFromCloud_2() {
+        System.out.println("----- TEMP_getFFSdataFromCloud_2");
         
+        
+        // TODO - pull this data from an API call instead of hardcoding it here
         String jsonStr= "{'encryption_algorithm': 'FF3_1'}";
         Gson gson = FFSdata;        
         FFS ffs = gson.fromJson(jsonStr, FFS.class);
@@ -190,10 +193,10 @@ public class UbiqFPEEncrypt implements AutoCloseable {
         FFS ffs;
         switch(FPEAlgorithm) {
             case "FF1":
-                ffs = TEMP_preloadFFSwithData1();
+                ffs = TEMP_getFFSdataFromCloud_1();
             break;
             case "FF3_1":
-                ffs = TEMP_preloadFFSwithData2();
+                ffs = TEMP_getFFSdataFromCloud_2();
             break;
             default:
                 throw new RuntimeException("Unknown FPE Algorithm: " + FPEAlgorithm);
@@ -279,8 +282,11 @@ public class UbiqFPEEncrypt implements AutoCloseable {
                     //System.out.println(ubiqEncrypt.FFSCache.get("FF1"));
                     
                     
+                    String cachingKey1 = "FF1-SSN";
+                    String cachingKey2 = "FF3_1-SSN";
+                    
                     System.out.println("First FF1 load....");
-                    FFS ffs = ubiqEncrypt.FFSCache.get("FF1");
+                    FFS ffs = ubiqEncrypt.FFSCache.get(cachingKey1);
                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
                     System.out.println("    ffs.getUser()= " + ffs.getUser());
                     System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
@@ -293,7 +299,7 @@ public class UbiqFPEEncrypt implements AutoCloseable {
                     
                     
                     System.out.println("Second FF1 load....");
-                    ffs = ubiqEncrypt.FFSCache.get("FF1");
+                    ffs = ubiqEncrypt.FFSCache.get(cachingKey1);
                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
                     System.out.println("    ffs.getUser()= " + ffs.getUser());
                     System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
@@ -305,7 +311,7 @@ public class UbiqFPEEncrypt implements AutoCloseable {
                     System.out.println("    ffs.getFpe_definable()= " + ffs.getFpe_definable());
                     
                     System.out.println("First FF3_1 load....");
-                    ffs = ubiqEncrypt.FFSCache.get("FF3_1");
+                    ffs = ubiqEncrypt.FFSCache.get(cachingKey2);
                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
                     System.out.println("    ffs.getUser()= " + ffs.getUser());
                     System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
@@ -318,7 +324,7 @@ public class UbiqFPEEncrypt implements AutoCloseable {
                     
                     
                     System.out.println("Second FF3_1 load....");
-                    ffs = ubiqEncrypt.FFSCache.get("FF3_1");
+                    ffs = ubiqEncrypt.FFSCache.get(cachingKey2);
                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
                     System.out.println("    ffs.getUser()= " + ffs.getUser());
                     System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
@@ -330,7 +336,7 @@ public class UbiqFPEEncrypt implements AutoCloseable {
                     System.out.println("    ffs.getFpe_definable()= " + ffs.getFpe_definable());
 
                     System.out.println("Original FF1 load....");
-                    ffs = ubiqEncrypt.FFSCache.get("FF1");
+                    ffs = ubiqEncrypt.FFSCache.get(cachingKey1);
                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
                     System.out.println("    ffs.getUser()= " + ffs.getUser());
                     System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
@@ -342,63 +348,272 @@ public class UbiqFPEEncrypt implements AutoCloseable {
                     System.out.println("    ffs.getFpe_definable()= " + ffs.getFpe_definable());
 
 
-                    
-                    
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-            
-            
-                FFS ffs = ubiqEncrypt.getFFS(FPEAlgorithm);
-                FFS ffs2 = ubiqEncrypt.getFFS(FPEAlgorithm);
-                FFS ffs3 = ubiqEncrypt.getFFS(FPEAlgorithm);
- 
-            
-            
-            
-            
-            
-                // Obtain encryption key information
-                if (ubiqEncrypt.ubiqWebServices == null) {
-                    throw new IllegalStateException("object closed");
-                } else if (ubiqEncrypt.aesGcmBlockCipher != null) {
-                    throw new IllegalStateException("encryption in progress");
-                }
 
-                if (ubiqEncrypt.encryptionKey == null) {
-                    // JIT: request encryption key from server
-                    ubiqEncrypt.encryptionKey = ubiqEncrypt.ubiqWebServices.getEncryptionKey(ubiqEncrypt.usesRequested);
-                }
 
-                // check key 'usage count' against server-specified limit
-                if (ubiqEncrypt.useCount > ubiqEncrypt.encryptionKey.MaxUses) {
-                    throw new RuntimeException("maximum key uses exceeded");
-                }
+                    ffs = ubiqEncrypt.getFFS(FPEAlgorithm);
+  
+            
+                    // Obtain encryption key information
+                    if (ubiqEncrypt.ubiqWebServices == null) {
+                        throw new IllegalStateException("object closed");
+                    } else if (ubiqEncrypt.aesGcmBlockCipher != null) {
+                        throw new IllegalStateException("encryption in progress");
+                    }
 
-                ubiqEncrypt.useCount++;
+                    if (ubiqEncrypt.encryptionKey == null) {
+                        // JIT: request encryption key from server
+                        ubiqEncrypt.encryptionKey = ubiqEncrypt.ubiqWebServices.getEncryptionKey(ubiqEncrypt.usesRequested);
+                    }
+
+                    // check key 'usage count' against server-specified limit
+                    if (ubiqEncrypt.useCount > ubiqEncrypt.encryptionKey.MaxUses) {
+                        throw new RuntimeException("maximum key uses exceeded");
+                    }
+
+                    ubiqEncrypt.useCount++;
             
             
             
-                // STUB - get the encryption key
-                byte[] key = ubiqEncrypt.TEMP_getAKey(ffs);
+                    // STUB - get the encryption key
+                    byte[] key = ubiqEncrypt.TEMP_getAKey(ffs);
                 
             
             
             
-                // encrypt based on the specified cipher
-                String encryption_algorithm = ffs.getAlgorithm();
-                switch(encryption_algorithm) {
-                    case "FF1":
-                        FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix); 
-                        cipher = ctxFF1.encrypt(PlainText);
-                    break;
-                    case "FF3_1":
-                        FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, radix); 
-                        cipher = ctxFF3_1.encrypt(PlainText);
-                    break;
-                    default:
-                        throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
-                }
+                    // encrypt based on the specified cipher
+                    String encryption_algorithm = ffs.getAlgorithm();
+                    switch(encryption_algorithm) {
+                        case "FF1":
+                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix); 
+                            cipher = ctxFF1.encrypt(PlainText);
+                        break;
+                        case "FF3_1":
+                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, radix); 
+                            cipher = ctxFF3_1.encrypt(PlainText);
+                        break;
+                        default:
+                            throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
+                    }
+                   
+                    
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+            
+            
+            
+            
+            
+            
+            }  // try
+            
+            
+            
+            
+            return cipher;
+            
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+    public static String encryptFPE(UbiqCredentials ubiqCredentials, String FPEAlgorithm, String PlainText, byte[] tweek, String LDAP, FFS FFScaching) 
+        throws IllegalStateException, InvalidCipherTextException {
+      
+            // check for FFS cache 
+            //    else call server for FFD (aka FFS)  --- from UbiqFPEEncrypt(ubiqCredentials, 1) eevntually return JSON obkect for JP's model def
+            
+            // Based on FFS, determine if PT match this specification (radix, passthrough, regex), we will create algorithm to do this
+            
+            // From FFS get encryption algorithm (FF1 or FF3_1)
+            
+            // Validate LDAP request (later)
+            
+            // Validate does FFS spec require/supply tweek.   Generated-random, constant, calculated, user-supplied
+            //   May be embedded in FFS, or externally provided by user
+            // Plaintext needs to be trimmed (passthrough characters e.g. dashes)  ---> santizedPlainText
+            
+            // Radix in FFS (list of valid chars) 
+            
+            // check cache for encyrption key...   else separate webservice call to api/v0/fpe/key/papi (part of credentials) --- data key needed for FPE
+            //   if (this.encryptionKey == null) {
+            // JIT: request encryption key from server
+            //      this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(this.usesRequested);  (API, LDAP, FFS)    based on spec of 7/27/21 from Gary 
+            //   }
+            // decrypt key using credentials (already in standard code)
+            
+            
+            // input radix conversion
+            // call encryptFF1/encryptFF3_1 depending on FFS    ctx = getContext(   ((new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix)))    )
+            
+            //ctx.encrypt(santizedPlainText)
+            
+            //  FFS may have both input radix and output radix
+            /// convert to output radix, radix conversion
+            
+            // report billing updater
+            
+            
+            
+            
+            
+            
+            String cipher = "";
+            
+            // STUB - For now, hardcode a key    
+            // STUB - tweek ranges
+            final long twkmin= 0;
+            final long twkmax= 10;
+            int radix = 10;
+          
+            
+            
+            
+            
+            try (UbiqFPEEncrypt ubiqEncrypt = new UbiqFPEEncrypt(ubiqCredentials, 1)) {
+            
+                System.out.println("Running encryptFPE");
+                
+                
+                
+                // attempt to load the FPEAlgorithm from the local cache
+                try {
+                    //System.out.println(ubiqEncrypt.FFSCache.get("FF1"));
+                    
+                    
+                    String cachingKey1 = "FF1-SSN";
+                    String cachingKey2 = "FF3_1-SSN";
+                    
+                    System.out.println("First FF1 load....");
+                    FFS ffs = ubiqEncrypt.FFSCache.get(cachingKey1);
+                    System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
+                    System.out.println("    ffs.getUser()= " + ffs.getUser());
+                    System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
+                    System.out.println("    ffs.getName()= " + ffs.getName());
+                    System.out.println("    ffs.getRegex()= " + ffs.getRegex());
+                    System.out.println("    ffs.getTweak_source()= " + ffs.getTweak_source());
+                    System.out.println("    ffs.getMin_input_length()= " + ffs.getMin_input_length());
+                    System.out.println("    ffs.getMax_input_length()= " + ffs.getMax_input_length());
+                    System.out.println("    ffs.getFpe_definable()= " + ffs.getFpe_definable());
+                    
+                    
+                    System.out.println("Second FF1 load....");
+                    ffs = ubiqEncrypt.FFSCache.get(cachingKey1);
+                    System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
+                    System.out.println("    ffs.getUser()= " + ffs.getUser());
+                    System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
+                    System.out.println("    ffs.getName()= " + ffs.getName());
+                    System.out.println("    ffs.getRegex()= " + ffs.getRegex());
+                    System.out.println("    ffs.getTweak_source()= " + ffs.getTweak_source());
+                    System.out.println("    ffs.getMin_input_length()= " + ffs.getMin_input_length());
+                    System.out.println("    ffs.getMax_input_length()= " + ffs.getMax_input_length());
+                    System.out.println("    ffs.getFpe_definable()= " + ffs.getFpe_definable());
+                    
+                    System.out.println("First FF3_1 load....");
+                    ffs = ubiqEncrypt.FFSCache.get(cachingKey2);
+                    System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
+                    System.out.println("    ffs.getUser()= " + ffs.getUser());
+                    System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
+                    System.out.println("    ffs.getName()= " + ffs.getName());
+                    System.out.println("    ffs.getRegex()= " + ffs.getRegex());
+                    System.out.println("    ffs.getTweak_source()= " + ffs.getTweak_source());
+                    System.out.println("    ffs.getMin_input_length()= " + ffs.getMin_input_length());
+                    System.out.println("    ffs.getMax_input_length()= " + ffs.getMax_input_length());
+                    System.out.println("    ffs.getFpe_definable()= " + ffs.getFpe_definable());
+                    
+                    
+                    System.out.println("Second FF3_1 load....");
+                    ffs = ubiqEncrypt.FFSCache.get(cachingKey2);
+                    System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
+                    System.out.println("    ffs.getUser()= " + ffs.getUser());
+                    System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
+                    System.out.println("    ffs.getName()= " + ffs.getName());
+                    System.out.println("    ffs.getRegex()= " + ffs.getRegex());
+                    System.out.println("    ffs.getTweak_source()= " + ffs.getTweak_source());
+                    System.out.println("    ffs.getMin_input_length()= " + ffs.getMin_input_length());
+                    System.out.println("    ffs.getMax_input_length()= " + ffs.getMax_input_length());
+                    System.out.println("    ffs.getFpe_definable()= " + ffs.getFpe_definable());
+
+                    System.out.println("Original FF1 load....");
+                    ffs = ubiqEncrypt.FFSCache.get(cachingKey1);
+                    System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
+                    System.out.println("    ffs.getUser()= " + ffs.getUser());
+                    System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
+                    System.out.println("    ffs.getName()= " + ffs.getName());
+                    System.out.println("    ffs.getRegex()= " + ffs.getRegex());
+                    System.out.println("    ffs.getTweak_source()= " + ffs.getTweak_source());
+                    System.out.println("    ffs.getMin_input_length()= " + ffs.getMin_input_length());
+                    System.out.println("    ffs.getMax_input_length()= " + ffs.getMax_input_length());
+                    System.out.println("    ffs.getFpe_definable()= " + ffs.getFpe_definable());
+
+
+
+
+                    ffs = ubiqEncrypt.getFFS(FPEAlgorithm);
+  
+            
+                    // Obtain encryption key information
+                    if (ubiqEncrypt.ubiqWebServices == null) {
+                        throw new IllegalStateException("object closed");
+                    } else if (ubiqEncrypt.aesGcmBlockCipher != null) {
+                        throw new IllegalStateException("encryption in progress");
+                    }
+
+                    if (ubiqEncrypt.encryptionKey == null) {
+                        // JIT: request encryption key from server
+                        ubiqEncrypt.encryptionKey = ubiqEncrypt.ubiqWebServices.getEncryptionKey(ubiqEncrypt.usesRequested);
+                    }
+
+                    // check key 'usage count' against server-specified limit
+                    if (ubiqEncrypt.useCount > ubiqEncrypt.encryptionKey.MaxUses) {
+                        throw new RuntimeException("maximum key uses exceeded");
+                    }
+
+                    ubiqEncrypt.useCount++;
+            
+            
+            
+                    // STUB - get the encryption key
+                    byte[] key = ubiqEncrypt.TEMP_getAKey(ffs);
+                
+            
+            
+            
+                    // encrypt based on the specified cipher
+                    String encryption_algorithm = ffs.getAlgorithm();
+                    switch(encryption_algorithm) {
+                        case "FF1":
+                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix); 
+                            cipher = ctxFF1.encrypt(PlainText);
+                        break;
+                        case "FF3_1":
+                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, radix); 
+                            cipher = ctxFF3_1.encrypt(PlainText);
+                        break;
+                        default:
+                            throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
+                    }
+                   
+                    
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+            
+            
             
             
             

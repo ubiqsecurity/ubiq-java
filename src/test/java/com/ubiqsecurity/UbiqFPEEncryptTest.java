@@ -11,6 +11,15 @@ import ubiqsecurity.fpe.FF3_1;
 
 
 
+
+
+
+import com.ubiqsecurity.UbiqFPEDecrypt;
+import com.ubiqsecurity.UbiqFPEEncrypt;
+import com.ubiqsecurity.UbiqFactory;
+
+
+
 public class UbiqFPEEncryptTest
 {
     private void testFF1(final byte[] key, final byte[] twk,
@@ -137,6 +146,102 @@ public class UbiqFPEEncryptTest
                   this.twk1_FF3_1,
                   PT_FF3_1[0], "075870132022772250", 10);
     }
+
+
+
+
+
+
+
+    @Test
+    public void encryptDecrypt1() {
+    
+    
+    
+        try {
+            UbiqCredentials ubiqCredentials;
+            
+            // TODO - setup a set of standard credentials, for now hardcode some here
+            ubiqCredentials = UbiqFactory.createCredentials(
+                    "J07/KueP1k07rsJjRwFBfJpF",
+                    "GMmrma7+4D7I1ymYUqInvuHmFjrhQ70zslDQ+EZbVHfS",
+                    "bkEyHxQZ5/mq+pu3vHA22fSgKUSKKgUaTKn5KGIFTUhv",
+                    "https://dev.koala.ubiqsecurity.com");
+
+            ////// TEST 1 - ENCRYPT AND DECRYPT
+            final byte[] tweekFF1 = {
+                (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+                (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30,
+            };
+            
+            
+            
+            
+            String original = "0123456789";
+            String cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF1", original, tweekFF1, "LDAP"); 
+            String decrypted = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF1", cipher, tweekFF1, "LDAP");
+            
+            assertEquals(original, decrypted);
+    
+        } catch (Exception ex) {
+            System.out.println(String.format("Exception: %s", ex.getMessage()));
+            ex.printStackTrace();
+            System.exit(1);
+        }    
+    
+    
+
+    }
+
+
+
+
+
+
+
+    @Test
+    public void encryptDecrypt2() {
+    
+    
+    
+        try {
+            UbiqCredentials ubiqCredentials;
+            
+            // TODO - setup a set of standard credentials, for now hardcode some here
+            ubiqCredentials = UbiqFactory.createCredentials(
+                    "J07/KueP1k07rsJjRwFBfJpF",
+                    "GMmrma7+4D7I1ymYUqInvuHmFjrhQ70zslDQ+EZbVHfS",
+                    "bkEyHxQZ5/mq+pu3vHA22fSgKUSKKgUaTKn5KGIFTUhv",
+                    "https://dev.koala.ubiqsecurity.com");
+
+            ////// TEST 1 - ENCRYPT AND DECRYPT
+            final byte[] tweekFF1 = {
+                (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+                (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30,
+            };
+            String original = "0123456789";
+            String cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF1", original, tweekFF1, "LDAP"); 
+            String decrypted = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF1", cipher, tweekFF1, "LDAP");
+            
+            assertEquals(original, decrypted);
+    
+        } catch (Exception ex) {
+            System.out.println(String.format("Exception: %s", ex.getMessage()));
+            ex.printStackTrace();
+            System.exit(1);
+        }    
+    
+    
+
+    }
+
+
+
+
+
+
 
 
 
