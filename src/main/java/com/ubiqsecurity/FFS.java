@@ -13,6 +13,9 @@ public class FFS {
     private String tweak_source;   //e.g. "generated",
     private int min_input_length;   //e.g. 9 
     private int max_input_length;   //e.g. 9
+    private boolean fpe_definable;
+    
+    private String cachingKey;
     
 	
 	public String getAlgorithm() {
@@ -20,6 +23,7 @@ public class FFS {
 	}
 	public void setAlgorithm(String encryption_algorithm) {
 		this.encryption_algorithm = encryption_algorithm;
+		this.cachingKey = this.encryption_algorithm + "-" + this.user;
 	}
 	
 	public String getUser() {
@@ -27,6 +31,7 @@ public class FFS {
 	}
 	public void setUser(String user) {
 		this.user = user;
+		this.cachingKey = this.encryption_algorithm + "-" + this.user;
 	}
 	
 	public String getCustomer() {
@@ -71,6 +76,12 @@ public class FFS {
 		this.max_input_length = max_input_length;
 	}
 	
+	public boolean getFpe_definable() {
+		return fpe_definable;
+	}
+	public void setFpe_definable(boolean fpe_definable) {
+		this.fpe_definable = fpe_definable;
+	}
 	
 	
 } 
