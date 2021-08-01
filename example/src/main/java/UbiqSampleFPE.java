@@ -17,6 +17,8 @@ import com.ubiqsecurity.UbiqFPEDecrypt;
 import com.ubiqsecurity.UbiqFPEEncrypt;
 import com.ubiqsecurity.UbiqFactory;
 
+import com.ubiqsecurity.FFS;
+
 import ubiqsecurity.fpe.Bn;
 
 import java.math.BigInteger;
@@ -102,8 +104,6 @@ public class UbiqSampleFPE {
 
  
 
- 
-
 
             ////// TEST 1 - ENCRYPT AND DECRYPT
             final byte[] tweekFF1 = {
@@ -111,13 +111,16 @@ public class UbiqSampleFPE {
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30,
             };
+            
+            FFS ffs = new FFS();
+            
             System.out.println("\n@@@@@@@@@    simpleEncryptionFF1");
             String plainText = "0123456789";
-            String cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF1", plainText, tweekFF1, "LDAP"); 
+            String cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF1", "SSN", plainText, tweekFF1, "LDAP", ffs); 
             System.out.println("    plainText= " + plainText + "    cipher= " + cipher);
 
             System.out.println("\n@@@@@@@@@    simpleDecryptionFF1");
-            String plaintext = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF1", cipher, tweekFF1, "LDAP");
+            String plaintext = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF1", "SSN", cipher, tweekFF1, "LDAP", ffs);
             System.out.println("    plaintext= " + plaintext);
 
 
@@ -129,11 +132,11 @@ public class UbiqSampleFPE {
             };
             System.out.println("\n@@@@@@@@@    simpleEncryptionFF3_1");
             plainText = "890121234567890000";
-            cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF3_1", plainText, tweekFF3_1, "LDAP"); 
+            cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF3_1", "SSN", plainText, tweekFF3_1, "LDAP", ffs); 
             System.out.println("    plainText= " + plainText + "    cipher= " + cipher);
 
             System.out.println("\n@@@@@@@@@    simpleDecryptionFF3_1");
-            plaintext = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF3_1", cipher, tweekFF3_1, "LDAP");
+            plaintext = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF3_1", "SSN", cipher, tweekFF3_1, "LDAP", ffs);
             System.out.println("    plaintext= " + plaintext);
 
 
@@ -157,65 +160,7 @@ public class UbiqSampleFPE {
     
     
 
-/*
-    private static void simpleEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
-            throws IOException, IllegalStateException, InvalidCipherTextException {
-        byte[] plainBytes = Files.readAllBytes(new File(inFile).toPath());
-        byte[] cipherBytes = UbiqFPEEncrypt.encrypt(ubiqCredentials, plainBytes);
-        Files.write(new File(outFile).toPath(), cipherBytes);
-    }
-
-    private static void simpleDecryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
-            throws IOException, IllegalStateException, InvalidCipherTextException {
-        byte[] cipherBytes = Files.readAllBytes(new File(inFile).toPath());
-        byte[] plainBytes = UbiqFPEDecrypt.decrypt(ubiqCredentials, cipherBytes);
-        Files.write(new File(outFile).toPath(), plainBytes);
-    }
-
-    private static void piecewiseEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
-            throws IOException, IllegalStateException, InvalidCipherTextException {
-        try (FileInputStream plainStream = new FileInputStream(inFile)) {
-            try (FileOutputStream cipherStream = new FileOutputStream(outFile)) {
-                try (UbiqFPEEncrypt ubiqEncrypt = new UbiqFPEEncrypt(ubiqCredentials, 1)) {
-                    byte[] cipherBytes = ubiqEncrypt.begin();
-                    cipherStream.write(cipherBytes);
-
-                    var plainBytes = new byte[0x20000];
-                    int bytesRead = 0;
-                    while ((bytesRead = plainStream.read(plainBytes, 0, plainBytes.length)) > 0) {
-                        cipherBytes = ubiqEncrypt.update(plainBytes, 0, bytesRead);
-                        cipherStream.write(cipherBytes);
-                    }
-
-                    cipherBytes = ubiqEncrypt.end();
-                    cipherStream.write(cipherBytes);
-                }
-            }
-        }
-    }
-
-    private static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
-            throws FileNotFoundException, IOException, IllegalStateException, InvalidCipherTextException {
-        try (FileInputStream cipherStream = new FileInputStream(inFile)) {
-            try (FileOutputStream plainStream = new FileOutputStream(outFile)) {
-                try (UbiqFPEDecrypt ubiqDecrypt = new UbiqFPEDecrypt(ubiqCredentials)) {
-                    byte[] plainBytes = ubiqDecrypt.begin();
-                    plainStream.write(plainBytes);
-
-                    var cipherBytes = new byte[0x20000];
-                    int bytesRead = 0;
-                    while ((bytesRead = cipherStream.read(cipherBytes, 0, cipherBytes.length)) > 0) {
-                        plainBytes = ubiqDecrypt.update(cipherBytes, 0, bytesRead);
-                        plainStream.write(plainBytes);
-                    }
-
-                    plainBytes = ubiqDecrypt.end();
-                    plainStream.write(plainBytes);
-                }
-            }
-        }
-    }
-*/    
+ 
     
 }
 

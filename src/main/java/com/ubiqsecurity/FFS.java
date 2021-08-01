@@ -6,15 +6,105 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.concurrent.TimeUnit;
-
 import java.util.concurrent.ExecutionException;
  
- 
- 
- 
 
 
-public class FFS {
+public class FFS  {
+    private String encryption_algorithm;   //e.g. FF1 or FF3_1
+    private String user;
+    private String customer;
+    private String name;   //e.g."SSN",
+    private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",
+    private String tweak_source;   //e.g. "generated",
+    private int min_input_length;   //e.g. 9 
+    private int max_input_length;   //e.g. 9
+    private boolean fpe_definable;
+    public LoadingCache<String, FFS_Record> FFSCache;
+    
+    
+    
+    public FFS() {
+        System.out.println("NEW OBJECT FFS");
+        
+        //create a cache for FFS based on the encryption_algorithm
+        //LoadingCache<String, FFS> FFSCache =
+        FFSCache = 
+            CacheBuilder.newBuilder()
+            .maximumSize(100)                             // maximum 100 records can be cached
+            .expireAfterAccess(30, TimeUnit.MINUTES)      // cache will expire after 30 minutes of access
+            .build(new CacheLoader<String, FFS_Record>() {  // build the cacheloader
+
+                @Override
+                public FFS_Record load(String cachingKey) throws Exception {
+                   //make the expensive call
+                   return getFFSFromCloudAPI(cachingKey);
+                } 
+         });
+    }
+    
+    
+    // called when FFS is not in cache and need to make remote call
+    private  FFS_Record getFFSFromCloudAPI(String cachingKey) {
+        FFS_Record ffs;
+
+        System.out.println("EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
+        
+        // STUB - HARDCODE FOR NOW
+        if (cachingKey.equals("FF1-SSN"))   
+            ffs = TEMP_getFFSdataFromCloud_1();
+        else if (cachingKey.equals("FF3_1-SSN"))
+            ffs = TEMP_getFFSdataFromCloud_2();
+        else 
+            ffs = TEMP_getFFSdataFromCloud_2();
+            
+        return ffs;
+    }
+    
+    
+    // STUB - Get fresh FFS data
+    public FFS_Record TEMP_getFFSdataFromCloud_1() {
+        System.out.println("----- TEMP_getFFSdataFromCloud_1");
+        
+        // TODO - pull this data from an API call instead of hardcoding it here
+        FFS_Record ffs = new FFS_Record();
+        
+        ffs.setAlgorithm("FF1");
+        ffs.setName("SSN");
+        ffs.setRegex("(\\d{3})-(\\d{2})-(\\d{4})");
+        ffs.setTweak_source("generated");
+        ffs.setMin_input_length(9);
+        ffs.setMax_input_length(9);
+        ffs.setFpe_definable(true);
+        
+	    return ffs;
+    }
+
+
+
+    // STUB - Get fresh FFS data
+    public FFS_Record TEMP_getFFSdataFromCloud_2() {
+        System.out.println("----- TEMP_getFFSdataFromCloud_2");
+        
+        // TODO - pull this data from an API call instead of hardcoding it here
+        FFS_Record ffs = new FFS_Record();
+        
+        ffs.setAlgorithm("FF3_1");
+        ffs.setName("SSN");
+        ffs.setRegex("(\\d{3})-(\\d{2})-(\\d{4})");
+        ffs.setTweak_source("generated");
+        ffs.setMin_input_length(9);
+        ffs.setMax_input_length(9);
+        ffs.setFpe_definable(true);
+	    
+	    return ffs;
+    }
+    
+}    
+
+
+
+class FFS_Record {
     private String encryption_algorithm;   //e.g. FF1 or FF3_1
     
     private String user;
@@ -29,93 +119,8 @@ public class FFS {
     // cachingKey is in the format of <encryption_algorithm>-<name>
     //  and used to retrieve cached FFS record
     private String cachingKey;
-    
-    private Gson FFSdata;
-    private LoadingCache<String, FFS> FFSCache;
-    
-    
-    
-    public FFS() {
-        
-        System.out.println("NEW OBJECT FFS");
-        
-        
-        
-        //create a cache for FFS based on the encryption_algorithm
-        //LoadingCache<String, FFS> FFSCache =
-        FFSCache = 
-            CacheBuilder.newBuilder()
-            .maximumSize(100)                             // maximum 100 records can be cached
-            .expireAfterAccess(30, TimeUnit.MINUTES)      // cache will expire after 30 minutes of access
-            .build(new CacheLoader<String, FFS>() {  // build the cacheloader
-
-                @Override
-                public FFS load(String cachingKey) throws Exception {
-                   //make the expensive call
-                   return getFFSFromCloudAPI(cachingKey);
-                } 
-         });
-         
-         
-    }
-    
-    // called when FFS is not in cache and need to make remote call
-    private  FFS getFFSFromCloudAPI(String encryption_algorithm) {
-        
-        FFS ffs = TEMP_getFFSdataFromCloud_1();
-        
-        System.out.println("----- getFFSFromCloudAPI");
-        
-        return ffs;
-    }
-    
-    // STUB - Get fresh FFS data
-    public FFS TEMP_getFFSdataFromCloud_1() {
-        System.out.println("----- TEMP_getFFSdataFromCloud_1");
-        
-        
-        // TODO - pull this data from an API call instead of hardcoding it here
-        String jsonStr= "{'encryption_algorithm': 'FF1'}";
-        Gson gson = FFSdata;        
-        FFS ffs = gson.fromJson(jsonStr, FFS.class);
-        
-        ffs.setName("SSN");
-        ffs.setRegex("(\\d{3})-(\\d{2})-(\\d{4})");
-        ffs.setTweak_source("generated");
-        ffs.setMin_input_length(9);
-        ffs.setMax_input_length(9);
-        ffs.setFpe_definable(true);
-        
-	    return ffs;
-    }
 
 
-
-    // STUB - Get fresh FFS data
-    public FFS TEMP_getFFSdataFromCloud_2() {
-        System.out.println("----- TEMP_getFFSdataFromCloud_2");
-        
-        
-        // TODO - pull this data from an API call instead of hardcoding it here
-        String jsonStr= "{'encryption_algorithm': 'FF3_1'}";
-        Gson gson = FFSdata;        
-        FFS ffs = gson.fromJson(jsonStr, FFS.class);
-        
-        ffs.setName("SSN");
-        ffs.setRegex("(\\d{3})-(\\d{2})-(\\d{4})");
-        ffs.setTweak_source("generated");
-        ffs.setMin_input_length(9);
-        ffs.setMax_input_length(9);
-        ffs.setFpe_definable(true);
-	    
-	    return ffs;
-    }
-    
-
-
-
-
-    
 	
 	public String getAlgorithm() {
 		return encryption_algorithm;
