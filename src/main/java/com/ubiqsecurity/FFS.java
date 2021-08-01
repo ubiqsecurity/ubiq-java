@@ -48,7 +48,7 @@ public class FFS  {
     private  FFS_Record getFFSFromCloudAPI(String cachingKey) {
         FFS_Record ffs;
 
-        System.out.println("EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
+        System.out.println("\n****** START EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
         
         // STUB - HARDCODE FOR NOW
         if (cachingKey.equals("FF1-SSN"))   
@@ -57,6 +57,9 @@ public class FFS  {
             ffs = TEMP_getFFSdataFromCloud_2();
         else 
             ffs = TEMP_getFFSdataFromCloud_2();
+
+        System.out.println("****** END EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey + "\n");
+
             
         return ffs;
     }
@@ -66,16 +69,22 @@ public class FFS  {
     public FFS_Record TEMP_getFFSdataFromCloud_1() {
         System.out.println("----- TEMP_getFFSdataFromCloud_1");
         
-        // TODO - pull this data from an API call instead of hardcoding it here
-        FFS_Record ffs = new FFS_Record();
         
-        ffs.setAlgorithm("FF1");
-        ffs.setName("SSN");
-        ffs.setRegex("(\\d{3})-(\\d{2})-(\\d{4})");
-        ffs.setTweak_source("generated");
-        ffs.setMin_input_length(9);
-        ffs.setMax_input_length(9);
-        ffs.setFpe_definable(true);
+        
+        // TODO - pull this data from an API call instead of hardcoding it here
+        String jsonStr= "{   'encryption_algorithm': 'FF1', 'user': '0000', 'customer': '1111', 'name': 'SSN', 'regex': '(\\\\d{3})-(\\\\d{2})-(\\\\d{4})', 'tweak_source': 'generated', 'min_input_length': '9', 'max_input_length': '9', 'fpe_definable': 'true'}";    
+        Gson gson = new Gson();        
+        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
+    
+        System.out.println("----- ffs.getAlgorithm= " + ffs.getAlgorithm() );
+        System.out.println("----- ffs.getName= " + ffs.getName() );
+        System.out.println("----- ffs.getRegex= " + ffs.getRegex() );
+        System.out.println("----- ffs.getTweak_source= " + ffs.getTweak_source() );
+        System.out.println("----- ffs.getMin_input_length= " + ffs.getMin_input_length() );
+        System.out.println("----- ffs.getMax_input_length= " + ffs.getMax_input_length() );
+        System.out.println("----- ffs.getFpe_definable= " + ffs.getFpe_definable() );
+        System.out.println("----- ffs.getUser= " + ffs.getUser() );
+    
         
 	    return ffs;
     }
@@ -87,16 +96,20 @@ public class FFS  {
         System.out.println("----- TEMP_getFFSdataFromCloud_2");
         
         // TODO - pull this data from an API call instead of hardcoding it here
-        FFS_Record ffs = new FFS_Record();
+        String jsonStr= "{   'encryption_algorithm': 'FF3_1', 'user': '0000', 'customer': '1111', 'name': 'SSN', 'regex': '(\\\\d{3})-(\\\\d{2})-(\\\\d{4})', 'tweak_source': 'generated', 'min_input_length': '9', 'max_input_length': '9', 'fpe_definable': 'true'}";    
+        Gson gson = new Gson();        
+        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
+    
+        System.out.println("----- ffs.getAlgorithm= " + ffs.getAlgorithm() );
+        System.out.println("----- ffs.getName= " + ffs.getName() );
+        System.out.println("----- ffs.getRegex= " + ffs.getRegex() );
+        System.out.println("----- ffs.getTweak_source= " + ffs.getTweak_source() );
+        System.out.println("----- ffs.getMin_input_length= " + ffs.getMin_input_length() );
+        System.out.println("----- ffs.getMax_input_length= " + ffs.getMax_input_length() );
+        System.out.println("----- ffs.getFpe_definable= " + ffs.getFpe_definable() );
+        System.out.println("----- ffs.getUser= " + ffs.getUser() );
         
-        ffs.setAlgorithm("FF3_1");
-        ffs.setName("SSN");
-        ffs.setRegex("(\\d{3})-(\\d{2})-(\\d{4})");
-        ffs.setTweak_source("generated");
-        ffs.setMin_input_length(9);
-        ffs.setMax_input_length(9);
-        ffs.setFpe_definable(true);
-	    
+        	    
 	    return ffs;
     }
     
@@ -106,7 +119,6 @@ public class FFS  {
 
 class FFS_Record {
     private String encryption_algorithm;   //e.g. FF1 or FF3_1
-    
     private String user;
     private String customer;
     private String name;   //e.g."SSN",

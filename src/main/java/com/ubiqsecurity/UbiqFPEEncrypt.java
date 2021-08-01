@@ -175,51 +175,11 @@ public class UbiqFPEEncrypt implements AutoCloseable {
                 // attempt to load the FPEAlgorithm from the local cache
                 try {
                     String cachingKey = FPEAlgorithm + "-" + FPEName;
-                    System.out.println("Loading for...." + cachingKey);
+                    System.out.println("Loading for FFS record...." + cachingKey);
                     FFS_Record ffs = FFScaching.FFSCache.get(cachingKey);
                     
-//                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
-//                     System.out.println("    ffs.getName()= " + ffs.getName());
-//                     
-//                     
-//                     System.out.println("Loading for...." + "FF3_1-SSN");
-//                     ffs = FFScaching.FFSCache.get("FF3_1-SSN");
-//                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
-//                     System.out.println("    ffs.getName()= " + ffs.getName());
-//                     
-//                     System.out.println("Loading for...." + "FF1-SSN");
-//                     ffs = FFScaching.FFSCache.get("FF1-SSN");
-//                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
-//                     System.out.println("    ffs.getName()= " + ffs.getName());
-//                    
-//                     
-//                     System.out.println("Loading for...." + cachingKey);
-//                     ffs = FFScaching.FFSCache.get(cachingKey);
-//                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
-//                     System.out.println("    ffs.getName()= " + ffs.getName());
-//                     
-//                     
-// 
-//                     
-//                     System.out.println("    ffs.getAlgorithm()= " + ffs.getAlgorithm());
-//                     System.out.println("    ffs.getUser()= " + ffs.getUser());
-//                     System.out.println("    ffs.getCustomer()= " + ffs.getCustomer());
-//                     System.out.println("    ffs.getName()= " + ffs.getName());
-//                     System.out.println("    ffs.getRegex()= " + ffs.getRegex());
-//                     System.out.println("    ffs.getTweak_source()= " + ffs.getTweak_source());
-//                     System.out.println("    ffs.getMin_input_length()= " + ffs.getMin_input_length());
-//                     System.out.println("    ffs.getMax_input_length()= " + ffs.getMax_input_length());
-//                     System.out.println("    ffs.getFpe_definable()= " + ffs.getFpe_definable());
                     
                     
-
-
-
-
-
-                    //ffs = ubiqEncrypt.getFFS(FPEAlgorithm);
-  
-            
                     // Obtain encryption key information
                     if (ubiqEncrypt.ubiqWebServices == null) {
                         throw new IllegalStateException("object closed");
