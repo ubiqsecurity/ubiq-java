@@ -36,7 +36,7 @@ public class FFS  {
                 @Override
                 public FFS_Record load(String cachingKey) throws Exception {
                    //make the expensive call
-                   return getFFSFromCloudAPI(cachingKey);
+                   return getFFSFromCloudAPI(cachingKey);   // <AccessKeyId>-<FFS Name> 
                 } 
          });
     }
@@ -48,10 +48,10 @@ public class FFS  {
 
         System.out.println("\n****** START EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
         
-        // STUB - HARDCODE FOR NOW
-        if (cachingKey.equals("FF1-SSN"))   
+        // STUB - HARDCODE FOR NOW. NOTE HARDCODED ACCESS KEY!
+        if (cachingKey.equals("0cxsgl9sL2QLGlBpm6D3s6KG-SSN"))    // <AccessKeyId>-<FFS Name> 
             ffs = TEMP_getFFSdataFromCloud_1();
-        else if (cachingKey.equals("FF3_1-SSN"))
+        else if (cachingKey.equals("0cxsgl9sL2QLGlBpm6D3s6KG-PIN"))  
             ffs = TEMP_getFFSdataFromCloud_2();
         else 
             ffs = TEMP_getFFSdataFromCloud_2();
@@ -128,9 +128,6 @@ class FFS_Record {
     private String input_character_set;   //  "alphabet (inut/output radix)
     private String output_character_set;  // not for fpe (most likely)
     
-    // cachingKey is in the format of <encryption_algorithm>-<name>
-    //  and used to retrieve cached FFS record
-    private String cachingKey;
 
 
 	
@@ -139,7 +136,6 @@ class FFS_Record {
 	}
 	public void setAlgorithm(String encryption_algorithm) {
 		this.encryption_algorithm = encryption_algorithm;
-		this.cachingKey = this.encryption_algorithm + "-" + this.name;
 	}
 	
 	public String getUser() {
@@ -161,7 +157,6 @@ class FFS_Record {
 	}
 	public void setName(String name) {
 		this.name = name;
-		this.cachingKey = this.encryption_algorithm + "-" + this.name;
 	}
 	
 	public String getRegex() {

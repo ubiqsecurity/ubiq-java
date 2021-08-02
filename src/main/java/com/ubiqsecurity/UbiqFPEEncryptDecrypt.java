@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
-public class UbiqFPEEncrypt implements AutoCloseable {
+public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private int usesRequested;
 
     private UbiqWebServices ubiqWebServices; // null when closed
@@ -29,17 +29,17 @@ public class UbiqFPEEncrypt implements AutoCloseable {
     
     private Gson FFSdata;
     
-    
+    private FFS ffs;
  
     
 
-    public UbiqFPEEncrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
+    public UbiqFPEEncryptDecrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
         this.usesRequested = usesRequested;
         this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
         
         this.FFSdata = new Gson();
         
-        System.out.println("NEW OBJECT UbiqFPEEncrypt");
+        System.out.println("NEW OBJECT UbiqFPEEncryptDecrypt");
         
          
     }
@@ -51,7 +51,7 @@ public class UbiqFPEEncrypt implements AutoCloseable {
             if (this.encryptionKey != null) {
                 // if key was used less times than requested, notify the server.
                 if (this.useCount < this.usesRequested) {
-                    System.out.println(String.format("UbiqFPEEncrypt.close: reporting key usage: %d of %d", this.useCount,
+                    System.out.println(String.format("UbiqFPEEncryptDecrypt.close: reporting key usage: %d of %d", this.useCount,
                             this.usesRequested));
                     this.ubiqWebServices.updateEncryptionKeyUsage(this.useCount, this.usesRequested,
                             this.encryptionKey.KeyFingerprint, this.encryptionKey.EncryptionSession);
@@ -121,7 +121,7 @@ public class UbiqFPEEncrypt implements AutoCloseable {
     
 
 
-    public static String encryptFPE(UbiqCredentials ubiqCredentials, String FPEAlgorithm, String FPEName, String PlainText, byte[] tweek, String LDAP, FFS FFScaching) 
+    public String encryptFPE(UbiqCredentials ubiqCredentials, String FPEName, String PlainText, byte[] tweek, String LDAP) 
         throws IllegalStateException, InvalidCipherTextException {
       
             // check for FFS cache 
@@ -174,49 +174,57 @@ public class UbiqFPEEncrypt implements AutoCloseable {
             // key for the cache is <credentials.papi>-<name>
             
             
-            try (UbiqFPEEncrypt ubiqEncrypt = new UbiqFPEEncrypt(ubiqCredentials, 1)) {
+            try (UbiqFPEEncryptDecrypt ubiqEncrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
             
                 System.out.println("Running encryptFPE");
+                
+                
+                // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
+                if (ffs == null) {
+                    ffs = new FFS();
+                }
+                
                 
                 
                 
                 // attempt to load the FPEAlgorithm from the local cache
                 try {
-                    String cachingKey = FPEAlgorithm + "-" + FPEName;
-                    System.out.println("Loading for FFS record...." + cachingKey);
-                    FFS_Record ffs = FFScaching.FFSCache.get(cachingKey);
-                    
+                    String cachingKey = ubiqCredentials.getAccessKeyId() + "-" + FPEName;   // <AccessKeyId>-<FFS Name> 
+                    System.out.println("Loading for FFS record: " + cachingKey);
+                    FFS_Record FFScaching = ffs.FFSCache.get(cachingKey);
                     
                     
                     // Obtain encryption key information
-                    if (ubiqEncrypt.ubiqWebServices == null) {
+                    if (this.ubiqWebServices == null) {
                         throw new IllegalStateException("object closed");
-                    } else if (ubiqEncrypt.aesGcmBlockCipher != null) {
+                    } else if (this.aesGcmBlockCipher != null) {
                         throw new IllegalStateException("encryption in progress");
                     }
 
-                    if (ubiqEncrypt.encryptionKey == null) {
+                    if (this.encryptionKey == null) {
                         // JIT: request encryption key from server
-                        ubiqEncrypt.encryptionKey = ubiqEncrypt.ubiqWebServices.getEncryptionKey(ubiqEncrypt.usesRequested);
+                        this.encryptionKey = this.ubiqWebServices.getEncryptionKey(this.usesRequested);
                     }
 
+                    
                     // check key 'usage count' against server-specified limit
-                    if (ubiqEncrypt.useCount > ubiqEncrypt.encryptionKey.MaxUses) {
-                        throw new RuntimeException("maximum key uses exceeded");
+                    if (this.useCount > this.encryptionKey.MaxUses) {
+                        throw new RuntimeException("maximum key uses exceeded:  " + this.useCount);
                     }
 
-                    ubiqEncrypt.useCount++;
+                    // TODO - Uncomment this line in production to allow checking for usage limit (2)
+                    //this.useCount++;
             
             
             
                     // STUB - get the encryption key
-                    byte[] key = ubiqEncrypt.TEMP_getAKey(ffs);
+                    byte[] key = this.TEMP_getAKey(FFScaching);
                 
             
             
             
                     // encrypt based on the specified cipher
-                    String encryption_algorithm = ffs.getAlgorithm();
+                    String encryption_algorithm = FFScaching.getAlgorithm();
                     switch(encryption_algorithm) {
                         case "FF1":
                             FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix); 
@@ -247,6 +255,106 @@ public class UbiqFPEEncrypt implements AutoCloseable {
       
       
       
+
+ 
+ 
+    public  String decryptFPE(UbiqCredentials ubiqCredentials, String FPEName, String CipherText, byte[] tweek, String LDAP) 
+        throws IllegalStateException, InvalidCipherTextException {
+        
+        
+            String PlainText = "";
+        
+            // STUB - tweek ranges
+            final long twkmin= 0;
+            final long twkmax= 10;
+            int radix = 10;
+        
+        
+        
+            try (UbiqFPEEncryptDecrypt ubiqDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
+            
+                // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
+                if (ffs == null) {
+                    ffs = new FFS();
+                }
+             
+                // attempt to load the FPEAlgorithm from the local cache
+                try {
+                    String cachingKey = ubiqCredentials.getAccessKeyId() + "-" + FPEName; // <AccessKeyId>-<FFS Name> 
+                    System.out.println("Loading for: " + cachingKey);
+                    FFS_Record FFScaching = ffs.FFSCache.get(cachingKey);
+                    
+                    
+                    // Obtain encryption key information
+                    if (this.ubiqWebServices == null) {
+                        throw new IllegalStateException("object closed");
+                    } else if (this.aesGcmBlockCipher != null) {
+                        throw new IllegalStateException("decryption in progress");
+                    }
+                    
+                    
+                    
+                    // If needed, use the header info to fetch the decryption key.
+//                     if (ubiqDecrypt.decryptionKey == null) {
+//                         // JIT: request encryption key from server
+//                         ubiqDecrypt.decryptionKey = ubiqDecrypt.ubiqWebServices.getDecryptionKey(ubiqDecrypt.cipherHeader.encryptedDataKeyBytes);
+//                     }
+//                     if (ubiqDecrypt.decryptionKey != null) {
+//                         ubiqDecrypt.reset();
+//                         ubiqDecrypt.decryptionKey = ubiqDecrypt.ubiqWebServices.getDecryptionKey(ubiqDecrypt.cipherHeader.encryptedDataKeyBytes);
+//                         ubiqDecrypt.decryptionKey.KeyUseCount++;
+//                     }
+                    
+                    
+                    
+            
+                    
+                    // STUB - get the encryption key
+                    byte[] key = this.TEMP_getAKey(FFScaching);
+                    
+                    
+                    
+                    
+                    
+
+                    // decrypt based on the specified cipher
+                    String encryption_algorithm = FFScaching.getAlgorithm();
+                    switch(encryption_algorithm) {
+                        case "FF1":
+                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix); 
+                            PlainText = ctxFF1.decrypt(CipherText);
+                        break;
+                        case "FF3_1":
+                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, radix); 
+                            PlainText = ctxFF3_1.decrypt(CipherText);
+                        break;
+                        default:
+                            throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
+                    }
+            
+
+                    
+                     
+                    
+                    
+
+
+                } catch (ExecutionException e) {
+                        e.printStackTrace();
+                }
+                
+            
+            
+            
+            
+            
+            }  // try        
+        
+        return PlainText;
+    }
+
+
+
 
 
 

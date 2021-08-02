@@ -11,10 +11,7 @@ import com.beust.jcommander.Parameter;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
 import com.ubiqsecurity.UbiqCredentials;
-//import com.ubiqsecurity.UbiqDecrypt;
-//import com.ubiqsecurity.UbiqEncrypt;
-import com.ubiqsecurity.UbiqFPEDecrypt;
-import com.ubiqsecurity.UbiqFPEEncrypt;
+import com.ubiqsecurity.UbiqFPEEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
 import com.ubiqsecurity.FFS;
@@ -106,42 +103,49 @@ public class UbiqSampleFPE {
 
 
             ////// TEST 1 - ENCRYPT AND DECRYPT
+            // HARDcODE credentials for testing/dev purposes
+            ubiqCredentials = UbiqFactory.createCredentials(
+                    "0cxsgl9sL2QLGlBpm6D3s6KG",
+                    "ZBkJQWe8Ylz6TBa3avYkc4zUb5tEk62wsya7wBZM8aDC",
+                    "RzF9gvqFp7H0a1pzRpLBfBavQSNyqJJJ0yWrwWtWGvIS",
+                    "https://stg.koala.ubiqsecurity.com");
+                    
             final byte[] tweekFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30,
             };
             
-            FFS ffs = new FFS();
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
             
-            System.out.println("\n@@@@@@@@@    simpleEncryptionFF1");
-            String plainText = "0123456789";
-            String cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF1", "SSN", plainText, tweekFF1, "LDAP", ffs); 
-            System.out.println("    plainText= " + plainText + "    cipher= " + cipher);
+                System.out.println("\n@@@@@@@@@    simpleEncryptionFF1 SSN");
+                String plainText = "0123456789";
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SSN", plainText, tweekFF1, "LDAP"); 
+                System.out.println("    plainText= " + plainText + "    cipher= " + cipher);
 
-            System.out.println("\n@@@@@@@@@    simpleDecryptionFF1");
-            String plaintext = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF1", "SSN", cipher, tweekFF1, "LDAP", ffs);
-            System.out.println("    plaintext= " + plaintext);
-
-
-
-            ////// TEST 2 - ENCRYPT AND DECRYPT
-            final byte[] tweekFF3_1 = {
-                 (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
-                 (byte)0x00, (byte)0x00, (byte)0x00,
-            };
-            System.out.println("\n@@@@@@@@@    simpleEncryptionFF3_1");
-            plainText = "890121234567890000";
-            cipher = UbiqFPEEncrypt.encryptFPE(ubiqCredentials, "FF3_1", "SSN", plainText, tweekFF3_1, "LDAP", ffs); 
-            System.out.println("    plainText= " + plainText + "    cipher= " + cipher);
-
-            System.out.println("\n@@@@@@@@@    simpleDecryptionFF3_1");
-            plaintext = UbiqFPEDecrypt.decryptFPE(ubiqCredentials, "FF3_1", "SSN", cipher, tweekFF3_1, "LDAP", ffs);
-            System.out.println("    plaintext= " + plaintext);
+                System.out.println("\n@@@@@@@@@    simpleDecryptionFF1 SSN");
+                String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SSN", cipher, tweekFF1, "LDAP");
+                System.out.println("    plaintext= " + plaintext);
 
 
 
+                ////// TEST 2 - ENCRYPT AND DECRYPT
+                final byte[] tweekFF3_1 = {
+                     (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
+                     (byte)0x00, (byte)0x00, (byte)0x00,
+                };
+                System.out.println("\n@@@@@@@@@    simpleEncryptionFF3_1 PIN");
+                plainText = "890121234567890000";
+                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "PIN", plainText, tweekFF3_1, "LDAP"); 
+                System.out.println("    plainText= " + plainText + "    cipher= " + cipher);
 
+                System.out.println("\n@@@@@@@@@    simpleDecryptionFF3_1 PIN");
+                plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "PIN", cipher, tweekFF3_1, "LDAP");
+                System.out.println("    plaintext= " + plaintext);
+
+
+
+            }
 
 
             System.exit(0);
