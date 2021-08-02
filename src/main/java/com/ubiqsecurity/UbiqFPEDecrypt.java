@@ -147,6 +147,22 @@ public class UbiqFPEDecrypt implements AutoCloseable {
                     } else if (ubiqDecrypt.aesGcmBlockCipher != null) {
                         throw new IllegalStateException("decryption in progress");
                     }
+                    
+                    
+                    
+                    // If needed, use the header info to fetch the decryption key.
+//                     if (ubiqDecrypt.decryptionKey == null) {
+//                         // JIT: request encryption key from server
+//                         ubiqDecrypt.decryptionKey = ubiqDecrypt.ubiqWebServices.getDecryptionKey(ubiqDecrypt.cipherHeader.encryptedDataKeyBytes);
+//                     }
+//                     if (ubiqDecrypt.decryptionKey != null) {
+//                         ubiqDecrypt.reset();
+//                         ubiqDecrypt.decryptionKey = ubiqDecrypt.ubiqWebServices.getDecryptionKey(ubiqDecrypt.cipherHeader.encryptedDataKeyBytes);
+//                         ubiqDecrypt.decryptionKey.KeyUseCount++;
+//                     }
+                    
+                    
+                    
             
                     
                     // STUB - get the encryption key
@@ -173,7 +189,10 @@ public class UbiqFPEDecrypt implements AutoCloseable {
                     }
             
 
-
+                    
+                     
+                    
+                    
 
 
                 } catch (ExecutionException e) {

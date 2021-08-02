@@ -35,11 +35,22 @@ public class UbiqFPEEncryptTest
             UbiqCredentials ubiqCredentials;
             
             // TODO - setup a set of standard credentials, for now hardcode some here
+//             ubiqCredentials = UbiqFactory.createCredentials(
+//                     "J07/KueP1k07rsJjRwFBfJpF",
+//                     "GMmrma7+4D7I1ymYUqInvuHmFjrhQ70zslDQ+EZbVHfS",
+//                     "bkEyHxQZ5/mq+pu3vHA22fSgKUSKKgUaTKn5KGIFTUhv",
+//                     "https://dev.koala.ubiqsecurity.com");
+                    
             ubiqCredentials = UbiqFactory.createCredentials(
-                    "J07/KueP1k07rsJjRwFBfJpF",
-                    "GMmrma7+4D7I1ymYUqInvuHmFjrhQ70zslDQ+EZbVHfS",
-                    "bkEyHxQZ5/mq+pu3vHA22fSgKUSKKgUaTKn5KGIFTUhv",
-                    "https://dev.koala.ubiqsecurity.com");
+                    "0cxsgl9sL2QLGlBpm6D3s6KG",
+                    "ZBkJQWe8Ylz6TBa3avYkc4zUb5tEk62wsya7wBZM8aDC",
+                    "RzF9gvqFp7H0a1pzRpLBfBavQSNyqJJJ0yWrwWtWGvIS",
+                    "https://stg.koala.ubiqsecurity.com");
+                    
+ 
+// note: "0cxsgl9sL2QLGlBpm6D3s6KG" is the <credentials.papi>  (this.accessKeyId)
+
+
 
             ////// TEST 1 - ENCRYPT AND DECRYPT
             final byte[] tweekFF1 = {

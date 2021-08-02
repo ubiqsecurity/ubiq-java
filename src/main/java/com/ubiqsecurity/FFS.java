@@ -27,14 +27,12 @@ public class FFS  {
     public FFS() {
         System.out.println("NEW OBJECT FFS");
         
-        //create a cache for FFS based on the encryption_algorithm
-        //LoadingCache<String, FFS> FFSCache =
+        //create a cache for FFS based on the <encryption_algorithm>-<name>
         FFSCache = 
             CacheBuilder.newBuilder()
-            .maximumSize(100)                             // maximum 100 records can be cached
-            .expireAfterAccess(30, TimeUnit.MINUTES)      // cache will expire after 30 minutes of access
+            .maximumSize(100)                               // maximum 100 records can be cached
+            .expireAfterAccess(30, TimeUnit.MINUTES)        // cache will expire after 30 minutes of access
             .build(new CacheLoader<String, FFS_Record>() {  // build the cacheloader
-
                 @Override
                 public FFS_Record load(String cachingKey) throws Exception {
                    //make the expensive call
@@ -122,11 +120,13 @@ class FFS_Record {
     private String user;
     private String customer;
     private String name;   //e.g."SSN",
-    private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",
+    private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",   // "(\d{3})-(\d{2})-\d{4}",  last 4 in the clear
     private String tweak_source;   //e.g. "generated",
     private int min_input_length;   //e.g. 9 
     private int max_input_length;   //e.g. 9
     private boolean fpe_definable;
+    private String input_character_set;   //  "alphabet (inut/output radix)
+    private String output_character_set;  // not for fpe (most likely)
     
     // cachingKey is in the format of <encryption_algorithm>-<name>
     //  and used to retrieve cached FFS record

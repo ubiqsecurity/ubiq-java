@@ -111,6 +111,14 @@ public class UbiqFPEEncrypt implements AutoCloseable {
     
     
     
+    //public static String encryptFPE(UbiqCredentials ubiqCredentials, String FPEName, String PlainText, byte[] tweek, String LDAP) 
+    // PlainText --> SSN, trim out 
+    // 111-22-3333   --> 111223333
+    //    fpeencrypt
+    //    convert to output radix
+    // restore passthrough  decrypt xxyyzzzz ---> xx-yy-zzzz
+    // 
+    
 
 
     public static String encryptFPE(UbiqCredentials ubiqCredentials, String FPEAlgorithm, String FPEName, String PlainText, byte[] tweek, String LDAP, FFS FFScaching) 
@@ -163,7 +171,7 @@ public class UbiqFPEEncrypt implements AutoCloseable {
             int radix = 10;
           
             
-            
+            // key for the cache is <credentials.papi>-<name>
             
             
             try (UbiqFPEEncrypt ubiqEncrypt = new UbiqFPEEncrypt(ubiqCredentials, 1)) {
