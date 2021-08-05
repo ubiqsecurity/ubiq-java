@@ -83,9 +83,7 @@ class UbiqWebServices {
 
 
     FFSRecordResponse getFFSDefinition(String ffs_name, String ldap) {
-        //String urlString = String.format("%s/%s/fpe/key/aox5ZRptLg8B758xllfEFsNG", this.baseUrl, this.restApiRoot);
         String urlString = String.format("%s/%s/ffs/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId());
-        //String jsonRequest = String.format("{\"data\":{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}}", ffs_name, ldap);
         String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}", ffs_name, ldap);
 
         try {
@@ -104,11 +102,6 @@ System.out.println("getFFSDefinition jsonResponse= " + jsonResponse);
             FFSRecordResponse ffsRecordResponse =
                     gson.fromJson(jsonResponse, FFSRecordResponse.class);
 
- 
-System.out.println("getFFSDefinition ffsRecordResponse.FfsName= " + ffsRecordResponse.FfsName);
-
- 
-
             return ffsRecordResponse;
         } catch (Exception ex) {
             System.out.println(String.format("getFFSDefinition exception: %s", ex.getMessage()));
@@ -120,12 +113,7 @@ System.out.println("getFFSDefinition ffsRecordResponse.FfsName= " + ffsRecordRes
     
 
     EncryptionKeyResponse getFPEEncryptionKey(String ffs_name, String ldap, int uses) {
-        //String urlString = String.format("%s/%s/fpe/key/aox5ZRptLg8B758xllfEFsNG", this.baseUrl, this.restApiRoot);
         String urlString = String.format("%s/%s/fpe/key/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId());
-
-        //String jsonRequest = String.format("{\"uses\": %s}", uses);
-        //String jsonRequest = String.format("{\"data\":{\"ffs_name\":\"SSN\", \"ldap\":\"xxx\"}}");
-        //String jsonRequest = String.format("{\"data\":{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}}", ffs_name, ldap);
         String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}", ffs_name, ldap);
 
 System.out.println("this.ubiqCredentials.getAccessKeyId()= " + this.ubiqCredentials.getAccessKeyId());
@@ -149,22 +137,11 @@ System.out.println("ENCRYPT jsonResponse= " + jsonResponse);
             EncryptionKeyResponse encryptionKeyResponse =
                     gson.fromJson(jsonResponse, EncryptionKeyResponse.class);
 
-//System.out.println("encryptionKeyResponse.EncryptedPrivateKey= " + encryptionKeyResponse.EncryptedPrivateKey);
-//System.out.println("encryptionKeyResponse.WrappedDataKey= " + encryptionKeyResponse.WrappedDataKey);
-//System.out.println("this.ubiqCredentials.getSecretCryptoAccessKey()= " + this.ubiqCredentials.getSecretCryptoAccessKey());
-//System.out.println("gson= " + gson);
-
             // decrypt the server-provided encryption key
             encryptionKeyResponse.UnwrappedDataKey = unwrapKey(
                         encryptionKeyResponse.EncryptedPrivateKey,
                         encryptionKeyResponse.WrappedDataKey,
                         this.ubiqCredentials.getSecretCryptoAccessKey());
-System.out.println("encryptionKeyResponse.UnwrappedDataKey= " + encryptionKeyResponse.UnwrappedDataKey);
-
-            //encryptionKeyResponse.EncryptedDataKeyBytes =
-            //        Base64.getDecoder().decode(encryptionKeyResponse.EncryptedDataKey);
-
-//System.out.println("encryptionKeyResponse.EncryptedDataKeyBytes= " + encryptionKeyResponse.EncryptedDataKeyBytes);
 
             return encryptionKeyResponse;
         } catch (Exception ex) {
@@ -178,10 +155,6 @@ System.out.println("encryptionKeyResponse.UnwrappedDataKey= " + encryptionKeyRes
     DecryptionKeyResponse getFPEDecryptionKey(String ffs_name, String ldap, int key_number) {
         String urlString = String.format("%s/%s/fpe/key/%s/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId(), key_number);
 
-        // convert binary key bytes to Base64
-        //String base64DataKey = Base64.getEncoder().encodeToString(encryptedDataKey);
-        //String jsonRequest = String.format("{\"encrypted_data_key\": \"%s\"}", base64DataKey);
-        //String jsonRequest = String.format("{\"data\":{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}}", ffs_name, ldap);
         String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}", ffs_name, ldap);
 System.out.println("jsonRequest= " + jsonRequest);        
 
@@ -224,7 +197,7 @@ System.out.println("DECRYPT jsonResponse= " + jsonResponse);
             // submit HTTP request + expect HTTP response w/ status 'Created' (201)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 201);
             //System.out.println(jsonResponse);
-System.out.println("getEncryptionKey jsonResponse= " + jsonResponse);
+
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             EncryptionKeyResponse encryptionKeyResponse =
@@ -235,7 +208,7 @@ System.out.println("getEncryptionKey jsonResponse= " + jsonResponse);
                         encryptionKeyResponse.EncryptedPrivateKey,
                         encryptionKeyResponse.WrappedDataKey,
                         this.ubiqCredentials.getSecretCryptoAccessKey());
-System.out.println("encryptionKeyResponse.UnwrappedDataKey= " + encryptionKeyResponse.UnwrappedDataKey);
+
             encryptionKeyResponse.EncryptedDataKeyBytes =
                     Base64.getDecoder().decode(encryptionKeyResponse.EncryptedDataKey);
 

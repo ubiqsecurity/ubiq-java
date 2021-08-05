@@ -58,25 +58,33 @@ public class FFS  {
         System.out.println("   Regex= " + ffsRecordResponse.Regex);
         
         
-         
         
-        String jsonStr= "{'name': '" + ffsRecordResponse.FfsName + "'}";
+        // STUB - populate FFS_Record with default values and then override with backend FFS definitions
+        String jsonStr= "{'encryption_algorithm': 'FF1', " + 
+                        "'user': '0000', " + 
+                        "'customer': '1111', " + 
+                        "'name': 'SSN', " + 
+                        "'regex': '(\\\\d{3})-(\\\\d{2})-(\\\\d{4})', " + 
+                        "'tweak_source': 'generated', " + 
+                        "'min_input_length': '9', " + 
+                        "'max_input_length': '9', " + 
+                        "'input_character_set': '0123456789', " +
+                        "'output_character_set': '9876543210', " +
+                        "'fpe_definable': 'true'}";    
         Gson gson = new Gson();        
-        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
+        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);        
         
+        
+        // override the default data with values obtained from the server
         ffs.setRegex(ffsRecordResponse.Regex);
         ffs.setTweak_source(ffsRecordResponse.TweakSource);
         ffs.setMin_input_length(ffsRecordResponse.MinInputLength);
         ffs.setMax_input_length(ffsRecordResponse.MaxInputLength);
-        ffs.setFpe_definable(true);
         
         
-        // assign missing data
-        ffs.setAlgorithm("FF1");
-        ffs.setInput_character_set("0123456789");
-        ffs.setOutput_character_set("9876543210");
         
         
+        // STUB - switch to a different cipher
         if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-SSN"))    // <AccessKeyId>-<FFS Name> 
             ffs.setAlgorithm("FF1");
         else if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-PIN"))  
@@ -85,55 +93,12 @@ public class FFS  {
             ffs.setAlgorithm("FF1");
        
         
-        
-        // STUB - HARDCODE FOR NOW. NOTE HARDCODED ACCESS KEY!
-//         if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-SSN"))    // <AccessKeyId>-<FFS Name> 
-//             ffs = TEMP_getFFSdataFromCloud_1();
-//         else if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-PIN"))  
-//             ffs = TEMP_getFFSdataFromCloud_2();
-//         else 
-//             ffs = TEMP_getFFSdataFromCloud_2();
 
             
         return ffs;
     }
     
     
-    // STUB - Get fresh FFS data
-//     public FFS_Record TEMP_getFFSdataFromCloud_1() {
-//         System.out.println("----- TEMP_getFFSdataFromCloud_1");
-//         
-//         
-//         
-//         // TODO - pull this data from an API call instead of hardcoding it here
-//         String jsonStr= "{   'encryption_algorithm': 'FF1', 'user': '0000', 'customer': '1111', 'name': 'SSN', " +
-//                         "'regex': '(\\\\d{3})-(\\\\d{2})-(\\\\d{4})', 'tweak_source': 'generated', " +
-//                         "'min_input_length': '9', 'max_input_length': '9', 'fpe_definable': 'true', 'input_character_set': '0123456789', 'output_character_set': '9876543210'}";    
-//         Gson gson = new Gson();        
-//         FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
-//     
-//         System.out.println("----- ffs.getAlgorithm= " + ffs.getAlgorithm() );    
-//         
-// 	    return ffs;
-//     }
-// 
-// 
-// 
-//     // STUB - Get fresh FFS data
-//     public FFS_Record TEMP_getFFSdataFromCloud_2() {
-//         System.out.println("----- TEMP_getFFSdataFromCloud_2");
-//         
-//         // TODO - pull this data from an API call instead of hardcoding it here
-//         String jsonStr= "{   'encryption_algorithm': 'FF3_1', 'user': '0000', 'customer': '1111', 'name': 'SSN', " +
-//                         "'regex': '(\\\\d{3})-(\\\\d{2})-(\\\\d{4})', 'tweak_source': 'generated', " +
-//                         "'min_input_length': '9', 'max_input_length': '9', 'fpe_definable': 'true', 'input_character_set': '0123456789', 'output_character_set': '9876543210'}";    
-//         Gson gson = new Gson();        
-//         FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
-//     
-//         System.out.println("----- ffs.getAlgorithm= " + ffs.getAlgorithm() );        
-//         	    
-// 	    return ffs;
-//     }
     
 }    
 

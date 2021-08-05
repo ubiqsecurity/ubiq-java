@@ -21,30 +21,21 @@ import org.bouncycastle.crypto.InvalidCipherTextException;
 
 public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private int usesRequested;
-
     private UbiqWebServices ubiqWebServices; // null when closed
     private int useCount;
     private EncryptionKeyResponse encryptionKey;
     private DecryptionKeyResponse decryptionKey;
     private AesGcmBlockCipher aesGcmBlockCipher;
-    
     private Gson FFSdata;
-    
     private FFS ffs;
  
-    
 
     public UbiqFPEEncryptDecrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
         this.usesRequested = usesRequested;
         this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
-        
         this.FFSdata = new Gson();
-        
-        
-         
     }
     
-
 
     public void close() {
         if (this.ubiqWebServices != null) {
@@ -57,66 +48,17 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                             this.encryptionKey.KeyFingerprint, this.encryptionKey.EncryptionSession);
                 }
             }
-
             this.ubiqWebServices = null;
         }
     }
-
-
-
-
-    // STUB - temporary key
-    // The cipher API requires an encryption key. For now lets hardcode here but later comes from backend
-    public byte[] TEMP_getAKey(FFS_Record ffs) {
-       final byte[] keyFF1 = {
-            (byte)0x2b, (byte)0x7e, (byte)0x15, (byte)0x16,
-            (byte)0x28, (byte)0xae, (byte)0xd2, (byte)0xa6,
-            (byte)0xab, (byte)0xf7, (byte)0x15, (byte)0x88,
-            (byte)0x09, (byte)0xcf, (byte)0x4f, (byte)0x3c,
-            (byte)0xef, (byte)0x43, (byte)0x59, (byte)0xd8,
-            (byte)0xd5, (byte)0x80, (byte)0xaa, (byte)0x4f,
-            (byte)0x7f, (byte)0x03, (byte)0x6d, (byte)0x6f,
-            (byte)0x04, (byte)0xfc, (byte)0x6a, (byte)0x94
-        };
-        final byte[] keyFF3_1 = {
-            (byte)0xef, (byte)0x43, (byte)0x59, (byte)0xd8,
-            (byte)0xd5, (byte)0x80, (byte)0xaa, (byte)0x4f,
-            (byte)0x7f, (byte)0x03, (byte)0x6d, (byte)0x6f,
-            (byte)0x04, (byte)0xfc, (byte)0x6a, (byte)0x94,
-            (byte)0x3b, (byte)0x80, (byte)0x6a, (byte)0xeb,
-            (byte)0x63, (byte)0x08, (byte)0x27, (byte)0x1f,
-            (byte)0x65, (byte)0xcf, (byte)0x33, (byte)0xc7,
-            (byte)0x39, (byte)0x1b, (byte)0x27, (byte)0xf7,
-        };
-
-        byte[] key;
-        String encryption_algorithm = ffs.getAlgorithm();
-        switch(encryption_algorithm) {
-            case "FF1":
-                key= keyFF1;
-            break;
-            case "FF3_1":
-                key= keyFF3_1;
-            break;
-            default:
-                throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
-        }
-        return key;
-    }
-
-
 
 
     // STUB - scrub the PlainText using regex and passthrough filtering
     public String scrubPlaintext(FFS_Record ffs, String PlainText) {
         String scrubbed = "";
         
-        
-        
         scrubbed = ffs.stripFormatCharacters(PlainText);
         System.out.println("scrubPlaintext:    PlainText= " + PlainText + "   scrubbed= " + scrubbed);
-            
- 
 
         return scrubbed;
     }
@@ -193,12 +135,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             
             String cipher = "";
             
-            // STUB - For now, hardcode a key    
-            // STUB - tweek ranges
-            final long twkmin= 0;
-            final long twkmax= 10;
-            int radix = 10;
-          
             
             // key for the cache is <credentials.papi>-<name>
             
@@ -228,16 +164,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     }
 
                     if (this.encryptionKey == null) {
-                        // JIT: request encryption key from server
-                        //this.encryptionKey = this.ubiqWebServices.getEncryptionKey(this.usesRequested);
-                        
-                        
                         this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(ffs_name, ldap, this.usesRequested);
-                        
-                        
-                        System.out.println("this.encryptionKey: " + this.encryptionKey);
-                        
-                        
                     }
 
                     
@@ -251,9 +178,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             
             
             
-                    // STUB - get the encryption key
-                    //byte[] key = this.TEMP_getAKey(FFScaching);
-                    
+                    // get the encryption key
                     byte[] key = this.encryptionKey.UnwrappedDataKey;
                     
                     
@@ -267,7 +192,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             
             
             
-            
+                    // set the tweek range and radix based on the FFS record
+                    final long twkmin= FFScaching.getMin_input_length();
+                    final long twkmax= FFScaching.getMax_input_length();
+                    final int inputradix = FFScaching.getInput_character_set().length();
+                    final int onputradix = FFScaching.getOutput_character_set().length();
             
             
             
@@ -276,7 +205,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     String encryption_algorithm = FFScaching.getAlgorithm();
                     switch(encryption_algorithm) {
                         case "FF1":
-                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix); 
+                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, inputradix); 
                             cipher = ctxFF1.encrypt(scrubbedText);
                             
                             // STUB - convert to output radix
@@ -286,7 +215,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
                         break;
                         case "FF3_1":
-                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, radix); 
+                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, inputradix); 
                             cipher = ctxFF3_1.encrypt(scrubbedText);
                             
                             // STUB - convert to output radix
@@ -328,12 +257,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         
         
             String PlainText = "";
-        
-            // STUB - tweek ranges
-            final long twkmin= 0;
-            final long twkmax= 10;
-            int radix = 10;
-        
         
         
             try (UbiqFPEEncryptDecrypt ubiqDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
@@ -381,23 +304,28 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
             
                     
-                    // STUB - get the encryption key
-                    //byte[] key = this.TEMP_getAKey(FFScaching);
-                    
+                    // get the encryption key
                     byte[] key = this.decryptionKey.UnwrappedDataKey;
                     
                     
                     
+                    // set the tweek range and radix based on the FFS record
+                    final long twkmin= FFScaching.getMin_input_length();
+                    final long twkmax= FFScaching.getMax_input_length();
+                    final int inputradix = FFScaching.getInput_character_set().length();
+                    final int onputradix = FFScaching.getOutput_character_set().length();
+
+
 
                     // decrypt based on the specified cipher
                     String encryption_algorithm = FFScaching.getAlgorithm();
                     switch(encryption_algorithm) {
                         case "FF1":
-                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, radix); 
+                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, inputradix); 
                             PlainText = ctxFF1.decrypt(CipherText);
                         break;
                         case "FF3_1":
-                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, radix); 
+                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, inputradix); 
                             PlainText = ctxFF3_1.decrypt(CipherText);
                         break;
                         default:

@@ -24,33 +24,33 @@ public class UbiqFPEEncryptTest
 
 
 
-    @Test
-    public void encrypt() {
-    
-        try {
-            UbiqCredentials ubiqCredentials;
-            ubiqCredentials = UbiqFactory.createCredentials(
-                    "aox5ZRptLg8B758xllfEFsNG",
-                    "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
-                    "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
-                    "http://localhost:8443");
-                    
-    
-            System.out.println("\nSimple Encrypt");
-            final byte[] plainBytes = {
-                    (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
-                    (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
-                    (byte)0x31, (byte)0x30,
-                };
-            byte[] cipherBytes = UbiqEncrypt.encrypt(ubiqCredentials, plainBytes);
-            
-            
-        } catch (Exception ex) {
-            System.out.println(String.format("Exception: %s", ex.getMessage()));
-            ex.printStackTrace();
-            System.exit(1);
-        }  
-    }        
+//     @Test
+//     public void encrypt() {
+//     
+//         try {
+//             UbiqCredentials ubiqCredentials;
+//             ubiqCredentials = UbiqFactory.createCredentials(
+//                     "aox5ZRptLg8B758xllfEFsNG",
+//                     "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
+//                     "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
+//                     "http://localhost:8443");
+//                     
+//     
+//             System.out.println("\nSimple Encrypt");
+//             final byte[] plainBytes = {
+//                     (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+//                     (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+//                     (byte)0x31, (byte)0x30,
+//                 };
+//             byte[] cipherBytes = UbiqEncrypt.encrypt(ubiqCredentials, plainBytes);
+//             
+//             
+//         } catch (Exception ex) {
+//             System.out.println(String.format("Exception: %s", ex.getMessage()));
+//             ex.printStackTrace();
+//             System.exit(1);
+//         }  
+//     }        
         
         
 
@@ -64,28 +64,13 @@ public class UbiqFPEEncryptTest
         
             // TODO - setup a set of standard credentials, for now hardcode some here
             UbiqCredentials ubiqCredentials;
-            
-//             ubiqCredentials = UbiqFactory.createCredentials(
-//                     "0cxsgl9sL2QLGlBpm6D3s6KG",
-//                     "ZBkJQWe8Ylz6TBa3avYkc4zUb5tEk62wsya7wBZM8aDC",
-//                     "RzF9gvqFp7H0a1pzRpLBfBavQSNyqJJJ0yWrwWtWGvIS",
-//                     "https://stg.koala.ubiqsecurity.com");
-                    
+                                
             ubiqCredentials = UbiqFactory.createCredentials(
                     "aox5ZRptLg8B758xllfEFsNG",
                     "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
                     "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
                     "http://localhost:8443");
 
-
-                    
-                 
-                    
-                    
-                    
-                    
- 
-// note: "0cxsgl9sL2QLGlBpm6D3s6KG" is the <credentials.papi>  (this.accessKeyId)
 
 
 
