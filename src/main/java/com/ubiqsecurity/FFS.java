@@ -130,7 +130,7 @@ public class FFS  {
 
         if (ffsRecordResponse.OutputCharacterSet == null) {
             System.out.println("Missing OutputCharacterSet in FFS definition. Setting to: " + "9876543210");
-            ffs.setOutput_character_set("0123456789");
+            ffs.setOutput_character_set("9876543210");
         } else {
             ffs.setOutput_character_set(ffsRecordResponse.OutputCharacterSet);
         }
@@ -193,6 +193,14 @@ class FFSRecordResponse {
 
     @SerializedName("output_character_set")
     String OutputCharacterSet;
+    
+    @SerializedName("encryption_session")
+    String EncryptionSession;
+
+    @SerializedName("key_fingerprint")
+    String KeyFingerprint;
+
+
 
 }
 

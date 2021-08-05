@@ -86,12 +86,12 @@ public class UbiqFPEEncryptTest
             };
             
             
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
             
             
             
                 System.out.println("\nSSN First run");
-                String original = "0123456789";
+                String original = "123-45-6789";
                 String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SSN", original, tweekFF1, "LDAP"); 
                 String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SSN", cipher, tweekFF1, "LDAP");
             

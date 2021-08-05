@@ -42,6 +42,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             if (this.encryptionKey != null) {
                 // if key was used less times than requested, notify the server.
                 if (this.useCount < this.usesRequested) {
+// TODO - Does not work. Need to update this call since KeyFingerprint and EncryptionSession is not provided.
                     System.out.println(String.format("UbiqFPEEncryptDecrypt.close: reporting key usage: %d of %d", this.useCount,
                             this.usesRequested));
                     this.ubiqWebServices.updateEncryptionKeyUsage(this.useCount, this.usesRequested,
@@ -69,6 +70,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         
         // convert a given string to a numerical location based on a given Input_character_set
         BigInteger r1 = Bn.__bigint_set_str(rawtext, ffs.getInput_character_set());
+//         System.out.println("BigInteger r1= " + r1);
+//         System.out.println("ffs.getInput_character_set()= " + ffs.getInput_character_set()  + "   ffs.getOutput_character_set()= " + ffs.getOutput_character_set());
         
         // convert a numerical location code to a string based on its location in an Output_character_set
         String output = Bn.__bigint_get_str(ffs.getOutput_character_set(), r1);
@@ -79,6 +82,22 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
     
     
+    // STUB - given the output radix, return the original string
+    public String restoreFromRadix(FFS_Record ffs, String convertedToRadix) {
+    
+        // convert a given string to a numerical location based on a given Input_character_set
+        BigInteger r1 = Bn.__bigint_set_str(convertedToRadix, ffs.getOutput_character_set());
+        System.out.println("BigInteger r1= " + r1);
+        
+        // convert a numerical location code to a string based on its location in an Output_character_set
+        String output = Bn.__bigint_get_str(ffs.getInput_character_set(), r1);
+        System.out.println("restoreFromRadix:    convertedToRadix= " + convertedToRadix  + "   output= " + output);
+        
+        
+        
+
+        return output;
+    }
     
     
     
@@ -132,7 +151,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             
             
             
-            
+            String convertedToRadix = "";
             String cipher = "";
             
             
@@ -201,7 +220,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             
             
                     // encrypt based on the specified cipher
-                    String convertedToRadix = "";
                     String encryption_algorithm = FFScaching.getAlgorithm();
                     switch(encryption_algorithm) {
                         case "FF1":
@@ -210,7 +228,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                             
                             // STUB - convert to output radix
                             convertedToRadix = convertToOutputRadix(FFScaching, cipher); 
-                            System.out.println("cipher = " + cipher);
             
 
                         break;
@@ -220,16 +237,15 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                             
                             // STUB - convert to output radix
                             convertedToRadix = convertToOutputRadix(FFScaching, cipher); 
-                            System.out.println("cipher = " + cipher);
                             
                         break;
                         default:
                             throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
                     }
+                    System.out.println("cipher = " + cipher + "    convertedToRadix = " + convertedToRadix);
                     
                     
-                    
-                    
+                    System.out.println("restored = " + restoreFromRadix(FFScaching, convertedToRadix));
                     
                    
                     
@@ -238,7 +254,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 }
             
             }  // try
-            return cipher;
+            return convertedToRadix;
     }
       
       
@@ -257,6 +273,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         
         
             String PlainText = "";
+            String restoredFromRadix = "";
         
         
             try (UbiqFPEEncryptDecrypt ubiqDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
@@ -316,17 +333,19 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     final int onputradix = FFScaching.getOutput_character_set().length();
 
 
+                    // restore the cipher from the radix 
+                    restoredFromRadix = restoreFromRadix(FFScaching, CipherText); 
 
                     // decrypt based on the specified cipher
                     String encryption_algorithm = FFScaching.getAlgorithm();
                     switch(encryption_algorithm) {
                         case "FF1":
                             FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, inputradix); 
-                            PlainText = ctxFF1.decrypt(CipherText);
+                            PlainText = ctxFF1.decrypt(restoredFromRadix);
                         break;
                         case "FF3_1":
                             FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, inputradix); 
-                            PlainText = ctxFF3_1.decrypt(CipherText);
+                            PlainText = ctxFF3_1.decrypt(restoredFromRadix);
                         break;
                         default:
                             throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
