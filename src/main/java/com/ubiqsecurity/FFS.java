@@ -8,7 +8,7 @@ import com.google.common.cache.LoadingCache;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
  
-
+import com.google.gson.annotations.SerializedName;
 
 public class FFS  {
     private String encryption_algorithm;   //e.g. FF1 or FF3_1
@@ -24,8 +24,7 @@ public class FFS  {
     
     
     
-    public FFS() {
-        System.out.println("NEW OBJECT FFS");
+    public FFS(UbiqWebServices ubiqWebServices, String ffs_name, String ldap) {
         
         //create a cache for FFS based on the <encryption_algorithm>-<name>
         FFSCache = 
@@ -36,27 +35,64 @@ public class FFS  {
                 @Override
                 public FFS_Record load(String cachingKey) throws Exception {
                    //make the expensive call
-                   return getFFSFromCloudAPI(cachingKey);   // <AccessKeyId>-<FFS Name> 
+                   return getFFSFromCloudAPI(ubiqWebServices, cachingKey, ffs_name, ldap);   // <AccessKeyId>-<FFS Name> 
                 } 
          });
     }
     
     
     // called when FFS is not in cache and need to make remote call
-    private  FFS_Record getFFSFromCloudAPI(String cachingKey) {
-        FFS_Record ffs;
+    private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String cachingKey, String ffs_name, String ldap) {
+        //FFS_Record ffs;
 
-        System.out.println("\n****** START EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
+        System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
+        
+        FFSRecordResponse ffsRecordResponse;
+        ffsRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name, ldap);
+        
+        
+        System.out.println("   FfsName= " + ffsRecordResponse.FfsName);
+        System.out.println("   TweakSource= " + ffsRecordResponse.TweakSource);
+        System.out.println("   MinInputLength= " + ffsRecordResponse.MinInputLength);
+        System.out.println("   MaxInputLength= " + ffsRecordResponse.MaxInputLength);
+        System.out.println("   Regex= " + ffsRecordResponse.Regex);
+        
+        
+         
+        
+        String jsonStr= "{'name': '" + ffsRecordResponse.FfsName + "'}";
+        Gson gson = new Gson();        
+        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
+        
+        ffs.setRegex(ffsRecordResponse.Regex);
+        ffs.setTweak_source(ffsRecordResponse.TweakSource);
+        ffs.setMin_input_length(ffsRecordResponse.MinInputLength);
+        ffs.setMax_input_length(ffsRecordResponse.MaxInputLength);
+        ffs.setFpe_definable(true);
+        
+        
+        // assign missing data
+        ffs.setAlgorithm("FF1");
+        ffs.setInput_character_set("0123456789");
+        ffs.setOutput_character_set("9876543210");
+        
+        
+        if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-SSN"))    // <AccessKeyId>-<FFS Name> 
+            ffs.setAlgorithm("FF1");
+        else if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-PIN"))  
+            ffs.setAlgorithm("FF3_1");
+        else 
+            ffs.setAlgorithm("FF1");
+       
+        
         
         // STUB - HARDCODE FOR NOW. NOTE HARDCODED ACCESS KEY!
-        if (cachingKey.equals("0cxsgl9sL2QLGlBpm6D3s6KG-SSN"))    // <AccessKeyId>-<FFS Name> 
-            ffs = TEMP_getFFSdataFromCloud_1();
-        else if (cachingKey.equals("0cxsgl9sL2QLGlBpm6D3s6KG-PIN"))  
-            ffs = TEMP_getFFSdataFromCloud_2();
-        else 
-            ffs = TEMP_getFFSdataFromCloud_2();
-
-        System.out.println("****** END EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey + "\n");
+//         if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-SSN"))    // <AccessKeyId>-<FFS Name> 
+//             ffs = TEMP_getFFSdataFromCloud_1();
+//         else if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-PIN"))  
+//             ffs = TEMP_getFFSdataFromCloud_2();
+//         else 
+//             ffs = TEMP_getFFSdataFromCloud_2();
 
             
         return ffs;
@@ -64,54 +100,81 @@ public class FFS  {
     
     
     // STUB - Get fresh FFS data
-    public FFS_Record TEMP_getFFSdataFromCloud_1() {
-        System.out.println("----- TEMP_getFFSdataFromCloud_1");
-        
-        
-        
-        // TODO - pull this data from an API call instead of hardcoding it here
-        String jsonStr= "{   'encryption_algorithm': 'FF1', 'user': '0000', 'customer': '1111', 'name': 'SSN', 'regex': '(\\\\d{3})-(\\\\d{2})-(\\\\d{4})', 'tweak_source': 'generated', 'min_input_length': '9', 'max_input_length': '9', 'fpe_definable': 'true'}";    
-        Gson gson = new Gson();        
-        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
-    
-        System.out.println("----- ffs.getAlgorithm= " + ffs.getAlgorithm() );
-        System.out.println("----- ffs.getName= " + ffs.getName() );
-        System.out.println("----- ffs.getRegex= " + ffs.getRegex() );
-        System.out.println("----- ffs.getTweak_source= " + ffs.getTweak_source() );
-        System.out.println("----- ffs.getMin_input_length= " + ffs.getMin_input_length() );
-        System.out.println("----- ffs.getMax_input_length= " + ffs.getMax_input_length() );
-        System.out.println("----- ffs.getFpe_definable= " + ffs.getFpe_definable() );
-        System.out.println("----- ffs.getUser= " + ffs.getUser() );
-    
-        
-	    return ffs;
-    }
-
-
-
-    // STUB - Get fresh FFS data
-    public FFS_Record TEMP_getFFSdataFromCloud_2() {
-        System.out.println("----- TEMP_getFFSdataFromCloud_2");
-        
-        // TODO - pull this data from an API call instead of hardcoding it here
-        String jsonStr= "{   'encryption_algorithm': 'FF3_1', 'user': '0000', 'customer': '1111', 'name': 'SSN', 'regex': '(\\\\d{3})-(\\\\d{2})-(\\\\d{4})', 'tweak_source': 'generated', 'min_input_length': '9', 'max_input_length': '9', 'fpe_definable': 'true'}";    
-        Gson gson = new Gson();        
-        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
-    
-        System.out.println("----- ffs.getAlgorithm= " + ffs.getAlgorithm() );
-        System.out.println("----- ffs.getName= " + ffs.getName() );
-        System.out.println("----- ffs.getRegex= " + ffs.getRegex() );
-        System.out.println("----- ffs.getTweak_source= " + ffs.getTweak_source() );
-        System.out.println("----- ffs.getMin_input_length= " + ffs.getMin_input_length() );
-        System.out.println("----- ffs.getMax_input_length= " + ffs.getMax_input_length() );
-        System.out.println("----- ffs.getFpe_definable= " + ffs.getFpe_definable() );
-        System.out.println("----- ffs.getUser= " + ffs.getUser() );
-        
-        	    
-	    return ffs;
-    }
+//     public FFS_Record TEMP_getFFSdataFromCloud_1() {
+//         System.out.println("----- TEMP_getFFSdataFromCloud_1");
+//         
+//         
+//         
+//         // TODO - pull this data from an API call instead of hardcoding it here
+//         String jsonStr= "{   'encryption_algorithm': 'FF1', 'user': '0000', 'customer': '1111', 'name': 'SSN', " +
+//                         "'regex': '(\\\\d{3})-(\\\\d{2})-(\\\\d{4})', 'tweak_source': 'generated', " +
+//                         "'min_input_length': '9', 'max_input_length': '9', 'fpe_definable': 'true', 'input_character_set': '0123456789', 'output_character_set': '9876543210'}";    
+//         Gson gson = new Gson();        
+//         FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
+//     
+//         System.out.println("----- ffs.getAlgorithm= " + ffs.getAlgorithm() );    
+//         
+// 	    return ffs;
+//     }
+// 
+// 
+// 
+//     // STUB - Get fresh FFS data
+//     public FFS_Record TEMP_getFFSdataFromCloud_2() {
+//         System.out.println("----- TEMP_getFFSdataFromCloud_2");
+//         
+//         // TODO - pull this data from an API call instead of hardcoding it here
+//         String jsonStr= "{   'encryption_algorithm': 'FF3_1', 'user': '0000', 'customer': '1111', 'name': 'SSN', " +
+//                         "'regex': '(\\\\d{3})-(\\\\d{2})-(\\\\d{4})', 'tweak_source': 'generated', " +
+//                         "'min_input_length': '9', 'max_input_length': '9', 'fpe_definable': 'true', 'input_character_set': '0123456789', 'output_character_set': '9876543210'}";    
+//         Gson gson = new Gson();        
+//         FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
+//     
+//         System.out.println("----- ffs.getAlgorithm= " + ffs.getAlgorithm() );        
+//         	    
+// 	    return ffs;
+//     }
     
 }    
+
+
+
+
+class FFSRecordResponse {
+    @SerializedName("encryption_algorithm")
+    String EncryptionAlgorithm;
+
+    @SerializedName("user")
+    String User;
+
+    @SerializedName("customer")
+    String Customer;
+
+    @SerializedName("ffs_name")
+    String FfsName;
+
+    @SerializedName("regex")
+    String Regex;
+
+    @SerializedName("tweak_source")
+    String TweakSource;
+
+    @SerializedName("min_input_length")
+    int MinInputLength;
+
+    @SerializedName("max_input_length")
+    int MaxInputLength;
+
+    @SerializedName("fpe_definable")
+    boolean FpeDefinable;
+
+    @SerializedName("input_character_set")
+    String InputCharacterSet;
+
+    @SerializedName("output_character_set")
+    String OutputCharacterSet;
+
+}
 
 
 
@@ -130,6 +193,32 @@ class FFS_Record {
     
 
 
+    public String stripFormatCharacters(String fieldValue) {
+        String substitution;    
+    
+        switch(this.name) {
+            case "SSN":
+                substitution= "$1$2$3";
+            break;
+            case "PIN":
+                substitution= "*";
+            break;
+            default:
+                substitution= "*";
+        }
+
+        String strippedValue  = fieldValue.replaceAll(this.regex, substitution);
+        //System.out.println(strippedValue);
+        
+        return strippedValue;
+    }
+    
+    public String restoreFormatCharacters(String fieldValue) {
+        String restoredValue = "";
+        
+        return restoredValue;
+    }
+    
 	
 	public String getAlgorithm() {
 		return encryption_algorithm;
@@ -193,6 +282,22 @@ class FFS_Record {
 	public void setFpe_definable(boolean fpe_definable) {
 		this.fpe_definable = fpe_definable;
 	}
+
+	public String getInput_character_set() {
+		return input_character_set;
+	}
+	public void setInput_character_set(String input_character_set) {
+		this.input_character_set = input_character_set;
+	}
+
+	public String getOutput_character_set() {
+		return output_character_set;
+	}
+	public void setOutput_character_set(String output_character_set) {
+		this.output_character_set = output_character_set;
+	}
+
+
 	
 	
 } 

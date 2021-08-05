@@ -104,11 +104,18 @@ public class UbiqSampleFPE {
 
             ////// TEST 1 - ENCRYPT AND DECRYPT
             // HARDcODE credentials for testing/dev purposes
+//             ubiqCredentials = UbiqFactory.createCredentials(
+//                     "0cxsgl9sL2QLGlBpm6D3s6KG",
+//                     "ZBkJQWe8Ylz6TBa3avYkc4zUb5tEk62wsya7wBZM8aDC",
+//                     "RzF9gvqFp7H0a1pzRpLBfBavQSNyqJJJ0yWrwWtWGvIS",
+//                     "https://stg.koala.ubiqsecurity.com");
+                    
             ubiqCredentials = UbiqFactory.createCredentials(
-                    "0cxsgl9sL2QLGlBpm6D3s6KG",
-                    "ZBkJQWe8Ylz6TBa3avYkc4zUb5tEk62wsya7wBZM8aDC",
-                    "RzF9gvqFp7H0a1pzRpLBfBavQSNyqJJJ0yWrwWtWGvIS",
-                    "https://stg.koala.ubiqsecurity.com");
+                    "aox5ZRptLg8B758xllfEFsNG",
+                    "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
+                    "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
+                    "http://localhost:8443");
+                    
                     
             final byte[] tweekFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
@@ -119,7 +126,8 @@ public class UbiqSampleFPE {
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
             
                 System.out.println("\n@@@@@@@@@    simpleEncryptionFF1 SSN");
-                String plainText = "0123456789";
+                //String plainText = "0123456789";
+                String plainText = "123-45-6789";
                 String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SSN", plainText, tweekFF1, "LDAP"); 
                 System.out.println("    plainText= " + plainText + "    cipher= " + cipher);
 
