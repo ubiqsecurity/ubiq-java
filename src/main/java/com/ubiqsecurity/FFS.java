@@ -136,9 +136,6 @@ public class FFS  {
         }
 
 
-        
-        
-        
         // STUB - switch to a different cipher
         if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-SSN"))    // <AccessKeyId>-<FFS Name> 
             ffs.setAlgorithm("FF1");

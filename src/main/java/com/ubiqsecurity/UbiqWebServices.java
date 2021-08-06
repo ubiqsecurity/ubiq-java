@@ -80,8 +80,6 @@ class UbiqWebServices {
 
 
 
-
-
     FFSRecordResponse getFFSDefinition(String ffs_name, String ldap) {
         String urlString = String.format("%s/%s/ffs/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId());
         String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}", ffs_name, ldap);
@@ -90,12 +88,8 @@ class UbiqWebServices {
             HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, jsonRequest,
                 this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-System.out.println("getFFSDefinition signedHttpRequest= " + signedHttpRequest);
-
-
             // submit HTTP request + expect HTTP response w/ status 'Created' (201)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
-System.out.println("getFFSDefinition jsonResponse= " + jsonResponse);
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -116,21 +110,12 @@ System.out.println("getFFSDefinition jsonResponse= " + jsonResponse);
         String urlString = String.format("%s/%s/fpe/key/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId());
         String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}", ffs_name, ldap);
 
-System.out.println("this.ubiqCredentials.getAccessKeyId()= " + this.ubiqCredentials.getAccessKeyId());
-System.out.println("this.ubiqCredentials.getSecretSigningKey()= " + this.ubiqCredentials.getSecretSigningKey());
-System.out.println("urlString= " + urlString);
-System.out.println("jsonRequest= " + jsonRequest);
-
         try {
             HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, jsonRequest,
                 this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-System.out.println("signedHttpRequest= " + signedHttpRequest);
-
-
             // submit HTTP request + expect HTTP response w/ status 'Created' (201)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
-System.out.println("ENCRYPT jsonResponse= " + jsonResponse);
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -156,7 +141,6 @@ System.out.println("ENCRYPT jsonResponse= " + jsonResponse);
         String urlString = String.format("%s/%s/fpe/key/%s/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId(), key_number);
 
         String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}", ffs_name, ldap);
-System.out.println("jsonRequest= " + jsonRequest);        
 
         try {
             HttpRequest signedHttpRequest =  buildSignedHttpRequest("GET", urlString, jsonRequest,
@@ -164,7 +148,7 @@ System.out.println("jsonRequest= " + jsonRequest);
 
             // submit HTTP request + expect HTTP response w/ status 'OK' (200)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
-System.out.println("DECRYPT jsonResponse= " + jsonResponse);
+
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             DecryptionKeyResponse decryptionKeyResponse = gson.fromJson(jsonResponse, DecryptionKeyResponse.class);
@@ -177,7 +161,7 @@ System.out.println("DECRYPT jsonResponse= " + jsonResponse);
 
             return decryptionKeyResponse;
         } catch (Exception ex) {
-            System.out.println(String.format("getDecryptionKey exception: %s", ex.getMessage()));
+            System.out.println(String.format("getFPEDecryptionKey exception: %s", ex.getMessage()));
             return null;
         }
     }

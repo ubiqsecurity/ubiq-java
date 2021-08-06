@@ -14,51 +14,12 @@ import java.util.concurrent.ExecutionException;
 
 
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
 
 
 
 
 public class UbiqFPEEncryptTest
 {
-
-
-
-
-
-//     @Test
-//     public void encrypt() {
-//     
-//         try {
-//             UbiqCredentials ubiqCredentials;
-//             ubiqCredentials = UbiqFactory.createCredentials(
-//                     "aox5ZRptLg8B758xllfEFsNG",
-//                     "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
-//                     "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
-//                     "http://localhost:8443");
-//                     
-//     
-//             System.out.println("\nSimple Encrypt");
-//             final byte[] plainBytes = {
-//                     (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
-//                     (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
-//                     (byte)0x31, (byte)0x30,
-//                 };
-//             byte[] cipherBytes = UbiqEncrypt.encrypt(ubiqCredentials, plainBytes);
-//             
-//             
-//         } catch (Exception ex) {
-//             System.out.println(String.format("Exception: %s", ex.getMessage()));
-//             ex.printStackTrace();
-//             System.exit(1);
-//         }  
-//     }        
-        
-        
-
-
 
 
     @Test

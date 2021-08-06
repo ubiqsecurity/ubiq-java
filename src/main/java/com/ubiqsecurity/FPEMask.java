@@ -24,7 +24,6 @@ public class FPEMask  {
     }
     
     
-    
     /**
      * Inserts a String at a position in a String by
      * replacing the same number of characters as its length.
@@ -53,21 +52,18 @@ public class FPEMask  {
         
         // create the redacted version
         String redactionGroup= "";
-        StringBuffer newRedactedString  = new StringBuffer(redactedString);
+        StringBuffer newRedactedString  = new StringBuffer(this.redactedString);
         newRedactedString.delete(index, index + stringToBeInserted.length());
         for (int i = 1; i <= stringToBeInserted.length(); i++) {
             redactionGroup= redactionGroup + "X";
         }
         newRedactedString.insert(index, redactionGroup);
-        redactedString= newRedactedString.toString();
+        this.redactedString= newRedactedString.toString();
         
         // return the modified String
         return newString.toString();
     }
     
-
-
-
     
     /**
      * Returns only the encrypt-able portion of a concatenated String.
@@ -80,7 +76,7 @@ public class FPEMask  {
      * Use the function insertEncryptedPart() to reinsert the String
      * back into the appropriate original positions.
      *
-     * @return    the encrypt-able/decrypt-able String
+     * @return the encrypt-able/decrypt-able String
      */         
     public String getEncryptablePart() {
         this.encryptable= "";
@@ -119,7 +115,7 @@ public class FPEMask  {
      *
      * @param insertion the String to insert
      *
-     * @return    the new String after the insertion
+     * @return the new String after the insertion
      */         
     public String insertEncryptedPart(String insertion) {
         String withInsertion= this.original;  // start with the original including all special characters
@@ -127,7 +123,7 @@ public class FPEMask  {
         int groupindex;
         
         if (insertion.isEmpty() == true) {
-            throw new IllegalArgumentException("invalid argument, insertion string cannot be empty.");
+            throw new IllegalArgumentException("Invalid argument, insertion string cannot be empty.");
         }
 
         // Create a Pattern object
@@ -165,7 +161,7 @@ public class FPEMask  {
      * Call this after insertEncryptedPart() to ensure that the
      * final redacted String has been created.
      *
-     * @return    the new String with the encrypted portion redacted
+     * @return the new String with the encrypted portion redacted
      */          
     public String getRedacted() {
         return redactedString;    
