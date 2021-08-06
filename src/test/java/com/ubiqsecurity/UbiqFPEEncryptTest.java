@@ -17,6 +17,10 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+
+
+
+
 public class UbiqFPEEncryptTest
 {
 
@@ -131,6 +135,94 @@ public class UbiqFPEEncryptTest
     
 
     }
+
+
+
+
+
+
+
+ 
+ 
+
+
+
+
+//     public String insertEncryptedPart(String original, String regex) {
+//         String encryptable= "";
+// 
+//         // Create a Pattern object
+//         Pattern r = Pattern.compile(regex);
+// 
+//         // Now create matcher object.
+//         Matcher m = r.matcher(original);
+// 
+//         System.out.println("m.groupCount: " + m.groupCount() );
+// 
+//         if (m.find( )) {
+//             for (int i = 1; i <= m.groupCount(); i++) {
+//                  System.out.println("Found value: " + m.group(i) + "    m.start(): " + m.start(i) + "    m.end(): " + m.end(i));
+//                  
+//                  encryptable = encryptable +  m.group(i);
+//             }
+//         } else {
+//          System.out.println("NO MATCH");
+//         }
+//         
+//         return encryptable;
+//     }
+
+
+
+
+//  getEncryptablePart("123-45-6789", "(\\d{3})-(\\d{2})-\\d{4}");   ---> 12345  XXX-XX-6789
+//  encrypt(12345) --> 88888
+//  insertEncryptedPart(String original, String regex, String insertion)   ---> 888-88-6789
+//  getDisplayable(String encrypted, String regex)     888-88-6789 ---> XXX-XX-6789
+
+
+
+
+
+
+    @Test
+    public void testpatterns() {
+        String line = "123-45-6789";
+        String encryptable= "";
+        String cipher= "";
+        String withInsertion= "";
+        String redacted = "";
+        
+        
+        
+        System.out.println("\nTEST 1");
+        
+        FPEMask mask = new FPEMask("123-45-6789", "(\\d{3})-(\\d{2})-(\\d{4})");
+        encryptable = mask.getEncryptablePart();
+        System.out.println("encryptable: " + encryptable);
+        cipher = "987654321";  // assume that this is the result of the fpe encrypt for the encryptable part
+        withInsertion = mask.insertEncryptedPart(cipher);
+        System.out.println("withInsertion: " + withInsertion);
+        redacted = mask.getRedacted();
+        System.out.println("redacted: " + redacted);
+        
+        
+        System.out.println("\nTEST 2");
+        mask = new FPEMask("123-45-6789", "(\\d{3})-(\\d{2})-\\d{4}");
+        encryptable = mask.getEncryptablePart();
+        System.out.println("encryptable: " + encryptable);
+        cipher = "000000000";  // assume that this is the result of the fpe encrypt for the encryptable part
+        withInsertion = mask.insertEncryptedPart(cipher);
+        System.out.println("withInsertion: " + withInsertion);
+        redacted = mask.getRedacted();
+        System.out.println("redacted: " + redacted);
+        
+        
+
+    
+        assertEquals(true, true);
+    }
+
 
 
 
