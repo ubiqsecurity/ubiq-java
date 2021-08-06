@@ -1,18 +1,15 @@
 package com.ubiqsecurity;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ExecutionException;
-
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 
 
-
-
-
-
+/**
+ * Algorithms to pattern-match encryptable portions of a string
+ * and apply masking based on an accompanied regex.
+ */
 public class FPEMask  {
     private String encryptable;  
     private String original;
@@ -29,7 +26,8 @@ public class FPEMask  {
     
     
     /**
-     * Inserts a String at a position in a String.
+     * Inserts a String at a position in a String by
+     * replacing the same number of characters as its length.
      *
      * Convenience function returns String with inserted char 
      * at an index position.
@@ -48,14 +46,9 @@ public class FPEMask  {
             throw new IllegalArgumentException("invalid argument, input strings cannot be empty.");
         }
             
-        // Create a new StringBuffer
+        // Create a new StringBuffer with replaced string
         StringBuffer newString = new StringBuffer(originalString);
-            
-        System.out.println("  BEFORE delete: " + newString.toString() + "  index: " + index + "  stringToBeInserted.length(): " + stringToBeInserted.length() );    
         newString.delete(index, index + stringToBeInserted.length());
-        System.out.println("  AFTER delete: " + newString.toString() );
-  
-        // Insert the string to be inserted
         newString.insert(index, stringToBeInserted);
         
         // create the redacted version
@@ -65,11 +58,9 @@ public class FPEMask  {
         for (int i = 1; i <= stringToBeInserted.length(); i++) {
             redactionGroup= redactionGroup + "X";
         }
-        System.out.println("  redactionGroup: " + redactionGroup);
         newRedactedString.insert(index, redactionGroup);
         redactedString= newRedactedString.toString();
         
-  
         // return the modified String
         return newString.toString();
     }
@@ -84,6 +75,7 @@ public class FPEMask  {
      * regex is "(\\d{3})-(\\d{2})-\\d{4}". Then the portion "123-45" 
      * is the portion to be encrypted. The regex will return the digits
      * and this function will concatenate them as "12345".
+     * Normally call this function first and then insertEncryptedPart().
      *
      * Use the function insertEncryptedPart() to reinsert the String
      * back into the appropriate original positions.
@@ -91,7 +83,7 @@ public class FPEMask  {
      * @return    the encrypt-able/decrypt-able String
      */         
     public String getEncryptablePart() {
-        String encryptable= "";
+        this.encryptable= "";
 
         // Create a Pattern object
         Pattern r = Pattern.compile(this.regex);
@@ -99,19 +91,16 @@ public class FPEMask  {
         // Now create matcher object.
         Matcher m = r.matcher(this.original);
 
-        System.out.println("m.groupCount: " + m.groupCount() );
-
+        // pattern search each group and concat them together
         if (m.find( )) {
             for (int i = 1; i <= m.groupCount(); i++) {
-                 System.out.println("Found value: " + m.group(i) + "    m.start(): " + m.start(i) + "    m.end(): " + m.end(i));
                  encryptable = encryptable +  m.group(i);
             }
         } else {
-         System.out.println("NO MATCH");
+            throw new RuntimeException("Regex pattern not correct for given data.");
         }
         
         this.encryptable = encryptable;
-        
         return encryptable;
     }
 
@@ -122,6 +111,7 @@ public class FPEMask  {
      * For example, if the original String is "123-45-6789" and the
      * regex is "(\\d{3})-(\\d{2})-\\d{4}" and the insertion String is "99988" 
      * then the result returned will be "999-88-6789".
+     * Normally call this function after getEncryptablePart().
      *
      * Use the function getEncryptablePart() identify the string to be encrypted/decrypted
      * and then use this function to insert the encrypted/decrypted text
@@ -133,45 +123,35 @@ public class FPEMask  {
      */         
     public String insertEncryptedPart(String insertion) {
         String withInsertion= this.original;  // start with the original including all special characters
-        //String insertable= insertion;
         String grouptext= "";
         int groupindex;
-         
+        
+        if (insertion.isEmpty() == true) {
+            throw new IllegalArgumentException("invalid argument, insertion string cannot be empty.");
+        }
+
         // Create a Pattern object
         Pattern r = Pattern.compile(this.regex);
 
         // Now create matcher object.
         Matcher m = r.matcher(this.original);
 
-        System.out.println("\nm.groupCount: " + m.groupCount() + "    insertion: " + insertion );
-
+        // apply an insertion for each pattern-matched group
         if (m.find( )) {
             for (int i = 1; i <= m.groupCount(); i++) {
-                 System.out.println("Found value: " + m.group(i) + "    m.start(): " + m.start(i) + "    m.end(): " + m.end(i));
-                 
-                 System.out.println("insertion = " + insertion.substring( 0, m.end(i) - m.start(i) ));
-                 
-                 
                  grouptext = insertion.substring( 0, m.end(i) - m.start(i) );
                  
-                 
                  // insert this group into the proper location
-                 System.out.println("BEFORE withInsertion = " + withInsertion + "      grouptext= " + grouptext);
                  withInsertion = insertString(withInsertion, grouptext, m.start(i) );
-                 System.out.println("AFTER withInsertion = " + withInsertion);
-                 
-                 
                  
                  if (i != m.groupCount()) {
-                     insertion= insertion.substring( m.end(i) - m.start(i) );  // move on to the next group
-                     System.out.println("next insertion = " + insertion);
+                     // move on to the next group
+                     insertion= insertion.substring( m.end(i) - m.start(i) );  
                  }
             }
         } else {
-         System.out.println("NO MATCH");
+            throw new RuntimeException("Regex pattern not correct for given data.");
         }
-        
-               
         return withInsertion;
     }
  
