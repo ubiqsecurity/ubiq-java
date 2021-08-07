@@ -15,29 +15,45 @@ public class FPEMask  {
     private String original;
     String regex;
     String redactedString;
+    String redactionSymbol;
 
     
-    public FPEMask(String original, String regex) {
+    /**
+     * Constructor allows caller to set redaction Symbol
+     *
+     * @param original the original String
+     * @param regex the regex pattern to use
+     * @param redactionSymbol the custom redaction Symbol
+     */ 
+    public FPEMask(String original, String regex, String redactionSymbol) {
+        this.redactionSymbol = redactionSymbol;
         this.original = original;
         this.regex = regex;
         this.redactedString = original;
-        
-        System.out.println("FPEMask regex: " + regex);
     }
     
+
+    /**
+     * Constructor assumes default redaction Symbol
+     *
+     * @param original the original String
+     * @param regex the regex pattern to use
+     */ 
+    public FPEMask(String original, String regex) {
+        this(original, regex, "*");
+    }
+
     
     /**
      * Inserts a String at a position in a String by
      * replacing the same number of characters as its length.
      *
-     * Convenience function returns String with inserted char 
-     * at an index position.
      *
      * @param originalString the original String
      * @param stringToBeInserted the String to insert
      * @param index the index position where to insert
      *
-     * @return    the new String 
+     * @return the new String 
      */ 
     public String insertString(String originalString, String stringToBeInserted, int index) {
         if (index < 0) {
@@ -57,7 +73,7 @@ public class FPEMask  {
         StringBuffer newRedactedString  = new StringBuffer(this.redactedString);
         newRedactedString.delete(index, index + stringToBeInserted.length());
         for (int i = 1; i <= stringToBeInserted.length(); i++) {
-            redactionGroup= redactionGroup + "X";
+            redactionGroup= redactionGroup + redactionSymbol;
         }
         newRedactedString.insert(index, redactionGroup);
         this.redactedString= newRedactedString.toString();
@@ -95,7 +111,7 @@ public class FPEMask  {
                  encryptable = encryptable +  m.group(i);
             }
         } else {
-            throw new RuntimeException("Regex pattern not correct for given data.");
+            throw new RuntimeException("Regex pattern " + this.regex + " not correct for given data.");
         }
         
         this.encryptable = encryptable;
@@ -125,7 +141,7 @@ public class FPEMask  {
         int groupindex;
         
         if (insertion.isEmpty() == true) {
-            throw new IllegalArgumentException("Invalid argument, insertion string cannot be empty.");
+            throw new IllegalArgumentException("Invalid argument, insertion string is empty.");
         }
 
         // Create a Pattern object
@@ -148,7 +164,7 @@ public class FPEMask  {
                  }
             }
         } else {
-            throw new RuntimeException("Regex pattern not correct for given data.");
+            throw new RuntimeException("Regex pattern " + this.regex + " not correct for given data.");
         }
         return withInsertion;
     }

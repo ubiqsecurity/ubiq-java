@@ -257,7 +257,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     // restore the CipherText using regex and passthrough filtering
                     FPEMask mask = new FPEMask(CipherText, FFScaching.getRegex());
                     String decryptableText = mask.getEncryptablePart();
-                    System.out.println("@@@         CipherText= " + CipherText + "   decryptableText= " + decryptableText);
                     CipherText= decryptableText;
                     
                     // set the tweek range and radix based on the FFS record

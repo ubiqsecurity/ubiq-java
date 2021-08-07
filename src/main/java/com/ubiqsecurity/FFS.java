@@ -221,31 +221,6 @@ class FFS_Record {
     
 
 
-    public String stripFormatCharacters(String fieldValue) {
-        String substitution;    
-    
-        switch(this.name) {
-            case "SSN":
-                substitution= "$1$2$3";
-            break;
-            case "PIN":
-                substitution= "*";
-            break;
-            default:
-                substitution= "*";
-        }
-
-        String strippedValue  = fieldValue.replaceAll(this.regex, substitution);
-        //System.out.println(strippedValue);
-        
-        return strippedValue;
-    }
-    
-    public String restoreFormatCharacters(String fieldValue) {
-        String restoredValue = "";
-        
-        return restoredValue;
-    }
     
 	
 	public String getAlgorithm() {

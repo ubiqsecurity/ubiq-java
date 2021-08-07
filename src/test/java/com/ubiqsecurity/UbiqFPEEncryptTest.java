@@ -86,7 +86,7 @@ public class UbiqFPEEncryptTest
                 System.out.println("\noriginal= " + original + "   decrypted= " + decrypted);
                 
                 
-                assertEquals(true, true);  // TODO - Determine appropriate test
+                assertEquals(original, decrypted);  
             }
     
         } catch (Exception ex) {
