@@ -21,6 +21,8 @@ public class FPEMask  {
         this.original = original;
         this.regex = regex;
         this.redactedString = original;
+        
+        System.out.println("FPEMask regex: " + regex);
     }
     
     

@@ -17,8 +17,8 @@ public class FFS  {
     private String name;   //e.g."SSN",
     private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",
     private String tweak_source;   //e.g. "generated",
-    private int min_input_length;   //e.g. 9 
-    private int max_input_length;   //e.g. 9
+    private long min_input_length;   //e.g. 9 
+    private long max_input_length;   //e.g. 9
     private boolean fpe_definable;
     public LoadingCache<String, FFS_Record> FFSCache;
     
@@ -64,7 +64,7 @@ public class FFS  {
         Gson gson = new Gson();        
         FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);        
          
- 
+
         if (ffsRecordResponse.EncryptionAlgorithm == null) {
             System.out.println("Missing encryption_algorithm in FFS definition. Setting to: " + "FF1");
             ffs.setAlgorithm("FF1");
@@ -144,9 +144,12 @@ public class FFS  {
         else 
             ffs.setAlgorithm("FF1");
        
-        
-
-            
+// TDOD - TESTING ONLY        
+// ffs.setRegex("(\\d{3})-(\\d{2})-\\d{4}");
+// ffs.setMin_input_length(2);  
+// System.out.println("ffsRecordResponse.MinInputLength: " + ffsRecordResponse.MinInputLength);
+// System.out.println("ffs.getMin_input_length: " + ffs.getMin_input_length());
+          
         return ffs;
     }
     
@@ -177,10 +180,10 @@ class FFSRecordResponse {
     String TweakSource;
 
     @SerializedName("min_input_length")
-    int MinInputLength = -1;
+    long MinInputLength = -1;
 
     @SerializedName("max_input_length")
-    int MaxInputLength = -1;
+    long MaxInputLength = -1;
 
     @SerializedName("fpe_definable")
     boolean FpeDefinable;
@@ -210,8 +213,8 @@ class FFS_Record {
     private String name;   //e.g."SSN",
     private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",   // "(\d{3})-(\d{2})-\d{4}",  last 4 in the clear
     private String tweak_source;   //e.g. "generated",
-    private int min_input_length;   //e.g. 9 
-    private int max_input_length;   //e.g. 9
+    private long min_input_length;   //e.g. 9 
+    private long max_input_length;   //e.g. 9
     private boolean fpe_definable;
     private String input_character_set;   //  "alphabet (inut/output radix)
     private String output_character_set;  // not for fpe (most likely)
@@ -287,17 +290,17 @@ class FFS_Record {
 		this.tweak_source = tweak_source;
 	}
 	
-	public int getMin_input_length() {
+	public long getMin_input_length() {
 		return min_input_length;
 	}
-	public void setMin_input_length(int min_input_length) {
+	public void setMin_input_length(long min_input_length) {
 		this.min_input_length = min_input_length;
 	}
 	
-	public int getMax_input_length() {
+	public long getMax_input_length() {
 		return max_input_length;
 	}
-	public void setMax_input_length(int max_input_length) {
+	public void setMax_input_length(long max_input_length) {
 		this.max_input_length = max_input_length;
 	}
 	
