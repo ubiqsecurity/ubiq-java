@@ -35,10 +35,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 // if key was used less times than requested, notify the server.
                 if (this.useCount < this.usesRequested) {
 // TODO - Does not work. Need to update this call since KeyFingerprint and EncryptionSession is not provided.
-                    System.out.println(String.format("UbiqFPEEncryptDecrypt.close: reporting key usage: %d of %d", this.useCount,
-                            this.usesRequested));
-                    this.ubiqWebServices.updateEncryptionKeyUsage(this.useCount, this.usesRequested,
-                            this.encryptionKey.KeyFingerprint, this.encryptionKey.EncryptionSession);
+//                     System.out.println(String.format("UbiqFPEEncryptDecrypt.close: reporting key usage: %d of %d", this.useCount,
+//                             this.usesRequested));
+//                     this.ubiqWebServices.updateEncryptionKeyUsage(this.useCount, this.usesRequested,
+//                             this.encryptionKey.KeyFingerprint, this.encryptionKey.EncryptionSession);
                 }
             }
             this.ubiqWebServices = null;
@@ -53,7 +53,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         
         // convert a numerical location code to a string based on its location in an Output_character_set
         String output = Bn.__bigint_get_str(ffs.getOutput_character_set(), r1);
-        System.out.println("convertToOutputRadix:    rawtext= " + rawtext  + "   output= " + output);
+        System.out.println("        convertToOutputRadix:    rawtext= " + rawtext  + "   output= " + output);
         
         return output;
     }
@@ -157,7 +157,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     // scrub the PlainText using regex and passthrough filtering
                     FPEMask mask = new FPEMask(PlainText, FFScaching.getRegex());
                     String encryptableText = mask.getEncryptablePart();
-                    System.out.println("@@@ encryptablePlaintext:    PlainText= " + PlainText + "   encryptableText= " + encryptableText);
+                    System.out.println("ENCRYPT encryptablePlaintext:    PlainText= " + PlainText + "   encryptableText= " + encryptableText);
             
                     // set the tweek range and radix based on the FFS record
                     final long twkmin= FFScaching.getMin_input_length();
@@ -171,6 +171,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                         case "FF1":
                             FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, inputradix); 
                             cipher = ctxFF1.encrypt(encryptableText);
+                            System.out.println("        encrypted cipher= " + cipher);
                             
                             // convert to output radix
                             convertedToRadix = convertToOutputRadix(FFScaching, cipher); 
@@ -178,6 +179,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                         case "FF3_1":
                             FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, inputradix); 
                             cipher = ctxFF3_1.encrypt(encryptableText);
+                            System.out.println("        encrypted cipher= " + cipher);
                             
                             //convert to output radix
                             convertedToRadix = convertToOutputRadix(FFScaching, cipher); 
@@ -187,10 +189,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     }
                     withInsertion = mask.insertEncryptedPart(convertedToRadix);
                     
-                    System.out.println("ENCRYPT cipher = " + cipher + "    convertedToRadix = " + convertedToRadix);
-                    System.out.println("ENCRYPT restored = " + restoreFromRadix(FFScaching, convertedToRadix));
-                    System.out.println("ENCRYPT withInsertion = " + withInsertion);
-                    System.out.println("      Redacted: " + mask.getRedacted());
+                    //System.out.println("ENCRYPT cipher = " + cipher + "    convertedToRadix = " + convertedToRadix);
+                    //System.out.println("ENCRYPT restored = " + restoreFromRadix(FFScaching, convertedToRadix));
+                    System.out.println("        FPEMask applies insertion = " + withInsertion);
+                    System.out.println("        FPEMask Redacted: " + mask.getRedacted());
                     
                 } catch (ExecutionException e) {
                     e.printStackTrace();
@@ -257,6 +259,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     // restore the CipherText using regex and passthrough filtering
                     FPEMask mask = new FPEMask(CipherText, FFScaching.getRegex());
                     String decryptableText = mask.getEncryptablePart();
+                    System.out.println("DECRYPT decryptableText:    CipherText= " + CipherText + "   decryptableText= " + decryptableText);
                     CipherText= decryptableText;
                     
                     // set the tweek range and radix based on the FFS record
@@ -267,6 +270,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
                     // restore the cipher from the radix 
                     restoredFromRadix = restoreFromRadix(FFScaching, CipherText); 
+                    System.out.println("        restoredFromRadix = " + restoredFromRadix);
 
                     // decrypt based on the specified cipher
                     String encryption_algorithm = FFScaching.getAlgorithm();
@@ -282,12 +286,12 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                         default:
                             throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
                     }
-                    System.out.println("DECRYPT PlainText = " + PlainText);
+                    System.out.println("        Decrypts to PlainText = " + PlainText);
             
                     //FPEMask mask = new FPEMask(PlainText, FFScaching.getRegex());
                     restoredPlainText = mask.insertEncryptedPart(PlainText);
-                    System.out.println("DECRYPT restoredPlainText = " + restoredPlainText);
-                    System.out.println("      Redacted: " + mask.getRedacted());
+                    System.out.println("        FPEMask applies insertion = " + restoredPlainText);
+                    System.out.println("        FPEMask Redacted: " + mask.getRedacted());
                      
 
                 } catch (ExecutionException e) {

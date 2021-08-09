@@ -119,15 +119,22 @@ public class UbiqFPEEncryptTest
     @Test
     public void testMask1() {
         
-        FPEMask mask = new FPEMask("123-45-6789", "(\\d{3})-(\\d{2})-(\\d{4})");
-        System.out.println("original: " + "123-45-6789");
-        String encryptable = mask.getEncryptablePart();
-        System.out.println("encryptable part: " + encryptable);
+        String original = "123-45-6789";
+        String regex = "(\\d{3})-(\\d{2})-(\\d{4})";
+        
+        FPEMask mask = new FPEMask(original, regex);
+        System.out.println("original: " + original + "  using regex: " + regex);
+        
         String cipher = "987654321";  // assume that this is the result of the fpe encrypt for the encryptable part
+        String encryptable = mask.getEncryptablePart();
+        System.out.println("FPEMask determined encryptable part: " + encryptable);
+        System.out.println("Lets assume this 'encrypts' to cipher: " + cipher);
+                
         String withInsertion = mask.insertEncryptedPart(cipher);
-        System.out.println("After Insertion: " + withInsertion);
+        System.out.println("FPEMask applies insertion of cipher: " + withInsertion);
+        
         String redacted = mask.getRedacted();
-        System.out.println("Redacted: " + redacted);
+        System.out.println("FPEMask returns redacted: " + redacted);
         
         assertEquals(true, true);  // TODO - Determine appropriate test
     }
@@ -136,23 +143,27 @@ public class UbiqFPEEncryptTest
 
     @Test
     public void testMask2() {
+
+        String original = "123-45-6789";
+        String regex = "(\\d{3})-(\\d{2})-\\d{4}";
         
-        FPEMask mask = new FPEMask("123-45-6789", "(\\d{3})-(\\d{2})-\\d{4}");
-        System.out.println("original: " + "123-45-6789");
+        FPEMask mask = new FPEMask(original, regex);
+        System.out.println("original: " + original + "  using regex: " + regex);
+      
         String encryptable = mask.getEncryptablePart();
-        System.out.println("encryptable part: " + encryptable);
-        String cipher = "000000000";  // assume that this is the result of the fpe encrypt for the encryptable part
+        String cipher = "00000";  // assume that this is the result of the fpe encrypt for the encryptable part
+        System.out.println("FPEMask determined encryptable part: " + encryptable);
+        System.out.println("Lets assume this 'encrypts' to cipher: " + cipher);
+                
         String withInsertion = mask.insertEncryptedPart(cipher);
-        System.out.println("After Insertion: " + withInsertion);
+        System.out.println("FPEMask applies insertion of cipher: " + withInsertion);
+        
         String redacted = mask.getRedacted();
-        System.out.println("Redacted: " + redacted);
+        System.out.println("FPEMask returns redacted: " + redacted);
         
             
         assertEquals(true, true);  // TODO - Determine appropriate test
     }
-
-
-
 
 
 
