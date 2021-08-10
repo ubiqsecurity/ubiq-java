@@ -20,11 +20,26 @@ import ubiqsecurity.fpe.Bn;
 
 import java.math.BigInteger;
 
-
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 
 public class UbiqSampleFPE {
+
+
+
+    public static String printbytes(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[ ");
+        for (byte b : bytes) {
+            sb.append(String.format("0x%02X ", b));
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+ 
     public static void main(String[] args) throws Exception {
 
         try {
@@ -36,6 +51,12 @@ public class UbiqSampleFPE {
             
 
             if (options.help) {
+                System.out.println("\n************* Commandline Example *************");
+                System.out.println("Encrypt:");
+                System.out.println("java -cp \"./build/libs/ubiq-sample.jar:./build/deps/lib/*\"  UbiqSampleFPE  -e \"123-45-6789\" -c credentials -n SSN -t tweekfile.txt");
+                System.out.println("Decrypt:");
+                System.out.println("java -cp \"./build/libs/ubiq-sample.jar:./build/deps/lib/*\"  UbiqSampleFPE  -d \"393-70-9755\" -c credentials -n SSN -t tweekfile.txt");
+                System.out.println("\n*************** Command Usage *****************\n");
                 jCommander.usage();
                 System.exit(0);
             }
@@ -45,19 +66,24 @@ public class UbiqSampleFPE {
                 System.exit(0);
             }
 
-            if (options.simple == options.piecewise) {
-                throw new IllegalArgumentException("simple or piecewise API option need to be specified but not both");
+
+            if ((options.encrypttext == null) && (options.decrypttext == null)) {
+                throw new IllegalArgumentException("Encryption or Decrytion must be specified.");
+            }
+            if (options.encrypttext == options.decrypttext) {
+                throw new IllegalArgumentException("Encryption or Decrytion have to be specified but not both.");
             }
 
-            if (options.encrypt == options.decrypt) {
-                throw new IllegalArgumentException("Encryption or Decrytion have to be specified but not both");
+
+            if (options.ffsname== null) {
+                throw new IllegalArgumentException("ffsname must be specified.");
             }
 
-            File inputFile = new File(options.inputFile);
-            if (!inputFile.exists()) {
-                throw new IllegalArgumentException(String.format("Input file does not exist: %s", options.inputFile));
-            }
 
+            File tweekFile = new File(options.tweekFile);
+            if (!tweekFile.exists()) {
+                throw new IllegalArgumentException(String.format("Input file for tweek bytes does not exist: %s", options.tweekFile));
+            }
 
 
             UbiqCredentials ubiqCredentials;
@@ -68,36 +94,6 @@ public class UbiqSampleFPE {
                 // read credentials from caller-specified section of specified config file
                 ubiqCredentials = UbiqFactory.readCredentialsFromFile(options.credentials, options.profile);
             }
-
-            // check input file size - we already know it exists
-            {
-                long maxSimpleSize = 50 * 0x100000; // 50MB
-                if (Boolean.TRUE.equals(options.simple) && (inputFile.length() > maxSimpleSize)) {
-                    System.out.println("NOTE: This is only for demonstration purposes and is designed to work on memory");
-                    System.out.println("      constrained devices.  Therefore, this sample application will switch to");
-                    System.out.println(String.format("      the piecewise APIs for files larger than %d bytes in order to reduce", maxSimpleSize));
-                    System.out.println("      excessive resource usages on resource constrained IoT devices");
-                    options.simple = false;
-                    options.piecewise = true;
-                }
-            }
-/*
-            if (Boolean.TRUE.equals(options.simple)) {
-                if (Boolean.TRUE.equals(options.encrypt)) {
-                    simpleEncryption(options.inputFile, options.outputFile, ubiqCredentials);
-                } else {
-                    simpleDecryption(options.inputFile, options.outputFile, ubiqCredentials);
-                }
-            } else {
-                if (Boolean.TRUE.equals(options.encrypt)) {
-                    piecewiseEncryption(options.inputFile, options.outputFile, ubiqCredentials);
-                } else {
-                    piecewiseDecryption(options.inputFile, options.outputFile, ubiqCredentials);
-                }
-            }
-*/
-
-
 
   
                     
@@ -116,32 +112,47 @@ public class UbiqSampleFPE {
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
             
+                String FfsName = options.ffsname;
                 
-                //String plainText = "0123456789";
-                String plainText = "123-45-6789";
-                System.out.println("\n@@@@@@@@@    simpleEncryptionFF1 SSN: " + plainText);
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SSN", plainText, tweekFF1, "LDAP"); 
-                System.out.println("ENCRYPTED    cipher= " + cipher);
+                
+                
+                byte[] plainBytes = Files.readAllBytes(Paths.get(options.tweekFile));
 
-                System.out.println("\n@@@@@@@@@    simpleDecryptionFF1 SSN");
-                String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SSN", cipher, tweekFF1, "LDAP");
-                System.out.println("DECRYPTED    plaintext= " + plaintext);
-
-
+                
+                System.out.println("tweekFF1 bytes = " + printbytes(tweekFF1));
+                System.out.println("plainBytes bytes = " + printbytes(plainBytes));
+                 
+                                
+                if (options.encrypttext!= null) {
+                    String plainText = options.encrypttext;
+                
+                    System.out.println("\n#####    Encrypting: " + plainText + " for field name: " + FfsName);
+                    String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, plainBytes, "LDAP"); 
+                    System.out.println("ENCRYPTED    cipher= " + cipher);
+                
+                } else if (options.decrypttext!= null) {
+                    String cipher = options.decrypttext;
+                    
+                    System.out.println("\n#####    Decrypting: " + cipher + " for field name: " + FfsName);
+                    String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, plainBytes, "LDAP");
+                    System.out.println("DECRYPTED    plaintext= " + plaintext);
+                }
+                
+ 
 
                 ////// TEST 2 - ENCRYPT AND DECRYPT
-                final byte[] tweekFF3_1 = {
-                     (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
-                     (byte)0x00, (byte)0x00, (byte)0x00,
-                };
-                plainText = "335-22-0188";
-                System.out.println("\n@@@@@@@@@    simpleEncryptionFF3_1 PIN: " + plainText);
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "PIN", plainText, tweekFF3_1, "LDAP"); 
-                System.out.println("ENCRYPTED    cipher= " + cipher);
-
-                System.out.println("\n@@@@@@@@@    simpleDecryptionFF3_1 PIN");
-                plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "PIN", cipher, tweekFF3_1, "LDAP");
-                System.out.println("DECRYPTED    plaintext= " + plaintext);
+//                 final byte[] tweekFF3_1 = {
+//                      (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
+//                      (byte)0x00, (byte)0x00, (byte)0x00,
+//                 };
+//                 String plainText = "335-22-0188";
+//                 System.out.println("\n@@@@@@@@@    simpleEncryptionFF3_1 PIN: " + plainText);
+//                 String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "PIN", plainText, tweekFF3_1, "LDAP"); 
+//                 System.out.println("ENCRYPTED    cipher= " + cipher);
+// 
+//                 System.out.println("\n@@@@@@@@@    simpleDecryptionFF3_1 PIN");
+//                 String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "PIN", cipher, tweekFF3_1, "LDAP");
+//                 System.out.println("DECRYPTED    plaintext= " + plaintext);
 
 
 
@@ -156,13 +167,7 @@ public class UbiqSampleFPE {
         }
     }
     
-    
-    
-
-    
-
-    
-    
+  
 
  
     
@@ -170,42 +175,32 @@ public class UbiqSampleFPE {
 
 class ExampleArgsFPE {
     @Parameter(
-        names = { "--encrypt", "-e" },
-        description = "Encrypt the contents of the input file and write the results to output file",
+        names = { "--encrypttext", "-e" },
+        description = "Set the field text value to encrypt and will return the encrypted cipher text.",
+        arity = 1,
         required = false)
-    Boolean encrypt = null;
+    String encrypttext;
 
     @Parameter(
-        names = { "--decrypt", "-d" },
-        description = "Decrypt the contents of the input file and write the results to output file",
+        names = { "--decrypttext", "-d" },
+        description = "Set the cipher text value to decrypt and will return the decrypted text.",
+        arity = 1,
         required = false)
-    Boolean decrypt = null;
+    String decrypttext;
 
     @Parameter(
-        names = { "--simple", "-s" },
-        description = "Use the simple encryption / decryption interfaces",
-        required = false)
-    Boolean simple = null;
-
-    @Parameter(
-        names = { "--piecewise", "-p" },
-        description = "Use the piecewise encryption / decryption interfaces",
-        required = false)
-    Boolean piecewise = null;
-
-    @Parameter(
-        names = { "--in", "-i" },
-        description = "Set input file name",
+        names = { "--ffsname", "-n" },
+        description = "Set the ffs name, for example SSN.",
         arity = 1,
         required = true)
-    String inputFile;
+    String ffsname;
 
     @Parameter(
-        names = { "--out", "-o" },
-        description = "Set output file name",
+        names = { "--tweek", "-t" },
+        description = "Set input file name containing tweek bytes",
         arity = 1,
         required = true)
-    String outputFile;
+    String tweekFile;
 
     @Parameter(
         names = { "--help", "-h" },
