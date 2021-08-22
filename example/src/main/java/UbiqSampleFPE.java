@@ -97,11 +97,11 @@ public class UbiqSampleFPE {
 
   
                     
-            ubiqCredentials = UbiqFactory.createCredentials(
-                    "aox5ZRptLg8B758xllfEFsNG",
-                    "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
-                    "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
-                    "http://localhost:8443");
+//             ubiqCredentials = UbiqFactory.createCredentials(
+//                     "aox5ZRptLg8B758xllfEFsNG",
+//                     "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
+//                     "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
+//                     "http://localhost:8443");
                     
                     
             final byte[] tweekFF1 = {

@@ -44,6 +44,17 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             this.ubiqWebServices = null;
         }
     }
+    
+    
+    
+    
+    
+    public int ubiq_platform_fpe_string_parse() {
+        return 0;
+    }
+    
+    
+    
 
 
     // convert to output radix

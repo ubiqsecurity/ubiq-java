@@ -30,14 +30,20 @@ public class UbiqFPEEncryptTest
             // TODO - setup a set of standard credentials, for now hardcode some here
             UbiqCredentials ubiqCredentials;
                                 
-            ubiqCredentials = UbiqFactory.createCredentials(
-                    "aox5ZRptLg8B758xllfEFsNG",
-                    "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
-                    "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
-                    "http://localhost:8443");
+//             ubiqCredentials = UbiqFactory.createCredentials(
+//                     "aox5ZRptLg8B758xllfEFsNG",
+//                     "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
+//                     "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
+//                     "http://localhost:8443");
 
-
-
+//             ubiqCredentials = UbiqFactory.createCredentials(
+//                     "sxGesRB8KMwqhiy6k7xC2WL/",
+//                     "OpaJ+YXu1IoRw7be/B21kWIB6taN5L9KhRVFTur3C9UE",
+//                     "cIFQf1MsRn2T9YHLWZFt/z0Yb1zQj0mQdvA74gw8SQHe",
+//                     "https://koala.ubiqsecurity.com");
+                    
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("/Users/anthonyiasi/ubiq-java/credentials", "default");
+ 
 
             ////// TEST 1 - ENCRYPT AND DECRYPT
             final byte[] tweekFF1 = {

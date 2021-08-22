@@ -53,6 +53,13 @@ import java.util.Base64;
 import java.io.IOException;
 import java.io.StringReader;
 
+
+import java.io.UnsupportedEncodingException;  
+import java.net.URLDecoder;  
+import java.net.URLEncoder;  
+
+
+
 class UbiqWebServices {
     private final String applicationJson = "application/json";
     private final String restApiRoot = "api/v0";
@@ -77,19 +84,80 @@ class UbiqWebServices {
         Package pkg = UbiqWebServices.class.getPackage();
         version = pkg.getImplementationVersion();
     }
+    
+    
+    public static String encode(String url)  
+      {  
+            try {  
+                 String encodeURL=URLEncoder.encode( url, StandardCharsets.UTF_8.toString() );  
+                 return encodeURL;  
+            } catch (UnsupportedEncodingException e) {  
+                 return "Issue while encoding" +e.getMessage();  
+            }  
+      }  
 
 
 
     FFSRecordResponse getFFSDefinition(String ffs_name, String ldap) {
         String urlString = String.format("%s/%s/ffs/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId());
-        String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}", ffs_name, ldap);
+        //ORIG String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"ldap\":\"%s\"}", ffs_name, ldap);
+        //FFS url=> 'https://koala.ubiqsecurity.com/api/v0/ffs?ffs_name=FFS%20Name&papi=sxGesRB8KMwqhiy6k7xC2WL%2F'
+        
+        ffs_name= "FFS Name";
+        //String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"papi\":\"%s\"}", ffs_name, this.ubiqCredentials.getAccessKeyId());
+        
+        //String jsonRequest = String.format("{\"key_number\": \"%s\"}", 0);
+        //String jsonRequest = String.format("{\"ffs_name\":\"%s\", \"ldap\":\"%s\", \"key_number\": \"%s\"}", ffs_name, "ldap", "0");
+        String jsonRequest="";
+        
+        //urlString = String.format("%s/%s/ffs", this.baseUrl, this.restApiRoot);
+        
+        //String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name).replace("+", "%20"), this.ubiqCredentials.getAccessKeyId());
+        //String params = String.format("ffs_name=%s&papi=%s&key_number=%s&ldap=%s", encode(ffs_name).replace("+", "%20"), this.ubiqCredentials.getAccessKeyId(), "0", "ldap");
+        
+        String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()));
+        urlString = String.format("%s/%s/ffs?%s", this.baseUrl, this.restApiRoot, params);
+        System.out.println("urlString= " + urlString);
+        
+        
+        //urlString = String.format("%s/%s/ffs?ffs_name=%s&papi=%s", this.baseUrl, this.restApiRoot, ffs_name, this.ubiqCredentials.getAccessKeyId());
+        //System.out.println("urlString before encode= " + urlString);
+        //urlString= encode(urlString);
+        //System.out.println("urlString after encode=  " + urlString);
+        System.out.println("jsonRequest= " + jsonRequest);
+
+        // FFS url=> 'https://koala.ubiqsecurity.com/api/v0/ffs?ffs_name=FFS%20Name&papi=sxGesRB8KMwqhiy6k7xC2WL%2F'
+
+
+
+
+//         FFS => '{"ffs_name":"FFS Name",
+//                 "tweak_source":"generated",
+//                 "min_input_length":9,
+//                 "max_input_length":15,
+//                 "regex":"(\\d{3})-(\\d{2})-(\\d{4})",
+//                 "current_key":2,
+//                 "input_character_set":"0123456789AbCdEfGhIjKlMn",
+//                 "output_character_set":"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+//                 "passthrough_character_set":"!@#{$%^-_:;",
+//                 "max_key_rotations":17}'
+        
+        
+        
+        
+        
 
         try {
             HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, jsonRequest,
                 this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
+            System.out.println("signedHttpRequest= " + signedHttpRequest);
+            
+            
             // submit HTTP request + expect HTTP response w/ status 'Created' (201)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
+            
+            System.out.println("jsonResponse= " + jsonResponse);
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -284,7 +352,7 @@ class UbiqWebServices {
         builder.method(httpMethod, bodyPublisher);
 
         Map<String, String> headerFields = new HashMap<String, String>();
-
+System.out.println("String.valueOf(bodyPublisher.contentLength()= " + String.valueOf(bodyPublisher.contentLength()));
         headerFields.put("Content-Length", String.valueOf(bodyPublisher.contentLength()));
         headerFields.put("Content-Type", this.applicationJson);
         headerFields.put("Accept", this.applicationJson);
@@ -307,11 +375,19 @@ class UbiqWebServices {
         headerFields.remove("Content-Length");
         headerFields.remove("Host");
 
+
+System.out.println("\n#######headerFields#######");
+headerFields.entrySet().forEach( entry -> {
+    System.out.println( entry.getKey() + " => " + entry.getValue() );
+});
+System.out.println("\n");
+
         for (String fieldName : headerFields.keySet()) {
             builder.header(fieldName, headerFields.get(fieldName));
         }
+System.out.println("signature= " + signature);
 
-        HttpRequest httpRequest = builder.build();
+        HttpRequest httpRequest = builder.build();      
         return httpRequest;
     }
 
@@ -377,6 +453,10 @@ class UbiqWebServices {
     private static String submitHttpRequest(HttpRequest httpRequest, int successCode)
             throws IOException, InterruptedException {
         HttpClient httpClient = HttpClient.newBuilder().build();
+        
+        System.out.println("httpRequest= " + httpRequest);
+        System.out.println("BodyHandlers.ofString()= " + BodyHandlers.ofString());
+        
         HttpResponse<String> httpResponse = httpClient.send(httpRequest, BodyHandlers.ofString());
 
         String responseString = httpResponse.body();
