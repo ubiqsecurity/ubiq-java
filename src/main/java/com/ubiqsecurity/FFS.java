@@ -49,20 +49,7 @@ public class FFS  {
         FFSRecordResponse ffsRecordResponse;
         ffsRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name);
         
-        
-        System.out.println("   FfsName= " + ffsRecordResponse.FfsName);
-        System.out.println("   TweakSource= " + ffsRecordResponse.TweakSource);
-        System.out.println("   MinInputLength= " + ffsRecordResponse.MinInputLength);
-        System.out.println("   MaxInputLength= " + ffsRecordResponse.MaxInputLength);
-        System.out.println("   Regex= " + ffsRecordResponse.Regex);
-        
-        System.out.println("   InputCharacterSet= " + ffsRecordResponse.InputCharacterSet);
-        System.out.println("   OutputCharacterSet= " + ffsRecordResponse.OutputCharacterSet);
-        System.out.println("   CurrentKey= " + ffsRecordResponse.CurrentKey);
-        System.out.println("   PassthroughCharacterSet= " + ffsRecordResponse.PassthroughCharacterSet);
-        System.out.println("   MaxKeyRotations= " + ffsRecordResponse.MaxKeyRotations);
-        
-        
+         
         
         // STUB - populate FFS_Record with default values if missing from backend FFS definition
         //    Some of these would be mandatory and should report an exception

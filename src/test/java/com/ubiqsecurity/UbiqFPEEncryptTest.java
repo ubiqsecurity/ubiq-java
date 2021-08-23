@@ -42,7 +42,7 @@ public class UbiqFPEEncryptTest
 //                     "cIFQf1MsRn2T9YHLWZFt/z0Yb1zQj0mQdvA74gw8SQHe",
 //                     "https://koala.ubiqsecurity.com");
                     
-            ubiqCredentials = UbiqFactory.readCredentialsFromFile("/Users/anthonyiasi/ubiq-java/credentials", "default");
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
  
 
             ////// TEST 1 - ENCRYPT AND DECRYPT
@@ -69,42 +69,7 @@ public class UbiqFPEEncryptTest
                 assertEquals(original, decrypted);  
             
             
-            
-            
-//                 System.out.println("\nSSN First run");
-//                 String original = "123-45-6789";
-//                 String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "FFS Name", original, tweekFF1, "LDAP"); 
-//                 String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "FFS Name", cipher, tweekFF1, "LDAP");
-//             
-//         
-//                 System.out.println("\nSSN Second run");
-//                 cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "FFS Name", original, tweekFF1, "LDAP"); 
-//                 decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "FFS Name", cipher, tweekFF1, "LDAP");
-//                 
-//                 System.out.println("\nSSN Third run");
-//                 cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SSN", original, tweekFF1, "LDAP"); 
-//                 decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SSN", cipher, tweekFF1, "LDAP");
-//             
-// 
-//                 System.out.println("\nPIN New first run");
-//                 cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "PIN", original, tweekFF3_1, "LDAP"); 
-//                 decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "PIN", cipher, tweekFF3_1, "LDAP");
-// 
-//                 System.out.println("\nPIN New Second run");
-//                 cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "PIN", original, tweekFF3_1, "LDAP"); 
-//                 decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "PIN", cipher, tweekFF3_1, "LDAP");
-// 
-//                 System.out.println("\nSSN Back to original run");
-//                 cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SSN", original, tweekFF1, "LDAP"); 
-//                 decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SSN", cipher, tweekFF1, "LDAP");
-//             
-// 
-//                 System.out.println("\noriginal= " + original + "   decrypted= " + decrypted);
-//                 
-//                 
-//                 assertEquals(original, decrypted);  
-                
-                //assertEquals(true, true);    // for now, update later
+
             }
     
         } catch (Exception ex) {
