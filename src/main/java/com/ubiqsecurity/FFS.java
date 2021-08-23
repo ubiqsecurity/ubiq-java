@@ -24,7 +24,7 @@ public class FFS  {
     
     
     
-    public FFS(UbiqWebServices ubiqWebServices, String ffs_name, String ldap) {
+    public FFS(UbiqWebServices ubiqWebServices, String ffs_name) {
         
         //create a cache for FFS based on the <encryption_algorithm>-<name>
         FFSCache = 
@@ -35,19 +35,19 @@ public class FFS  {
                 @Override
                 public FFS_Record load(String cachingKey) throws Exception {
                    //make the expensive call
-                   return getFFSFromCloudAPI(ubiqWebServices, cachingKey, ffs_name, ldap);   // <AccessKeyId>-<FFS Name> 
+                   return getFFSFromCloudAPI(ubiqWebServices, cachingKey, ffs_name);   // <AccessKeyId>-<FFS Name> 
                 } 
          });
     }
     
     
     // called when FFS is not in cache and need to make remote call
-    private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String cachingKey, String ffs_name, String ldap) {
+    private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String cachingKey, String ffs_name) {
 
         System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
         
         FFSRecordResponse ffsRecordResponse;
-        ffsRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name, ldap);
+        ffsRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name);
         
         
         System.out.println("   FfsName= " + ffsRecordResponse.FfsName);
@@ -55,6 +55,12 @@ public class FFS  {
         System.out.println("   MinInputLength= " + ffsRecordResponse.MinInputLength);
         System.out.println("   MaxInputLength= " + ffsRecordResponse.MaxInputLength);
         System.out.println("   Regex= " + ffsRecordResponse.Regex);
+        
+        System.out.println("   InputCharacterSet= " + ffsRecordResponse.InputCharacterSet);
+        System.out.println("   OutputCharacterSet= " + ffsRecordResponse.OutputCharacterSet);
+        System.out.println("   CurrentKey= " + ffsRecordResponse.CurrentKey);
+        System.out.println("   PassthroughCharacterSet= " + ffsRecordResponse.PassthroughCharacterSet);
+        System.out.println("   MaxKeyRotations= " + ffsRecordResponse.MaxKeyRotations);
         
         
         
@@ -136,6 +142,31 @@ public class FFS  {
         }
 
 
+
+
+        if (ffsRecordResponse.CurrentKey == -1) {
+            System.out.println("Missing CurrentKey in FFS definition. Setting to: " + "0");
+            ffs.setCurrent_key(0);
+        } else {
+            ffs.setCurrent_key(ffsRecordResponse.CurrentKey);
+        }
+
+        if (ffsRecordResponse.PassthroughCharacterSet == null) {
+            System.out.println("Missing PassthroughCharacterSet in FFS definition. Setting to: " + "!@#{$%^-_:;");
+            ffs.setPassthrough_character_set("!@#{$%^-_:;");
+        } else {
+            ffs.setPassthrough_character_set(ffsRecordResponse.PassthroughCharacterSet);
+        }
+
+        if (ffsRecordResponse.MaxKeyRotations == -1) {
+            System.out.println("Missing MaxKeyRotations in FFS definition. Setting to: " + "1");
+            ffs.setMax_key_rotations(1);
+        } else {
+            ffs.setMax_key_rotations(ffsRecordResponse.MaxKeyRotations);
+        }
+
+
+
         // STUB - switch to a different cipher
         if (cachingKey.equals("aox5ZRptLg8B758xllfEFsNG-SSN"))    // <AccessKeyId>-<FFS Name> 
             ffs.setAlgorithm("FF1");
@@ -175,6 +206,9 @@ class FFSRecordResponse {
 
     @SerializedName("regex")
     String Regex;
+    
+    @SerializedName("current_key")
+    long CurrentKey = -1;
 
     @SerializedName("tweak_source")
     String TweakSource;
@@ -200,7 +234,11 @@ class FFSRecordResponse {
     @SerializedName("key_fingerprint")
     String KeyFingerprint;
 
+    @SerializedName("passthrough_character_set")
+    String PassthroughCharacterSet;
 
+    @SerializedName("max_key_rotations")
+    long MaxKeyRotations = -1;
 
 }
 
@@ -212,13 +250,15 @@ class FFS_Record {
     private String customer;
     private String name;   //e.g."SSN",
     private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",   // "(\d{3})-(\d{2})-\d{4}",  last 4 in the clear
+    private long current_key;
     private String tweak_source;   //e.g. "generated",
     private long min_input_length;   //e.g. 9 
     private long max_input_length;   //e.g. 9
     private boolean fpe_definable;
     private String input_character_set;   //  "alphabet (inut/output radix)
     private String output_character_set;  // not for fpe (most likely)
-    
+    private String passthrough_character_set;  
+    private long max_key_rotations;
 
 
     
@@ -258,6 +298,13 @@ class FFS_Record {
 		this.regex = regex;
 	}
 	
+	public long getCurrent_key() {
+		return current_key;
+	}
+	public void setCurrent_key(long current_key) {
+		this.current_key = current_key;
+	}
+
 	public String getTweak_source() {
 		return tweak_source;
 	}
@@ -300,6 +347,19 @@ class FFS_Record {
 		this.output_character_set = output_character_set;
 	}
 
+	public String getPassthrough_character_set() {
+		return passthrough_character_set;
+	}
+	public void setPassthrough_character_set(String passthrough_character_set) {
+		this.passthrough_character_set = passthrough_character_set;
+	}
+
+	public long getMax_key_rotations() {
+		return max_key_rotations;
+	}
+	public void setMax_key_rotations(long max_key_rotations) {
+		this.max_key_rotations = max_key_rotations;
+	}
 
 	
 	
