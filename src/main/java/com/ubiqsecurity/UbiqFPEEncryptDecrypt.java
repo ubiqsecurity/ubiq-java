@@ -12,6 +12,7 @@ import org.bouncycastle.crypto.InvalidCipherTextException;
 
 
 public class UbiqFPEEncryptDecrypt implements AutoCloseable {
+    private boolean verbose= true;
     private int usesRequested;
     private UbiqWebServices ubiqWebServices; // null when closed
     private int useCount;
@@ -133,7 +134,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweek) 
         throws IllegalStateException, InvalidCipherTextException {
             
-            System.out.println("\n@@@@@@@@@@ STARTING ENCRYPT @@@@@@@@@@ for:  " + PlainText);
+            //if (verbose) System.out.println("\n@@@@@@@@@@ STARTING ENCRYPT @@@@@@@@@@");
+            if (verbose) System.out.println("\nEncrypting PlainText: " + PlainText);
             
             String convertedToRadix = "";
             String cipher = "";
@@ -161,7 +163,9 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     }
 
                     if (this.encryptionKey == null) {
-                        this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(ffs_name, this.usesRequested);
+                        int key_number = 0;
+                        
+                        this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(ffs_name, this.usesRequested, key_number);
                     }
 
                     
@@ -181,7 +185,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
 
                     convertedToRadix = str_convert_radix(FFScaching, this.trimmed, FFScaching.getInput_character_set(), base10_charset);
-
+                    if (verbose) System.out.println("    converted to base10= " + convertedToRadix);
                     
 
                     // set the tweek range and radix based on the FFS record
@@ -195,19 +199,16 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     String encryption_algorithm = FFScaching.getAlgorithm();
                     switch(encryption_algorithm) {
                         case "FF1":
-                            System.out.println("     \ndoing ff1_encrypt"); 
+                            //System.out.println("     \ndoing ff1_encrypt"); 
                             FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, inputradix); 
                             cipher = ctxFF1.encrypt(convertedToRadix);
-                            
-                            System.out.println("     encrypted cipher= " + cipher);   
-                            
+                            if (verbose) System.out.println("    cipher= " + cipher);   
                         break;
                         case "FF3_1":
-                            System.out.println("     doing FF3_1_encrypt"); 
+                            //System.out.println("     doing FF3_1_encrypt"); 
                             FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, inputradix); 
                             cipher = ctxFF3_1.encrypt(convertedToRadix);
-                            
-                            System.out.println("     encrypted cipher= " + cipher);   
+                            if (verbose) System.out.println("     cipher= " + cipher);   
                             
                         break;
                         default:
@@ -217,14 +218,12 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     
                     convertedToRadix = str_convert_radix(FFScaching, cipher, base10_charset, FFScaching.getOutput_character_set());
+                    if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
                     convertedToRadix= merge_to_formatted_output(FFScaching, convertedToRadix);
-                    System.out.println("convertedToRadix= " + convertedToRadix + "    this.formatted_dest= " + this.formatted_dest);
+                    if (verbose) System.out.println("    merged to format= " + convertedToRadix);
+                    if (verbose) System.out.println("    encrypted= " + this.formatted_dest);
                     
                     
-                    
-    
-                    
-
                      // scrub the PlainText using regex and passthrough filtering
 //                     FPEMask mask = new FPEMask(PlainText, FFScaching.getRegex());
 //                     String encryptableText = mask.getEncryptablePart();
@@ -253,8 +252,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             
             
             
-            System.out.println("\n@@@@@@@@@@ STARTING DECRYPT @@@@@@@@@@");
-            
+            //System.out.println("\n@@@@@@@@@@ STARTING DECRYPT @@@@@@@@@@");
+            if (verbose) System.out.println("\nDecrypting CipherText: " + CipherText);
             
         
             try (UbiqFPEEncryptDecrypt ubiqDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
@@ -275,20 +274,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     } else if (this.aesGcmBlockCipher != null) {
                         throw new IllegalStateException("decryption in progress");
                     }
-                    
-                    
-                    
-                    // If needed, use the header info to fetch the decryption key.
-//                     if (ubiqDecrypt.decryptionKey == null) {
-//                         // JIT: request encryption key from server
-//                         ubiqDecrypt.decryptionKey = ubiqDecrypt.ubiqWebServices.getDecryptionKey(ubiqDecrypt.cipherHeader.encryptedDataKeyBytes);
-//                     }
-//                     if (ubiqDecrypt.decryptionKey != null) {
-//                         ubiqDecrypt.reset();
-//                         ubiqDecrypt.decryptionKey = ubiqDecrypt.ubiqWebServices.getDecryptionKey(ubiqDecrypt.cipherHeader.encryptedDataKeyBytes);
-//                         ubiqDecrypt.decryptionKey.KeyUseCount++;
-//                     }
-                    
+                                        
                     
                     if (this.decryptionKey == null) {
                         int key_number = 0;
@@ -304,7 +290,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
                     
                     restoredFromRadix = str_convert_radix(FFScaching, this.trimmed, FFScaching.getOutput_character_set(), base10_charset);
-                    System.out.println("        restoredFromRadix= " + restoredFromRadix);
+                    if (verbose) System.out.println("    converted to base10= " + restoredFromRadix);
                     
                     
                     final long twkmin= FFScaching.getMin_input_length();
@@ -317,31 +303,26 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     String encryption_algorithm = FFScaching.getAlgorithm();
                     switch(encryption_algorithm) {
                         case "FF1":
-                            System.out.println("     \ndoing ff1_decrypt"); 
-                            
+                            //System.out.println("     \ndoing ff1_decrypt"); 
                             FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, inputradix); 
                             PlainText = ctxFF1.decrypt(restoredFromRadix);
-                            
-                            System.out.println("     decrypted PlainText= " + PlainText);   
-                            
+                            if (verbose) System.out.println("    PlainText= " + PlainText);   
                         break;
                         case "FF3_1":
-                            System.out.println("     \ndoing FF3_1_decrypt"); 
-                            
+                            //System.out.println("     \ndoing FF3_1_decrypt"); 
                             FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, inputradix); 
                             PlainText = ctxFF3_1.decrypt(restoredFromRadix);
-                            
-                            System.out.println("     decrypted PlainText= " + PlainText);   
+                            if (verbose) System.out.println("    PlainText= " + PlainText);   
                         break;
                         default:
                             throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
                     }                    
                     
                     restoredFromRadix = str_convert_radix(FFScaching, PlainText, base10_charset, FFScaching.getInput_character_set());
+                    if (verbose) System.out.println("    converted to input char set= " + restoredFromRadix);
                     restoredFromRadix= merge_to_formatted_output(FFScaching, restoredFromRadix);
-                    System.out.println("restoredFromRadix= " + restoredFromRadix + "    this.formatted_dest= " + this.formatted_dest);
-                    
-                    
+                    if (verbose) System.out.println("    merged to format= " + restoredFromRadix);
+                    if (verbose) System.out.println("    decrypted= " + this.formatted_dest);
                     
 
                     

@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
 
 public class FFS  {
+    private boolean verbose= false;
     private String encryption_algorithm;   //e.g. FF1 or FF3_1
     private String user;
     private String customer;
@@ -21,6 +22,8 @@ public class FFS  {
     private long max_input_length;   //e.g. 9
     private boolean fpe_definable;
     public LoadingCache<String, FFS_Record> FFSCache;
+    
+    
     
     
     
@@ -44,7 +47,7 @@ public class FFS  {
     // called when FFS is not in cache and need to make remote call
     private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String cachingKey, String ffs_name) {
 
-        System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
+        if (verbose) System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
         
         FFSRecordResponse ffsRecordResponse;
         ffsRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name);
@@ -59,70 +62,70 @@ public class FFS  {
          
 
         if (ffsRecordResponse.EncryptionAlgorithm == null) {
-            System.out.println("Missing encryption_algorithm in FFS definition. Setting to: " + "FF1");
+            if (verbose) System.out.println("Missing encryption_algorithm in FFS definition. Setting to: " + "FF1");
             ffs.setAlgorithm("FF1");
         } else {
             ffs.setAlgorithm(ffsRecordResponse.EncryptionAlgorithm);
         }
         
         if (ffsRecordResponse.User == null) {
-            System.out.println("Missing User in FFS definition. Setting to: " + "0000");
+            if (verbose) System.out.println("Missing User in FFS definition. Setting to: " + "0000");
             ffs.setUser("0000");
         } else {
             ffs.setUser(ffsRecordResponse.User);
         }
 
         if (ffsRecordResponse.Customer == null) {
-            System.out.println("Missing Customer in FFS definition. Setting to: " + "1111");
+            if (verbose) System.out.println("Missing Customer in FFS definition. Setting to: " + "1111");
             ffs.setCustomer("1111");
         } else {
             ffs.setCustomer(ffsRecordResponse.Customer);
         }
  
         if (ffsRecordResponse.FfsName == null) {
-            System.out.println("Missing FfsName in FFS definition. Setting to: " + "SSN");
+            if (verbose) System.out.println("Missing FfsName in FFS definition. Setting to: " + "SSN");
             ffs.setName("SSN");
         } else {
             ffs.setName(ffsRecordResponse.FfsName);
         }
 
         if (ffsRecordResponse.Regex == null) {
-            System.out.println("Missing Regex in FFS definition. Setting to: " + "(\\\\d{3})-(\\\\d{2})-(\\\\d{4})");
+            if (verbose) System.out.println("Missing Regex in FFS definition. Setting to: " + "(\\\\d{3})-(\\\\d{2})-(\\\\d{4})");
             ffs.setRegex("(\\\\d{3})-(\\\\d{2})-(\\\\d{4})");
         } else {
             ffs.setRegex(ffsRecordResponse.Regex);
         }
 
         if (ffsRecordResponse.TweakSource == null) {
-            System.out.println("Missing TweakSource in FFS definition. Setting to: " + "generated");
+            if (verbose) System.out.println("Missing TweakSource in FFS definition. Setting to: " + "generated");
             ffs.setTweak_source("generated");
         } else {
             ffs.setTweak_source(ffsRecordResponse.TweakSource);
         }
 
         if (ffsRecordResponse.MinInputLength == -1) {
-            System.out.println("Missing MinInputLength in FFS definition. Setting to: " + "9");
+            if (verbose) System.out.println("Missing MinInputLength in FFS definition. Setting to: " + "9");
             ffs.setMin_input_length(9);
         } else {
             ffs.setMin_input_length(ffsRecordResponse.MinInputLength);
         }
 
         if (ffsRecordResponse.MaxInputLength == -1) {
-            System.out.println("Missing MaxInputLength in FFS definition. Setting to: " + "9");
+            if (verbose) System.out.println("Missing MaxInputLength in FFS definition. Setting to: " + "9");
             ffs.setMax_input_length(9);
         } else {
             ffs.setMax_input_length(ffsRecordResponse.MaxInputLength);
         }
 
         if (ffsRecordResponse.InputCharacterSet == null) {
-            System.out.println("Missing InputCharacterSet in FFS definition. Setting to: " + "0123456789");
+            if (verbose) System.out.println("Missing InputCharacterSet in FFS definition. Setting to: " + "0123456789");
             ffs.setInput_character_set("0123456789");
         } else {
             ffs.setInput_character_set(ffsRecordResponse.InputCharacterSet);
         }
 
         if (ffsRecordResponse.OutputCharacterSet == null) {
-            System.out.println("Missing OutputCharacterSet in FFS definition. Setting to: " + "9876543210");
+            if (verbose) System.out.println("Missing OutputCharacterSet in FFS definition. Setting to: " + "9876543210");
             ffs.setOutput_character_set("9876543210");
         } else {
             ffs.setOutput_character_set(ffsRecordResponse.OutputCharacterSet);
@@ -132,21 +135,21 @@ public class FFS  {
 
 
         if (ffsRecordResponse.CurrentKey == -1) {
-            System.out.println("Missing CurrentKey in FFS definition. Setting to: " + "0");
+            if (verbose) System.out.println("Missing CurrentKey in FFS definition. Setting to: " + "0");
             ffs.setCurrent_key(0);
         } else {
             ffs.setCurrent_key(ffsRecordResponse.CurrentKey);
         }
 
         if (ffsRecordResponse.PassthroughCharacterSet == null) {
-            System.out.println("Missing PassthroughCharacterSet in FFS definition. Setting to: " + "!@#{$%^-_:;");
+            if (verbose) System.out.println("Missing PassthroughCharacterSet in FFS definition. Setting to: " + "!@#{$%^-_:;");
             ffs.setPassthrough_character_set("!@#{$%^-_:;");
         } else {
             ffs.setPassthrough_character_set(ffsRecordResponse.PassthroughCharacterSet);
         }
 
         if (ffsRecordResponse.MaxKeyRotations == -1) {
-            System.out.println("Missing MaxKeyRotations in FFS definition. Setting to: " + "1");
+            if (verbose) System.out.println("Missing MaxKeyRotations in FFS definition. Setting to: " + "1");
             ffs.setMax_key_rotations(1);
         } else {
             ffs.setMax_key_rotations(ffsRecordResponse.MaxKeyRotations);

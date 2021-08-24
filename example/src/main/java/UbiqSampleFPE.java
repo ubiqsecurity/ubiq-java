@@ -41,6 +41,7 @@ public class UbiqSampleFPE {
 
  
     public static void main(String[] args) throws Exception {
+        File tweekFile= null;
 
         try {
             ExampleArgsFPE options = new ExampleArgsFPE();
@@ -57,9 +58,9 @@ public class UbiqSampleFPE {
             if (options.help) {
                 System.out.println("\n************* Commandline Example *************");
                 System.out.println("Encrypt:");
-                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -e '01$23-456-78-90' -c credentials -n 'FFS Name' -t tweekfile.txt");
+                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -e '01$23-456-78-90' -c credentials -n 'FFS Name' -t abcdefghijk");
                 System.out.println("Decrypt:");
-                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -d '00$01-LrI-6d-EA' -c credentials -n 'FFS Name' -t tweekfile.txt");
+                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -d '00$01-LrI-6d-EA' -c credentials -n 'FFS Name' -t abcdefghijk");
                 System.out.println("IMPORTANT, USE ONLY SINGLE QUOTES FOR COMMAND LINE OPTIONS");
                 System.out.println("\n*************** Command Usage *****************\n");
                 jCommander.usage();
@@ -84,12 +85,12 @@ public class UbiqSampleFPE {
                 throw new IllegalArgumentException("ffsname must be specified.");
             }
 
-
-            File tweekFile = new File(options.tweekFile);
-            if (!tweekFile.exists()) {
-                throw new IllegalArgumentException(String.format("Input file for tweek bytes does not exist: %s", options.tweekFile));
+            if (options.tweekFile!= null) {
+                tweekFile = new File(options.tweekFile);
+                if (!tweekFile.exists()) {
+                    throw new IllegalArgumentException(String.format("Input file for tweek bytes does not exist: %s", options.tweekFile));
+                }
             }
-
 
             UbiqCredentials ubiqCredentials;
             if (options.credentials == null) {
@@ -100,53 +101,39 @@ public class UbiqSampleFPE {
                 ubiqCredentials = UbiqFactory.readCredentialsFromFile(options.credentials, options.profile);
             }
 
-  
-                    
-//             ubiqCredentials = UbiqFactory.createCredentials(
-//                     "aox5ZRptLg8B758xllfEFsNG",
-//                     "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
-//                     "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
-//                     "http://localhost:8443");
-                    
-                    
-            final byte[] tweekFF1 = {
+                     
+            byte[] tweekFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30,
             };
             
+            if (options.tweekString!= null) {
+                tweekFF1 = options.tweekString.getBytes();
+                System.out.println("    commandline tweek bytes = " + printbytes(tweekFF1));
+            } else if (options.tweekFile!= null) {
+                tweekFF1 = Files.readAllBytes(Paths.get(options.tweekFile));
+                System.out.println("    file tweek bytes = " + printbytes(tweekFF1));
+            } else {
+                System.out.println("    default tweek bytes = " + printbytes(tweekFF1));
+            }
+            
+            
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
             
                 String FfsName = options.ffsname;
-                
-                
-                
-                byte[] plainBytes = Files.readAllBytes(Paths.get(options.tweekFile));
-
-                
-                System.out.println("tweekFF1 bytes = " + printbytes(tweekFF1));
-                System.out.println("plainBytes bytes = " + printbytes(plainBytes));
-                 
                                 
                 if (options.encrypttext!= null) {
                     String plainText = options.encrypttext;
                     
-                
-                    System.out.println("\n#####    Encrypting: " + plainText + " for field name: " + FfsName);
-                    System.out.println("        plainText= " + plainText);
-                    String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, plainBytes); 
-                    //String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, tweekFF1); 
-                    System.out.println("ENCRYPTED    cipher= " + cipher);
+                    String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, tweekFF1); 
+                    System.out.println("ENCRYPTED cipher= " + cipher + "\n");
                 
                 } else if (options.decrypttext!= null) {
                     String cipher = options.decrypttext;
                     
-                                        
-                    System.out.println("\n#####    Decrypting: " + cipher + " for field name: " + FfsName);
-                    System.out.println("        cipher= " + cipher);
-                    String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, plainBytes);
-                    //String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, tweekFF1);
-                    System.out.println("DECRYPTED    plaintext= " + plaintext);
+                    String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, tweekFF1);
+                    System.out.println("DECRYPTED plaintext= " + plaintext + "\n");
                 }
                 
  
@@ -208,11 +195,18 @@ class ExampleArgsFPE {
     String ffsname;
 
     @Parameter(
-        names = { "--tweek", "-t" },
+        names = { "--tweekfile", "-tf" },
         description = "Set input file name containing tweek bytes",
         arity = 1,
-        required = true)
+        required = false)
     String tweekFile;
+
+    @Parameter(
+        names = { "--tweek", "-t" },
+        description = "Set alpha string to be used as tweek bytes",
+        arity = 1,
+        required = false)
+    String tweekString;
 
     @Parameter(
         names = { "--help", "-h" },

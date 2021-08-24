@@ -26,23 +26,7 @@ public class UbiqFPEEncryptTest
     public void encryptFPE() {
     
         try {
-        
-            // TODO - setup a set of standard credentials, for now hardcode some here
-            UbiqCredentials ubiqCredentials;
-                                
-//             ubiqCredentials = UbiqFactory.createCredentials(
-//                     "aox5ZRptLg8B758xllfEFsNG",
-//                     "fhxmkk4lB/l6bnuKUxT2gYpdMoiSk+1AwUUIyD/ghQPu",
-//                     "YvNtl2+G3v5d3OeIz5ORuut8wZgsUChcTHBy3Uew9NiR",
-//                     "http://localhost:8443");
-
-//             ubiqCredentials = UbiqFactory.createCredentials(
-//                     "sxGesRB8KMwqhiy6k7xC2WL/",
-//                     "OpaJ+YXu1IoRw7be/B21kWIB6taN5L9KhRVFTur3C9UE",
-//                     "cIFQf1MsRn2T9YHLWZFt/z0Yb1zQj0mQdvA74gw8SQHe",
-//                     "https://koala.ubiqsecurity.com");
-                    
-            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
  
 
             ////// TEST 1 - ENCRYPT AND DECRYPT
@@ -58,18 +42,12 @@ public class UbiqFPEEncryptTest
             
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
-            
-            
-                System.out.println("\nSSN First run");
+                //System.out.println("\nSSN First run");
                 String original = "01$23-456-78-90";
                 String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "FFS Name", original, tweekFF1); 
                 String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "FFS Name", cipher, tweekFF1);
             
-            
                 assertEquals(original, decrypted);  
-            
-            
-
             }
     
         } catch (Exception ex) {
@@ -83,19 +61,7 @@ public class UbiqFPEEncryptTest
     }
 
 
-
-
-
-
-
-
-//  getEncryptablePart("123-45-6789", "(\\d{3})-(\\d{2})-\\d{4}");   ---> 12345  XXX-XX-6789
-//  encrypt(12345) --> 88888
-//  insertEncryptedPart(String original, String regex, String insertion)   ---> 888-88-6789
-//  getDisplayable(String encrypted, String regex)     888-88-6789 ---> XXX-XX-6789
-
-
-
+ 
 
 
 
