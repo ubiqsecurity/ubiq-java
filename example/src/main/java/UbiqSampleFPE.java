@@ -49,13 +49,18 @@ public class UbiqSampleFPE {
             jCommander.parse(args);
             
             
+            // Sample calls: IMPORTANT, DO NOT USE DOUBLE QUOTES
+            // $ java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -e '01$23-456-78-90' -c credentials -n 'FFS Name' -t tweekfile.txt
+            // $ java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -d '00$01-LrI-6d-EA' -c credentials -n 'FFS Name' -t tweekfile.txt
+
 
             if (options.help) {
                 System.out.println("\n************* Commandline Example *************");
                 System.out.println("Encrypt:");
-                System.out.println("java -cp \"./build/libs/ubiq-sample.jar:./build/deps/lib/*\"  UbiqSampleFPE  -e \"123-45-6789\" -c credentials -n SSN -t tweekfile.txt");
+                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -e '01$23-456-78-90' -c credentials -n 'FFS Name' -t tweekfile.txt");
                 System.out.println("Decrypt:");
-                System.out.println("java -cp \"./build/libs/ubiq-sample.jar:./build/deps/lib/*\"  UbiqSampleFPE  -d \"393-70-9755\" -c credentials -n SSN -t tweekfile.txt");
+                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -d '00$01-LrI-6d-EA' -c credentials -n 'FFS Name' -t tweekfile.txt");
+                System.out.println("IMPORTANT, USE ONLY SINGLE QUOTES FOR COMMAND LINE OPTIONS");
                 System.out.println("\n*************** Command Usage *****************\n");
                 jCommander.usage();
                 System.exit(0);
@@ -110,7 +115,7 @@ public class UbiqSampleFPE {
                 (byte)0x31, (byte)0x30,
             };
             
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 1)) {
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
             
                 String FfsName = options.ffsname;
                 
@@ -125,19 +130,26 @@ public class UbiqSampleFPE {
                                 
                 if (options.encrypttext!= null) {
                     String plainText = options.encrypttext;
+                    
                 
                     System.out.println("\n#####    Encrypting: " + plainText + " for field name: " + FfsName);
-                    String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, plainBytes, "LDAP"); 
+                    System.out.println("        plainText= " + plainText);
+                    String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, plainBytes); 
+                    //String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, tweekFF1); 
                     System.out.println("ENCRYPTED    cipher= " + cipher);
                 
                 } else if (options.decrypttext!= null) {
                     String cipher = options.decrypttext;
                     
+                                        
                     System.out.println("\n#####    Decrypting: " + cipher + " for field name: " + FfsName);
-                    String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, plainBytes, "LDAP");
+                    System.out.println("        cipher= " + cipher);
+                    String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, plainBytes);
+                    //String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, tweekFF1);
                     System.out.println("DECRYPTED    plaintext= " + plaintext);
                 }
                 
+ 
  
 
                 ////// TEST 2 - ENCRYPT AND DECRYPT
