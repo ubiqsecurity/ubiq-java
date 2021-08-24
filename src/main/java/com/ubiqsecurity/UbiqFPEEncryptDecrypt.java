@@ -91,9 +91,12 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     
     
     // merge to formatted output
-    public String merge_to_formatted_output(FFS_Record ffs, String convertedToRadix) {
+    public void merge_to_formatted_output(FFS_Record ffs, String convertedToRadix) {
         int d = this.formatted_dest.length() - 1;
         int s = convertedToRadix.length() - 1;
+        
+        //if (verbose) System.out.println("@@@@ this.formatted_dest= " + this.formatted_dest); 
+        //if (verbose) System.out.println("    convertedToRadix= " + convertedToRadix); 
         
         // Merge PT to formatted output
         while (s >= 0 && d >= 0) {
@@ -109,7 +112,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             s = s - 1;
             d = d - 1;
         }
-        return convertedToRadix;
+        
+        //if (verbose) System.out.println("    AFTER this.formatted_dest= " + this.formatted_dest); 
+        //if (verbose) System.out.println("    AFTER convertedToRadix= " + convertedToRadix); 
+        return;
     }
     
  
@@ -219,9 +225,9 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     convertedToRadix = str_convert_radix(FFScaching, cipher, base10_charset, FFScaching.getOutput_character_set());
                     if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
-                    convertedToRadix= merge_to_formatted_output(FFScaching, convertedToRadix);
-                    if (verbose) System.out.println("    merged to format= " + convertedToRadix);
-                    if (verbose) System.out.println("    encrypted= " + this.formatted_dest);
+                    if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
+                    merge_to_formatted_output(FFScaching, convertedToRadix);
+                    if (verbose) System.out.println("    encrypted and formatted= " + this.formatted_dest);
                     
                     
                      // scrub the PlainText using regex and passthrough filtering
@@ -320,9 +326,9 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     restoredFromRadix = str_convert_radix(FFScaching, PlainText, base10_charset, FFScaching.getInput_character_set());
                     if (verbose) System.out.println("    converted to input char set= " + restoredFromRadix);
-                    restoredFromRadix= merge_to_formatted_output(FFScaching, restoredFromRadix);
-                    if (verbose) System.out.println("    merged to format= " + restoredFromRadix);
-                    if (verbose) System.out.println("    decrypted= " + this.formatted_dest);
+                    if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
+                    merge_to_formatted_output(FFScaching, restoredFromRadix);
+                    if (verbose) System.out.println("    decrypted and formatted= " + this.formatted_dest);
                     
 
                     
