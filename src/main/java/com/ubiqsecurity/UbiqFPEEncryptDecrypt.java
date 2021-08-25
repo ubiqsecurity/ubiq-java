@@ -169,8 +169,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     }
 
                     if (this.encryptionKey == null) {
-                        int key_number = 0;
-                        
+                        int key_number = FFScaching.getCurrent_key();
+                        // key_number = 0; 
+                        key_number = 5;    // DONT NEED TO PASS IN KEY NUMBER IN getFPEEncryptionKey, ONLY IN getFPEDecryptionKey()
+                        System.out.println("    key_number: " + key_number);
                         this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(ffs_name, this.usesRequested, key_number);
                     }
 
@@ -283,8 +285,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                                         
                     
                     if (this.decryptionKey == null) {
-                        int key_number = 0;
-                        
+                        int key_number = FFScaching.getCurrent_key();
+                        //key_number = 0;
+                        key_number = 5;    // THIS KEY NUMBER WILL BE COMING FROM THE KEY ENCODED BYTE, HARDCODE FOR NOW
+                        System.out.println("    key_number: " + key_number);
                         this.decryptionKey = this.ubiqWebServices.getFPEDecryptionKey(ffs_name, key_number);
                     }
 

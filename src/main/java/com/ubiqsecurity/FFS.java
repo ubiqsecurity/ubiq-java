@@ -198,7 +198,7 @@ class FFSRecordResponse {
     String Regex;
     
     @SerializedName("current_key")
-    long CurrentKey = -1;
+    int CurrentKey = -1;
 
     @SerializedName("tweak_source")
     String TweakSource;
@@ -240,7 +240,7 @@ class FFS_Record {
     private String customer;
     private String name;   //e.g."SSN",
     private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",   // "(\d{3})-(\d{2})-\d{4}",  last 4 in the clear
-    private long current_key;
+    private int current_key;
     private String tweak_source;   //e.g. "generated",
     private long min_input_length;   //e.g. 9 
     private long max_input_length;   //e.g. 9
@@ -288,10 +288,10 @@ class FFS_Record {
 		this.regex = regex;
 	}
 	
-	public long getCurrent_key() {
+	public int getCurrent_key() {
 		return current_key;
 	}
-	public void setCurrent_key(long current_key) {
+	public void setCurrent_key(int current_key) {
 		this.current_key = current_key;
 	}
 
