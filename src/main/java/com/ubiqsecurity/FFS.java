@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
 
 public class FFS  {
-    private boolean verbose= false;
+    private boolean verbose= true;
     private String encryption_algorithm;   //e.g. FF1 or FF3_1
     private String user;
     private String customer;
@@ -155,6 +155,14 @@ public class FFS  {
             ffs.setMax_key_rotations(ffsRecordResponse.MaxKeyRotations);
         }
 
+        if (ffsRecordResponse.MsbEncodingBits == -1) {
+            if (verbose) System.out.println("Missing MsbEncodingBits in FFS definition. Setting to: " + "1");
+            ffs.setMsb_encoding_bits(1);
+        } else {
+            ffs.setMsb_encoding_bits(ffsRecordResponse.MsbEncodingBits);
+        }
+
+
 
 
         // STUB - switch to a different cipher
@@ -191,7 +199,7 @@ class FFSRecordResponse {
     @SerializedName("customer")
     String Customer;
 
-    @SerializedName("ffs_name")
+    @SerializedName("name")
     String FfsName;
 
     @SerializedName("regex")
@@ -224,11 +232,14 @@ class FFSRecordResponse {
     @SerializedName("key_fingerprint")
     String KeyFingerprint;
 
-    @SerializedName("passthrough_character_set")
+    @SerializedName("passthrough")
     String PassthroughCharacterSet;
 
     @SerializedName("max_key_rotations")
     long MaxKeyRotations = -1;
+    
+    @SerializedName("msb_encoding_bits")
+    long MsbEncodingBits = -1;
 
 }
 
@@ -249,6 +260,7 @@ class FFS_Record {
     private String output_character_set;  // not for fpe (most likely)
     private String passthrough_character_set;  
     private long max_key_rotations;
+    private long msb_encoding_bits;
 
 
     
@@ -351,6 +363,12 @@ class FFS_Record {
 		this.max_key_rotations = max_key_rotations;
 	}
 
+	public long getMsb_encoding_bits() {
+		return msb_encoding_bits;
+	}
+	public void setMsb_encoding_bits(long msb_encoding_bits) {
+		this.msb_encoding_bits = msb_encoding_bits;
+	}
 	
 	
 } 

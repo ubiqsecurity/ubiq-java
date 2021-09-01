@@ -110,6 +110,9 @@ class UbiqWebServices {
         String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()));
         String urlString = String.format("%s/%s/ffs?%s", this.baseUrl, this.restApiRoot, params);
 
+if (verbose) System.out.println("\n    urlString: " + urlString + "\n");
+if (verbose) System.out.println("\n    params: " + params + "\n");
+
         try {
             HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, params, jsonRequest,
                 this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
@@ -430,8 +433,8 @@ System.out.println("getFPEDecryptionKey  params: " + params);
             throws IOException, InterruptedException {
         HttpClient httpClient = HttpClient.newBuilder().build();
         
-//         System.out.println("httpRequest= " + httpRequest);
-//         System.out.println("BodyHandlers.ofString()= " + BodyHandlers.ofString());
+System.out.println("httpRequest= " + httpRequest);
+//System.out.println("BodyHandlers.ofString()= " + BodyHandlers.ofString());
         
         HttpResponse<String> httpResponse = httpClient.send(httpRequest, BodyHandlers.ofString());
 

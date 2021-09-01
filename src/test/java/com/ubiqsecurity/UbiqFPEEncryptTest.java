@@ -34,8 +34,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
                 String original = "123-45-6789";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "FFS Name", original, tweekFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "FFS Name", cipher, tweekFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweekFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweekFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -61,9 +61,9 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
                 //System.out.println("\nSSN First run");
-                String original = "01$23-456-78-90";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "FFS Name", original, tweekFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "FFS Name", cipher, tweekFF1);
+                String original = " 01&23-456-78-90";
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweekFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweekFF1);
             
                 assertEquals(original, decrypted);  
             }
