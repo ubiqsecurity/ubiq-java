@@ -36,4 +36,7 @@ class EncryptionKeyResponse {
     // not serialized - used only at runtime
     @Expose(serialize = false, deserialize = false)
     byte[] EncryptedDataKeyBytes;
+    
+    @SerializedName("key_number")
+    int KeyNumber;
 }

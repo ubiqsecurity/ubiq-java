@@ -41,9 +41,9 @@ public class UbiqFPEEncryptTest
             }
     
         } catch (Exception ex) {
-            System.out.println(String.format("Exception: %s", ex.getMessage()));
-            ex.printStackTrace();
-            System.exit(1);
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+            //ex.printStackTrace();
         }    
     }
 
@@ -69,11 +69,130 @@ public class UbiqFPEEncryptTest
             }
     
         } catch (Exception ex) {
-            System.out.println(String.format("Exception: %s", ex.getMessage()));
-            ex.printStackTrace();
-            System.exit(1);
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+            //ex.printStackTrace();
         }    
     }
+
+
+
+
+
+
+    @Test
+    public void encryptFPE_BIRTH_DATE_1() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+
+            final byte[] tweekFF1 = {
+                (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+                (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30,
+            };
+            
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
+                String original = "2006-05-01";
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "BIRTH_DATE", original, tweekFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "BIRTH_DATE", cipher, tweekFF1);
+            
+                assertEquals(original, decrypted);  
+            }
+    
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+            //ex.printStackTrace();
+        }    
+    }
+
+
+    @Test
+    public void encryptFPE_GENERIC_STRING() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+
+            final byte[] tweekFF1 = {
+                (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+                (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30, (byte)0x32,
+            };
+            
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
+                String original = "A STRING OF AT LEAST 15 UPPER CHARACTERS";
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "GENERIC_STRING", original, tweekFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "GENERIC_STRING", cipher, tweekFF1);
+            
+                assertEquals(original, decrypted);  
+            }
+    
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+            //ex.printStackTrace();
+        }    
+    }
+
+
+    @Test
+    public void encryptFPE_SO_ALPHANUM_PIN_1() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+
+            final byte[] tweekFF1 = {
+                (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+                (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30, (byte)0x32,
+            };
+            
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
+                String original = "1234";
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweekFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweekFF1);
+            
+                assertEquals(original, decrypted);  
+            }
+    
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+            //ex.printStackTrace();
+        }    
+    }
+
+
+    @Test
+    public void encryptFPE_SO_ALPHANUM_PIN_2() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+
+            final byte[] tweekFF1 = {
+                (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+                (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30, (byte)0x32,
+            };
+            
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
+                String original = "ABCD";
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweekFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweekFF1);
+            
+                assertEquals(original, decrypted);  
+            }
+    
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+            //ex.printStackTrace();
+        }    
+    }
+
+
+
+
 
 
 

@@ -138,11 +138,12 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
     
 
 
-    EncryptionKeyResponse getFPEEncryptionKey(String ffs_name, int uses, int key_number) {
+    EncryptionKeyResponse getFPEEncryptionKey(FFS_Record ffs, String ffs_name) {
         String jsonRequest="";
                                 // TODO: NEED TO REMOVE THE key_number=%d parameter here.
                                 // But continue to pass it in with getFPEDecryptionKey(). We will get the value from the key-encoded byte in the cipher string.
-        String params = String.format("ffs_name=%s&papi=%s&key_number=%d", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()), key_number);
+        //String params = String.format("ffs_name=%s&papi=%s&key_number=%d", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()), key_number);
+        String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()));
         String urlString = String.format("%s/%s/fpe/key?%s", this.baseUrl, this.restApiRoot, params);
         //System.out.println("getFPEEncryptionKey params: " + params);
         
@@ -165,6 +166,8 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
                         encryptionKeyResponse.EncryptedPrivateKey,
                         encryptionKeyResponse.WrappedDataKey,
                         this.ubiqCredentials.getSecretCryptoAccessKey());
+                        
+            ffs.setCurrent_key(encryptionKeyResponse.KeyNumber); 
 
             return encryptionKeyResponse;
         } catch (Exception ex) {

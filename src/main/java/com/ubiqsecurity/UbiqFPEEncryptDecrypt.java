@@ -106,6 +106,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       
     public String encode_keynum(FFS_Record ffs, String str, int position) {
         String buf= "";
+        if (position < 0) position = 0;
+        
         char charBuf = str.charAt(position);
       
         int ct_value = ffs.getOutput_character_set().indexOf(charBuf);
@@ -133,6 +135,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
     public int decode_keynum(FFS_Record ffs, String str, int position) {
         int key_num = 0;
+        if (position < 0) position = 0;
         
         char charBuf = str.charAt(position);
         int encoded_value = ffs.getOutput_character_set().indexOf(charBuf);
@@ -196,7 +199,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     
     
     // merge to formatted output for encrypt
-    public void merge_to_formatted_output(FFS_Record ffs, String convertedToRadix) {
+    public void merge_to_formatted_output(FFS_Record ffs, String convertedToRadix, String characterSet) {
         int d = this.formatted_dest.length() - 1;
         int s = convertedToRadix.length() - 1;
         
@@ -206,35 +209,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         // Merge PT to formatted output
         while (s >= 0 && d >= 0) {
             // Find the first available destination character
-            while (d >=0 && this.formatted_dest.charAt(d) != ffs.getOutput_character_set().charAt(0)) {
-                d--;
-            }
-
-            // Copy the encrypted text into the formatted output string
-            if (d >= 0) {
-                this.formatted_dest = Parsing.replaceChar(this.formatted_dest, convertedToRadix.charAt(s), d);
-            }        
-            s = s - 1;
-            d = d - 1;
-        }
-        
-        //if (verbose) System.out.println("    AFTER this.formatted_dest= " + this.formatted_dest); 
-        //if (verbose) System.out.println("    AFTER convertedToRadix= " + convertedToRadix); 
-        return;
-    }
- 
-    // merge to formatted output for decrypt
-    public void merge_to_formatted_input(FFS_Record ffs, String convertedToRadix) {
-        int d = this.formatted_dest.length() - 1;
-        int s = convertedToRadix.length() - 1;
-        
-        //if (verbose) System.out.println("@@@@ this.formatted_dest= " + this.formatted_dest); 
-        //if (verbose) System.out.println("    convertedToRadix= " + convertedToRadix); 
-        
-        // Merge PT to formatted output
-        while (s >= 0 && d >= 0) {
-            // Find the first available destination character
-            while (d >=0 && this.formatted_dest.charAt(d) != ffs.getInput_character_set().charAt(0)) {
+            while (d >=0 && this.formatted_dest.charAt(d) != characterSet.charAt(0)) {
                 d--;
             }
 
@@ -252,7 +227,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
  
  
-
      
  
 
@@ -305,14 +279,14 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     }
 
                     if (this.encryptionKey == null) {
-                        int key_number = FFScaching.getCurrent_key();
+                        //int key_number = FFScaching.getCurrent_key();
                         // key_number = 0; 
-                        key_number = 25;    // DONT NEED TO PASS IN KEY NUMBER IN getFPEEncryptionKey, ONLY IN getFPEDecryptionKey()
-                        FFScaching.setCurrent_key(key_number);  // temporary
+                        //key_number = 25;    // DONT NEED TO PASS IN KEY NUMBER IN getFPEEncryptionKey, ONLY IN getFPEDecryptionKey()
+                        //FFScaching.setCurrent_key(key_number);  // temporary
                         
                         
-                        System.out.println("    key_number: " + key_number);
-                        this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(ffs_name, this.usesRequested, key_number);
+                        //System.out.println("    key_number: " + key_number);
+                        this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(FFScaching, ffs_name);
                     }
 
                     
@@ -367,7 +341,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     convertedToRadix = str_convert_radix(FFScaching, cipher, base10_charset, FFScaching.getOutput_character_set());
                     if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
                     if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
-                    merge_to_formatted_output(FFScaching, convertedToRadix);
+                    merge_to_formatted_output(FFScaching, convertedToRadix, FFScaching.getOutput_character_set());
                     if (verbose) System.out.println("    encrypted and formatted= " + this.formatted_dest);
                     
                     
@@ -464,14 +438,14 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     if (this.decryptionKey == null) {
                     
                         int key_number = decode_keynum(FFScaching, this.trimmed, 0);
-                        if (verbose) System.out.println("    key_number= " + key_number);
+                        if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
                     
                         //int key_number = FFScaching.getCurrent_key();
                         //key_number = 0;
-                        key_number = 25;    // THIS KEY NUMBER WILL BE COMING FROM THE KEY ENCODED BYTE, HARDCODE FOR NOW
-                        FFScaching.setCurrent_key(key_number);  // temporary
+                        //key_number = 25;    // THIS KEY NUMBER WILL BE COMING FROM THE KEY ENCODED BYTE, HARDCODE FOR NOW
+                        //FFScaching.setCurrent_key(key_number);  // temporary
                         
-                        System.out.println("    key_number: " + key_number);
+                        //System.out.println("    key_number: " + key_number);
                         this.decryptionKey = this.ubiqWebServices.getFPEDecryptionKey(ffs_name, key_number);
                     }
 
@@ -515,7 +489,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     restoredFromRadix = str_convert_radix(FFScaching, PlainText, base10_charset, FFScaching.getInput_character_set());
                     if (verbose) System.out.println("    converted to input char set= " + restoredFromRadix);
                     if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
-                    merge_to_formatted_input(FFScaching, restoredFromRadix);
+                    merge_to_formatted_output(FFScaching, restoredFromRadix, FFScaching.getInput_character_set());
                     if (verbose) System.out.println("    decrypted and formatted= " + this.formatted_dest);
                     
 
