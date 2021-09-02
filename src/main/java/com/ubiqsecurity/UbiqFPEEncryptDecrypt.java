@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import ubiqsecurity.fpe.Bn;
 import java.util.concurrent.ExecutionException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
+import java.lang.Math;
 
 
 
@@ -25,7 +26,9 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private String formatted_dest;
     private String trimmed;
     
-    private String base10_charset = "0123456789";
+    //private String base10_charset = "0123456789";
+    private String base2_charset = "01";
+    private int FF1_base2_min_length = 20; // NIST requirement ceil(log2(1000000))
     
     
  
@@ -242,11 +245,29 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
     
 
-
  
- 
-        
+    
+    public String pad_text(String inputString, double length) {
+        if (inputString.length() >= length) {
+            return inputString;
+        }
+        StringBuilder sb = new StringBuilder();
+        while (sb.length() < length - inputString.length()) {
+            sb.append('0');
+        }
+        sb.append(inputString);
 
+        return sb.toString();
+    }
+
+
+    public int log2(int x) {
+        return (int)(Math.log(x) / Math.log(2));
+    }
+       
+       
+       
+ 
     public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweek) 
         throws IllegalStateException, InvalidCipherTextException {
             
@@ -279,13 +300,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     }
 
                     if (this.encryptionKey == null) {
-                        //int key_number = FFScaching.getCurrent_key();
-                        // key_number = 0; 
-                        //key_number = 25;    // DONT NEED TO PASS IN KEY NUMBER IN getFPEEncryptionKey, ONLY IN getFPEDecryptionKey()
-                        //FFScaching.setCurrent_key(key_number);  // temporary
-                        
-                        
-                        //System.out.println("    key_number: " + key_number);
                         this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(FFScaching, ffs_name);
                     }
 
@@ -305,15 +319,24 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
 
 
-                    convertedToRadix = str_convert_radix(FFScaching, this.trimmed, FFScaching.getInput_character_set(), base10_charset);
-                    if (verbose) System.out.println("    converted to base10= " + convertedToRadix);
+                    convertedToRadix = str_convert_radix(FFScaching, this.trimmed, FFScaching.getInput_character_set(), base2_charset);
+                    if (verbose) System.out.println("    converted to base2= " + convertedToRadix);
+                    
+                    // Figure out how long to pad the binary string.  Formula is input_radix^len = 2^Y which is log2(input_radix) * len
+                    // Due to FF1 constraints, the there is a minimum length for a base2 string, so make sure to be at least that long too
+                    // or fpe will fail
+                    double padlen = Math.ceil( Math.max(FF1_base2_min_length, log2(  FFScaching.getInput_character_set().length()  ) * this.trimmed.length()    ) );
+                    if (verbose) System.out.println("    padlen= " + padlen);   
+                    
+                    convertedToRadix = pad_text(convertedToRadix, padlen);
+                    if (verbose) System.out.println("    convertedToRadix= " + convertedToRadix);  
                     
 
                     // set the tweek range and radix based on the FFS record
                     final long twkmin= FFScaching.getMin_input_length();
                     final long twkmax= FFScaching.getMax_input_length();
                     //final int inputradix = FFScaching.getInput_character_set().length();
-                    final int inputradix = base10_charset.length();
+                    final int inputradix = base2_charset.length();
                     final int onputradix = FFScaching.getOutput_character_set().length();
 
             
@@ -322,6 +345,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                         case "FF1":
                             //System.out.println("     \ndoing ff1_encrypt"); 
                             FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, inputradix); 
+                            if (verbose) System.out.println("    twkmin= " + twkmin + "    twkmax= " + twkmax);   
                             cipher = ctxFF1.encrypt(convertedToRadix);
                             if (verbose) System.out.println("    cipher= " + cipher);   
                         break;
@@ -338,7 +362,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     
                     
-                    convertedToRadix = str_convert_radix(FFScaching, cipher, base10_charset, FFScaching.getOutput_character_set());
+                    convertedToRadix = str_convert_radix(FFScaching, cipher, base2_charset, FFScaching.getOutput_character_set());
                     if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
                     if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
                     merge_to_formatted_output(FFScaching, convertedToRadix, FFScaching.getOutput_character_set());
@@ -356,28 +380,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     
                     
-                    
-  /*
-  * Since ct_trimmed may not include empty leading characters, Need to walk through the formated_dest_buf and find
-  * first non-pass through character.  Could be char 0 or MSB with some actual CT
-  */
-//   if (!res) {
-//     /*
-//     * eFPE
-//     */
-//     char * pos = parsed->formatted_dest_buf;
-//     while ((*pos != '\0') && (NULL != strchr(enc->ffs_app->ffs->passthrough_character_set, *pos))) {pos++;};
-//     printf("first non-passthrough %s\n", pos);
-//     res = encode_keynum(enc, pos);
-// //    printf("ct %s\n", ct_trimmed);
-// 
-//   }                    
-//                     
-                    
-                    
-                    
-                    
-                    
+         
                      // scrub the PlainText using regex and passthrough filtering
 //                     FPEMask mask = new FPEMask(PlainText, FFScaching.getRegex());
 //                     String encryptableText = mask.getEncryptablePart();
@@ -457,13 +460,26 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     //ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
                     //if (verbose) System.out.println("    this.trimmed= " + this.trimmed);
                     
-                    restoredFromRadix = str_convert_radix(FFScaching, this.trimmed, FFScaching.getOutput_character_set(), base10_charset);
-                    if (verbose) System.out.println("    converted to base10= " + restoredFromRadix);
+                    restoredFromRadix = str_convert_radix(FFScaching, this.trimmed, FFScaching.getOutput_character_set(), base2_charset);
+                    if (verbose) System.out.println("    converted to base2= " + restoredFromRadix);
+                    
+                    
+                    
+                    double padlen = Math.ceil( Math.max(FF1_base2_min_length, log2(  FFScaching.getInput_character_set().length()  ) * this.trimmed.length()    ) );
+                    if (verbose) System.out.println("    padlen= " + padlen);   
+                    
+                    restoredFromRadix = pad_text(restoredFromRadix, padlen);
+                    if (verbose) System.out.println("    restoredFromRadix= " + restoredFromRadix);  
+                    
+                    //int padlen = ceil(fmax(FF1_base2_min_length,log2(strlen(enc->ffs_app->ffs->input_character_set)) * strlen(parsed->trimmed_buf)));
+                    //pad_text(&ct_base2,padlen, base2_charset[0]);
+                    
+                    
                     
                     
                     final long twkmin= FFScaching.getMin_input_length();
                     final long twkmax= FFScaching.getMax_input_length();
-                    final int inputradix = base10_charset.length();
+                    final int inputradix = base2_charset.length();
                     final int onputradix = FFScaching.getOutput_character_set().length();
                     
                     
@@ -486,7 +502,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                             throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
                     }                    
                     
-                    restoredFromRadix = str_convert_radix(FFScaching, PlainText, base10_charset, FFScaching.getInput_character_set());
+                    restoredFromRadix = str_convert_radix(FFScaching, PlainText, base2_charset, FFScaching.getInput_character_set());
                     if (verbose) System.out.println("    converted to input char set= " + restoredFromRadix);
                     if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
                     merge_to_formatted_output(FFScaching, restoredFromRadix, FFScaching.getInput_character_set());
