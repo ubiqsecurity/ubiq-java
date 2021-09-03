@@ -26,7 +26,7 @@ public class UbiqFPEEncryptTest
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
 
-            final byte[] tweekFF1 = {
+            final byte[] tweakFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30,
@@ -34,8 +34,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
                 String original = "123-45-6789";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweekFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweekFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -53,7 +53,7 @@ public class UbiqFPEEncryptTest
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
 
-            final byte[] tweekFF1 = {
+            final byte[] tweakFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30,
@@ -62,8 +62,8 @@ public class UbiqFPEEncryptTest
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
                 //System.out.println("\nSSN First run");
                 String original = " 01&23-456-78-90";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweekFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweekFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -85,7 +85,7 @@ public class UbiqFPEEncryptTest
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
 
-            final byte[] tweekFF1 = {
+            final byte[] tweakFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30,
@@ -93,8 +93,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
                 String original = "2006-05-01";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "BIRTH_DATE", original, tweekFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "BIRTH_DATE", cipher, tweekFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "BIRTH_DATE", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "BIRTH_DATE", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -112,7 +112,7 @@ public class UbiqFPEEncryptTest
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
 
-            final byte[] tweekFF1 = {
+            final byte[] tweakFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30, (byte)0x33, (byte)0x32,
@@ -121,8 +121,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
                 String original = "A STRING OF AT LEAST 15 UPPER CHARACTERS";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "GENERIC_STRING", original, tweekFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "GENERIC_STRING", cipher, tweekFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "GENERIC_STRING", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "GENERIC_STRING", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -140,7 +140,7 @@ public class UbiqFPEEncryptTest
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
 
-            final byte[] tweekFF1 = {
+            final byte[] tweakFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30, (byte)0x33, (byte)0x32,
@@ -149,8 +149,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
                 String original = "1234";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweekFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweekFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -168,7 +168,7 @@ public class UbiqFPEEncryptTest
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
 
-            final byte[] tweekFF1 = {
+            final byte[] tweakFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30, (byte)0x33, (byte)0x32,
@@ -177,8 +177,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
                 String original = "ABCDE";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweekFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweekFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -197,7 +197,7 @@ public class UbiqFPEEncryptTest
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
 
-            final byte[] tweekFF1 = {
+            final byte[] tweakFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30, (byte)0x33, (byte)0x32,
@@ -206,8 +206,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
                 String original = "ABCD";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweekFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweekFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }

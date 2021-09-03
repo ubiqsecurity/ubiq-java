@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutionException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import java.lang.Math;
 
+import java.io.UnsupportedEncodingException;
+import java.util.Base64;
 
 
 public class UbiqFPEEncryptDecrypt implements AutoCloseable {
@@ -268,7 +270,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
        
        
  
-    public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweek) 
+    public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak) 
         throws IllegalStateException, InvalidCipherTextException {
             
             //if (verbose) System.out.println("\n@@@@@@@@@@ STARTING ENCRYPT @@@@@@@@@@");
@@ -277,6 +279,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             String convertedToRadix = "";
             String cipher = "";
             String withInsertion = "";
+            long twkmin= 0;
+            long twkmax= 0;
             
             
             // key for the cache is <credentials.papi>-<name>
@@ -331,11 +335,23 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     convertedToRadix = pad_text(convertedToRadix, padlen);
                     if (verbose) System.out.println("    convertedToRadix= " + convertedToRadix);  
                     
-
-                    // set the tweek range and radix based on the FFS record
-                    final long twkmin= FFScaching.getMin_input_length();
-                    final long twkmax= FFScaching.getMax_input_length();
-                    //final int inputradix = FFScaching.getInput_character_set().length();
+                    // determine the tweak. Use the one in the FFS, if present, or default to the one user passed in as a parameter
+                    if (FFScaching.getTweak_source().equals("constant")) {
+                        // these have been explicitly set based on the FFS model
+                        if (verbose) System.out.println("    Using tweak from FFS record= " + FFScaching.getTweak());  
+                        if (verbose) System.out.println("                          Bytes= " + Base64.getDecoder().decode(FFScaching.getTweak()) );
+                        twkmin= FFScaching.getMin_tweak_length();
+                        twkmax= FFScaching.getMax_tweak_length();
+                        tweak= Base64.getDecoder().decode(FFScaching.getTweak());
+                    } else {
+                        // For now, the default case is to use the values in the FFS cache for min/max
+                        // and use the tweak that the user passed in as a parameter. Later may need to revise this.
+                        if (verbose) System.out.println("    Using tweak specified by user= " + tweak);  
+                        twkmin= FFScaching.getMin_tweak_length();
+                        twkmax= FFScaching.getMax_tweak_length();
+                    }
+                     
+                   
                     final int inputradix = base2_charset.length();
                     final int onputradix = FFScaching.getOutput_character_set().length();
 
@@ -344,14 +360,14 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     switch(encryption_algorithm) {
                         case "FF1":
                             //System.out.println("     \ndoing ff1_encrypt"); 
-                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, inputradix); 
-                            if (verbose) System.out.println("    twkmin= " + twkmin + "    twkmax= " + twkmax);   
+                            if (verbose) System.out.println("    twkmin= " + twkmin + "    twkmax= " + twkmax +   "    tweak.length= " + tweak.length);   
+                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweak, twkmin, twkmax, inputradix); 
                             cipher = ctxFF1.encrypt(convertedToRadix);
                             if (verbose) System.out.println("    cipher= " + cipher);   
                         break;
                         case "FF3_1":
                             //System.out.println("     doing FF3_1_encrypt"); 
-                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, inputradix); 
+                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweak, inputradix); 
                             cipher = ctxFF3_1.encrypt(convertedToRadix);
                             if (verbose) System.out.println("     cipher= " + cipher);   
                             
@@ -401,12 +417,13 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
  
  
-    public  String decryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String CipherText, byte[] tweek) 
+    public  String decryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String CipherText, byte[] tweak) 
         throws IllegalStateException, InvalidCipherTextException {
             String PlainText = "";
             String restoredFromRadix = "";
             String restoredPlainText = "";
-            
+            long twkmin= 0;
+            long twkmax= 0;
             
             
             //System.out.println("\n@@@@@@@@@@ STARTING DECRYPT @@@@@@@@@@");
@@ -439,16 +456,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     
                     if (this.decryptionKey == null) {
-                    
                         int key_number = decode_keynum(FFScaching, this.trimmed, 0);
                         if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
-                    
-                        //int key_number = FFScaching.getCurrent_key();
-                        //key_number = 0;
-                        //key_number = 25;    // THIS KEY NUMBER WILL BE COMING FROM THE KEY ENCODED BYTE, HARDCODE FOR NOW
-                        //FFScaching.setCurrent_key(key_number);  // temporary
-                        
-                        //System.out.println("    key_number: " + key_number);
                         this.decryptionKey = this.ubiqWebServices.getFPEDecryptionKey(ffs_name, key_number);
                     }
 
@@ -456,10 +465,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     // get the encryption key
                     byte[] key = this.decryptionKey.UnwrappedDataKey;
                     
-                    
-                    //ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
-                    //if (verbose) System.out.println("    this.trimmed= " + this.trimmed);
-                    
+                                        
                     restoredFromRadix = str_convert_radix(FFScaching, this.trimmed, FFScaching.getOutput_character_set(), base2_charset);
                     if (verbose) System.out.println("    converted to base2= " + restoredFromRadix);
                     
@@ -471,14 +477,25 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     restoredFromRadix = pad_text(restoredFromRadix, padlen);
                     if (verbose) System.out.println("    restoredFromRadix= " + restoredFromRadix);  
                     
-                    //int padlen = ceil(fmax(FF1_base2_min_length,log2(strlen(enc->ffs_app->ffs->input_character_set)) * strlen(parsed->trimmed_buf)));
-                    //pad_text(&ct_base2,padlen, base2_charset[0]);
                     
+                    // determine the tweak. Use the one in the FFS, if present, or default to the one user passed in as a parameter
+                    if (FFScaching.getTweak_source().equals("constant")) {
+                        // these have been explicitly set based on the FFS model
+                        if (verbose) System.out.println("    Using tweak from FFS record= " + FFScaching.getTweak()); 
+                        if (verbose) System.out.println("                          Bytes= " + Base64.getDecoder().decode(FFScaching.getTweak()) );      
+                        twkmin= FFScaching.getMin_tweak_length();
+                        twkmax= FFScaching.getMax_tweak_length();
+                        tweak= Base64.getDecoder().decode(FFScaching.getTweak());
+                    } else {
+                        // For now, the default case is to use the values in the FFS cache for min/max
+                        // and use the tweak that the user passed in as a parameter. Later may need to revise this.
+                        if (verbose) System.out.println("    Using tweak specified by user= " + tweak);  
+                        twkmin= FFScaching.getMin_tweak_length();
+                        twkmax= FFScaching.getMax_tweak_length();
+                    }
+
                     
-                    
-                    
-                    final long twkmin= FFScaching.getMin_input_length();
-                    final long twkmax= FFScaching.getMax_input_length();
+
                     final int inputradix = base2_charset.length();
                     final int onputradix = FFScaching.getOutput_character_set().length();
                     
@@ -488,13 +505,14 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     switch(encryption_algorithm) {
                         case "FF1":
                             //System.out.println("     \ndoing ff1_decrypt"); 
-                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweek, twkmin, twkmax, inputradix); 
+                            if (verbose) System.out.println("    twkmin= " + twkmin + "    twkmax= " + twkmax +   "    tweak.length= " + tweak.length); 
+                            FF1 ctxFF1 = new FF1(Arrays.copyOf(key, 16), tweak, twkmin, twkmax, inputradix); 
                             PlainText = ctxFF1.decrypt(restoredFromRadix);
                             if (verbose) System.out.println("    PlainText= " + PlainText);   
                         break;
                         case "FF3_1":
                             //System.out.println("     \ndoing FF3_1_decrypt"); 
-                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweek, inputradix); 
+                            FF3_1 ctxFF3_1 = new FF3_1(Arrays.copyOf(key, 16), tweak, inputradix); 
                             PlainText = ctxFF3_1.decrypt(restoredFromRadix);
                             if (verbose) System.out.println("    PlainText= " + PlainText);   
                         break;

@@ -83,7 +83,7 @@ public class FFS  {
         }
  
         if (ffsRecordResponse.FfsName == null) {
-            if (verbose) System.out.println("Missing FfsName in FFS definition. Setting to: " + "SSN");
+            if (verbose) System.out.println("Missing name in FFS definition. Setting to: " + "SSN");
             ffs.setName("SSN");
         } else {
             ffs.setName(ffsRecordResponse.FfsName);
@@ -97,35 +97,35 @@ public class FFS  {
         }
 
         if (ffsRecordResponse.TweakSource == null) {
-            if (verbose) System.out.println("Missing TweakSource in FFS definition. Setting to: " + "generated");
+            if (verbose) System.out.println("Missing tweak_source in FFS definition. Setting to: " + "generated");
             ffs.setTweak_source("generated");
         } else {
             ffs.setTweak_source(ffsRecordResponse.TweakSource);
         }
 
         if (ffsRecordResponse.MinInputLength == -1) {
-            if (verbose) System.out.println("Missing MinInputLength in FFS definition. Setting to: " + "9");
+            if (verbose) System.out.println("Missing min_input_length in FFS definition. Setting to: " + "9");
             ffs.setMin_input_length(9);
         } else {
             ffs.setMin_input_length(ffsRecordResponse.MinInputLength);
         }
 
         if (ffsRecordResponse.MaxInputLength == -1) {
-            if (verbose) System.out.println("Missing MaxInputLength in FFS definition. Setting to: " + "9");
+            if (verbose) System.out.println("Missing max_input_length in FFS definition. Setting to: " + "9");
             ffs.setMax_input_length(9);
         } else {
             ffs.setMax_input_length(ffsRecordResponse.MaxInputLength);
         }
 
         if (ffsRecordResponse.InputCharacterSet == null) {
-            if (verbose) System.out.println("Missing InputCharacterSet in FFS definition. Setting to: " + "0123456789");
+            if (verbose) System.out.println("Missing input_character_set in FFS definition. Setting to: " + "0123456789");
             ffs.setInput_character_set("0123456789");
         } else {
             ffs.setInput_character_set(ffsRecordResponse.InputCharacterSet);
         }
 
         if (ffsRecordResponse.OutputCharacterSet == null) {
-            if (verbose) System.out.println("Missing OutputCharacterSet in FFS definition. Setting to: " + "9876543210");
+            if (verbose) System.out.println("Missing output_character_set in FFS definition. Setting to: " + "9876543210");
             ffs.setOutput_character_set("9876543210");
         } else {
             ffs.setOutput_character_set(ffsRecordResponse.OutputCharacterSet);
@@ -142,7 +142,7 @@ public class FFS  {
         }
 
         if (ffsRecordResponse.PassthroughCharacterSet == null) {
-            if (verbose) System.out.println("Missing PassthroughCharacterSet in FFS definition. Setting to: " + "!@#{$%^-_:;");
+            if (verbose) System.out.println("Missing passthrough in FFS definition. Setting to: " + "!@#{$%^-_:;");
             ffs.setPassthrough_character_set("!@#{$%^-_:;");
         } else {
             ffs.setPassthrough_character_set(ffsRecordResponse.PassthroughCharacterSet);
@@ -156,11 +156,35 @@ public class FFS  {
         }
 
         if (ffsRecordResponse.MsbEncodingBits == -1) {
-            if (verbose) System.out.println("Missing MsbEncodingBits in FFS definition. Setting to: " + "1");
+            if (verbose) System.out.println("Missing msb_encoding_bits in FFS definition. Setting to: " + "1");
             ffs.setMsb_encoding_bits(1);
         } else {
             ffs.setMsb_encoding_bits(ffsRecordResponse.MsbEncodingBits);
         }
+
+
+
+        if (ffsRecordResponse.MinTweakLength == -1) {
+            if (verbose) System.out.println("Missing tweak_min_len in FFS definition. Setting to: " + "6");
+            ffs.setMin_tweak_length(6);
+        } else {
+            ffs.setMin_tweak_length(ffsRecordResponse.MinTweakLength);
+        }
+
+        if (ffsRecordResponse.MaxTweakLength == -1) {
+            if (verbose) System.out.println("Missing tweak_max_len in FFS definition. Setting to: " + "32");
+            ffs.setMax_tweak_length(32);
+        } else {
+            ffs.setMax_tweak_length(ffsRecordResponse.MaxTweakLength);
+        }
+
+        if (ffsRecordResponse.Tweak == null) {
+            if (verbose) System.out.println("Missing Tweak in FFS definition. Setting to: " + "OfMyOo9G4kiPsnj4JSQB8zfvJs8gV3WrKdz5c56ltW0=");
+            ffs.setTweak("OfMyOo9G4kiPsnj4JSQB8zfvJs8gV3WrKdz5c56ltW0=");
+        } else {
+            ffs.setTweak(ffsRecordResponse.Tweak);
+        }
+
 
 
 
@@ -240,6 +264,16 @@ class FFSRecordResponse {
     
     @SerializedName("msb_encoding_bits")
     long MsbEncodingBits = -1;
+    
+    @SerializedName("tweak_min_len")
+    long MinTweakLength = -1;
+
+    @SerializedName("tweak_max_len")
+    long MaxTweakLength = -1;
+
+    @SerializedName("tweak")
+    String Tweak;
+
 
 }
 
@@ -261,6 +295,10 @@ class FFS_Record {
     private String passthrough_character_set;  
     private long max_key_rotations;
     private long msb_encoding_bits;
+    
+    private long  tweak_min_len;
+    private long  tweak_max_len;
+    private String Tweak;
 
 
     
@@ -369,6 +407,33 @@ class FFS_Record {
 	public void setMsb_encoding_bits(long msb_encoding_bits) {
 		this.msb_encoding_bits = msb_encoding_bits;
 	}
+
+
+	public long getMin_tweak_length() {
+		return tweak_min_len;
+	}
+	public void setMin_tweak_length(long tweak_min_len) {
+		this.tweak_min_len = tweak_min_len;
+	}
+	
+	public long getMax_tweak_length() {
+		return tweak_max_len;
+	}
+	public void setMax_tweak_length(long tweak_max_len) {
+		this.tweak_max_len = tweak_max_len;
+	}
+	
+	public String getTweak() {
+		return Tweak;
+	}
+	public void setTweak(String Tweak) {
+		this.Tweak = Tweak;
+	}
+
+
+
+
+
 	
 	
 } 
