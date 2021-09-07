@@ -324,13 +324,14 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                             ffsEncryptKeyCache = new FFSEncryptKeyCache(this.ubiqWebServices, FFScaching, ffs_name);
                     }
                     FFS_EncryptionKeyRecord FFSEncryptionKeycaching = ffsEncryptKeyCache.FFSEncryptionKeyCache.get(cachingKey);
-                    byte[] key = FFSEncryptionKeycaching.getUnwrappedDataKey();
+                    
+                    
+                    // decrypt the datakey from the keys found in the cache
+                    String EncryptedPrivateKey = FFSEncryptionKeycaching.getEncryptedPrivateKey();
+                    String WrappedDataKey = FFSEncryptionKeycaching.getWrappedDataKey();
+                    byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
                     
                     System.out.println("    key bytes = " + printbytes(key));
-
- //                   if (this.encryptionKey == null) {
-  //                      this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(FFScaching, ffs_name);
- //                   }
 
                     
                     // check key 'usage count' against server-specified limit
@@ -341,9 +342,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     this.useCount++;
             
-                    // get the encryption key
- //                   byte[] key = this.encryptionKey.UnwrappedDataKey;
-                    
                     
                     ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
 
@@ -492,29 +490,16 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     
                     FFS_DecryptionKeyRecord FFSDecryptionKeycaching = ffsDecryptKeyCache.FFSDecryptionKeyCache.get(cachingKey);
-                    byte[] key = FFSDecryptionKeycaching.getUnwrappedDataKey();
+                    
+                    
+                    
+                    // decrypt the datakey from the keys found in the cache
+                    String EncryptedPrivateKey = FFSDecryptionKeycaching.getEncryptedPrivateKey();
+                    String WrappedDataKey = FFSDecryptionKeycaching.getWrappedDataKey();
+                    byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
                     
                     System.out.println("    key bytes = " +  printbytes(key));
 
-
-//                     if (this.decryptionKey == null) {
-//                         int key_number = decode_keynum(FFScaching, this.trimmed, 0);
-//                         if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
-//                         this.decryptionKey = this.ubiqWebServices.getFPEDecryptionKey(ffs_name, key_number);
-//                     }
-// 
-//                     
-//                     // get the encryption key
-//                     byte[] key = this.decryptionKey.UnwrappedDataKey;
-                    
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
                         
                                         
                     restoredFromRadix = str_convert_radix(this.trimmed, FFScaching.getOutput_character_set(), base2_charset);

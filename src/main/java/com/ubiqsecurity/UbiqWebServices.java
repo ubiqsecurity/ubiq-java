@@ -101,6 +101,29 @@ class UbiqWebServices {
                  return "Issue while encoding" +e.getMessage();  
             }  
       }  
+      
+      
+    byte[] getUnwrappedKey(String EncryptedPrivateKey, String WrappedDataKey) {
+        byte[] UnwrappedDataKey = {(byte)0x00};
+        try {
+            // decrypt the provided encryption key
+            UnwrappedDataKey = unwrapKey(
+                        EncryptedPrivateKey,
+                        WrappedDataKey,
+                        this.ubiqCredentials.getSecretCryptoAccessKey());
+            
+            return UnwrappedDataKey;
+        } catch (Exception ex) {
+            System.out.println(String.format("getUnwrappedKey exception: %s", ex.getMessage()));
+            return UnwrappedDataKey;
+        }
+    }
+    
+    
+    
+    
+    
+    
 
 
 
@@ -154,18 +177,12 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
             // submit HTTP request + expect HTTP response w/ status 'Created' (201)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
             
-            if (verbose) System.out.println("\n    getFPEEncryptionKey: " + jsonResponse + "\n");  
+            //if (verbose) System.out.println("\n    getFPEEncryptionKey: " + jsonResponse + "\n");  
             
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             EncryptionKeyResponse encryptionKeyResponse =
                     gson.fromJson(jsonResponse, EncryptionKeyResponse.class);
-
-            // decrypt the server-provided encryption key
-            encryptionKeyResponse.UnwrappedDataKey = unwrapKey(
-                        encryptionKeyResponse.EncryptedPrivateKey,
-                        encryptionKeyResponse.WrappedDataKey,
-                        this.ubiqCredentials.getSecretCryptoAccessKey());
                         
             ffs.setCurrent_key(encryptionKeyResponse.KeyNumber); 
 
@@ -190,17 +207,11 @@ System.out.println("getFPEDecryptionKey  params: " + params);
             // submit HTTP request + expect HTTP response w/ status 'OK' (200)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
             
-            if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");  
+            //if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");  
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             DecryptionKeyResponse decryptionKeyResponse = gson.fromJson(jsonResponse, DecryptionKeyResponse.class);
-
-            // decrypt the server-provided encryption key
-            decryptionKeyResponse.UnwrappedDataKey = unwrapKey(
-                    decryptionKeyResponse.EncryptedPrivateKey,
-                    decryptionKeyResponse.WrappedDataKey,
-                    this.ubiqCredentials.getSecretCryptoAccessKey());
 
             return decryptionKeyResponse;
         } catch (Exception ex) {

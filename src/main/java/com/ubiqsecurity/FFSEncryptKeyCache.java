@@ -12,16 +12,6 @@ import com.google.gson.annotations.SerializedName;
 
 public class FFSEncryptKeyCache  {
     private boolean verbose= true;
-    private String encryption_algorithm;   //e.g. FF1 or FF3_1
-    private String user;
-    private String customer;
-    private String name;   //e.g."SSN",
-    private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",
-    private String tweak_source;   //e.g. "generated",
-    private long min_input_length;   //e.g. 9 
-    private long max_input_length;   //e.g. 9
-    private boolean fpe_definable;
-    //public LoadingCache<String, FFS_Record> FFSCache;
     public LoadingCache<String, FFS_EncryptionKeyRecord> FFSEncryptionKeyCache;
     
 
@@ -44,11 +34,6 @@ public class FFSEncryptKeyCache  {
          });
     }
 
-
-
-    
-    
-
     
     
     // called when FFS is not in cache and need to make remote call
@@ -57,30 +42,21 @@ public class FFSEncryptKeyCache  {
 
         if (verbose) System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSEncryptionKeyFromCloudAPI for caching key: " + cachingKey);
         
-//         FFSEncryptionKeyRecordResponse ffsEncryptionKeyRecordResponse;
-//         ffsEncryptionKeyRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name);
         EncryptionKeyResponse ffsEncryptionKeyRecordResponse= ubiqWebServices.getFPEEncryptionKey(ffs, ffs_name); 
          
-        
-        // STUB - populate FFS_Record with default values if missing from backend FFS definition
-        //    Some of these would be mandatory and should report an exception
         String jsonStr= "{}";                
         Gson gson = new Gson();        
         FFS_EncryptionKeyRecord ffsEncrypt = gson.fromJson(jsonStr, FFS_EncryptionKeyRecord.class);        
          
-
-        if (ffsEncryptionKeyRecordResponse.UnwrappedDataKey == null) {
-            if (verbose) System.out.println("Missing UnwrappedDataKey in FPEEncryptionKey definition.");
+        if ((ffsEncryptionKeyRecordResponse.EncryptedPrivateKey == null) || (ffsEncryptionKeyRecordResponse.WrappedDataKey == null)) {
+            if (verbose) System.out.println("Missing keys in FPEEncryptionKey definition.");
             //ffs.setAlgorithm("FF1");
         } else {
-            ffsEncrypt.setUnwrappedDataKey(ffsEncryptionKeyRecordResponse.UnwrappedDataKey);
+            ffsEncrypt.setEncryptedPrivateKey(ffsEncryptionKeyRecordResponse.EncryptedPrivateKey); 
+            ffsEncrypt.setWrappedDataKey(ffsEncryptionKeyRecordResponse.WrappedDataKey); 
         }
-
-
-          
         return ffsEncrypt;
     }
-    
     
     
 }    
@@ -91,16 +67,25 @@ public class FFSEncryptKeyCache  {
 
 class FFS_EncryptionKeyRecord {
 
-    private byte[] UnwrappedDataKey;
-
-
-
-	public byte[] getUnwrappedDataKey() {
-		return UnwrappedDataKey;
+    String EncryptedPrivateKey;
+    String WrappedDataKey;
+    
+    
+    
+	public String getEncryptedPrivateKey() {
+		return EncryptedPrivateKey;
 	}
-	public void setUnwrappedDataKey(byte[] UnwrappedDataKey) {
-		this.UnwrappedDataKey = UnwrappedDataKey;
+	public void setEncryptedPrivateKey(String EncryptedPrivateKey) {
+		this.EncryptedPrivateKey = EncryptedPrivateKey;
+	}    
+    
+	public String getWrappedDataKey() {
+		return WrappedDataKey;
 	}
+	public void setWrappedDataKey(String WrappedDataKey) {
+		this.WrappedDataKey = WrappedDataKey;
+	}    
+    
 	
 } 
 
