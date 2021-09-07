@@ -34,6 +34,12 @@ public class FFSEncryptKeyCache  {
          });
     }
 
+
+    // clear the cache entirely
+    public void invalidateAllCache() {
+        FFSEncryptionKeyCache.invalidateAll(); 
+    }
+
     
     
     // called when FFS is not in cache and need to make remote call

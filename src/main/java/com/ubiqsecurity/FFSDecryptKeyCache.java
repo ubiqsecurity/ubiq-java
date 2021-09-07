@@ -34,6 +34,10 @@ public class FFSDecryptKeyCache  {
     }
 
 
+    // clear the cache entirely
+    public void invalidateAllCache() {
+        FFSDecryptionKeyCache.invalidateAll(); 
+    }
 
  
     

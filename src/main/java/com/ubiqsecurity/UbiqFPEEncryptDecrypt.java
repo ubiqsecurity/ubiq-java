@@ -56,6 +56,14 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 }
             }
             this.ubiqWebServices = null;
+            
+            if (verbose) {
+                System.out.println("+++++++ IN close()" ); 
+            }
+            
+            clearEncryptionKeyCache();
+            clearDecryptionKeyCache();
+            
         }
     }
     
@@ -281,6 +289,25 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
        
        
+    
+    
+    // allows user to forceably clear the encryption key cache resulting in a subsequent server access when key is needed
+    public void clearEncryptionKeyCache() {
+        if (this.ffsEncryptKeyCache != null) {
+            if (verbose) System.out.println("++++++++++++ clearing EncryptKeyCache" ); 
+            this.ffsEncryptKeyCache.invalidateAllCache();
+        }
+    }
+    
+
+    // allows user to forceably clear the decryption key cache resulting in a subsequent server access when key is needed
+    public void clearDecryptionKeyCache() {
+        if (this.ffsDecryptKeyCache != null) {
+            if (verbose) System.out.println("++++++++++++ clearing DecryptKeyCache" ); 
+            this.ffsDecryptKeyCache.invalidateAllCache();   
+        } 
+    }
+    
        
  
     public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak) 
