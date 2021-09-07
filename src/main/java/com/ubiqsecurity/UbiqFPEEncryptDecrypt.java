@@ -284,8 +284,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
 
 
-    public int log2(int x) {
-        return (int)(Math.log(x) / Math.log(2));
+    public double log2(int x) {
+        return (double)(Math.log(x) / Math.log(2));
     }
        
        
@@ -379,7 +379,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     // Figure out how long to pad the binary string.  Formula is input_radix^len = 2^Y which is log2(input_radix) * len
                     // Due to FF1 constraints, the there is a minimum length for a base2 string, so make sure to be at least that long too
                     // or fpe will fail
-                    double padlen = Math.ceil( Math.max(FF1_base2_min_length, log2(  FFScaching.getInput_character_set().length()  ) * this.trimmed.length()    ) );
+                    double padlen = Math.ceil( Math.max(FF1_base2_min_length, log2(  FFScaching.getInput_character_set().length()  ) * this.trimmed.length()       ));
                     if (verbose) System.out.println("    padlen= " + padlen);   
                     
                     convertedToRadix = pad_text(convertedToRadix, padlen);
