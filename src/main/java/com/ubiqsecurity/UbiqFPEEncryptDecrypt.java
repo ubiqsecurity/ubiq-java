@@ -32,7 +32,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private String base2_charset = "01";
     private int FF1_base2_min_length = 20; // NIST requirement ceil(log2(1000000))
     
-    
+    private FFSEncryptKeyCache ffsEncryptKeyCache;
+    private FFSDecryptKeyCache ffsDecryptKeyCache;
  
 
     public UbiqFPEEncryptDecrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
@@ -58,6 +59,18 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         }
     }
     
+
+
+    public String printbytes(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[ ");
+        for (byte b : bytes) {
+            sb.append(String.format("0x%02X ", b));
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
     
 
     /**
@@ -236,7 +249,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
  
 
     // convert to output radix
-    public String str_convert_radix(FFS_Record ffs, String rawtext, String input_radix, String output_radix) {
+    public String str_convert_radix(String rawtext, String input_radix, String output_radix) {
         // convert a given string to a numerical location based on a given Input_character_set
         BigInteger r1 = Bn.__bigint_set_str(rawtext, input_radix);
         
@@ -301,11 +314,23 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                         throw new IllegalStateException("object closed");
                     } else if (this.aesGcmBlockCipher != null) {
                         throw new IllegalStateException("encryption in progress");
+                    } 
+                    
+                    
+                    
+                    
+                    
+                    if (ffsEncryptKeyCache == null) {
+                            ffsEncryptKeyCache = new FFSEncryptKeyCache(this.ubiqWebServices, FFScaching, ffs_name);
                     }
+                    FFS_EncryptionKeyRecord FFSEncryptionKeycaching = ffsEncryptKeyCache.FFSEncryptionKeyCache.get(cachingKey);
+                    byte[] key = FFSEncryptionKeycaching.getUnwrappedDataKey();
+                    
+                    System.out.println("    key bytes = " + printbytes(key));
 
-                    if (this.encryptionKey == null) {
-                        this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(FFScaching, ffs_name);
-                    }
+ //                   if (this.encryptionKey == null) {
+  //                      this.encryptionKey = this.ubiqWebServices.getFPEEncryptionKey(FFScaching, ffs_name);
+ //                   }
 
                     
                     // check key 'usage count' against server-specified limit
@@ -317,13 +342,13 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     this.useCount++;
             
                     // get the encryption key
-                    byte[] key = this.encryptionKey.UnwrappedDataKey;
+ //                   byte[] key = this.encryptionKey.UnwrappedDataKey;
                     
                     
                     ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
 
 
-                    convertedToRadix = str_convert_radix(FFScaching, this.trimmed, FFScaching.getInput_character_set(), base2_charset);
+                    convertedToRadix = str_convert_radix(this.trimmed, FFScaching.getInput_character_set(), base2_charset);
                     if (verbose) System.out.println("    converted to base2= " + convertedToRadix);
                     
                     // Figure out how long to pad the binary string.  Formula is input_radix^len = 2^Y which is log2(input_radix) * len
@@ -378,7 +403,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     
                     
-                    convertedToRadix = str_convert_radix(FFScaching, cipher, base2_charset, FFScaching.getOutput_character_set());
+                    convertedToRadix = str_convert_radix(cipher, base2_charset, FFScaching.getOutput_character_set());
                     if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
                     if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
                     merge_to_formatted_output(FFScaching, convertedToRadix, FFScaching.getOutput_character_set());
@@ -455,18 +480,44 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     if (verbose) System.out.println("    this.trimmed= " + this.trimmed);
                     
                     
-                    if (this.decryptionKey == null) {
-                        int key_number = decode_keynum(FFScaching, this.trimmed, 0);
-                        if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
-                        this.decryptionKey = this.ubiqWebServices.getFPEDecryptionKey(ffs_name, key_number);
-                    }
+                    int key_number = decode_keynum(FFScaching, this.trimmed, 0);
+                    if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
 
+                   
+                    if (ffsDecryptKeyCache == null) {
+                        //int key_number = decode_keynum(FFScaching, this.trimmed, 0);
+                        //if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
+                        ffsDecryptKeyCache = new FFSDecryptKeyCache(this.ubiqWebServices, ffs_name, key_number);
+                    }
                     
-                    // get the encryption key
-                    byte[] key = this.decryptionKey.UnwrappedDataKey;
                     
+                    FFS_DecryptionKeyRecord FFSDecryptionKeycaching = ffsDecryptKeyCache.FFSDecryptionKeyCache.get(cachingKey);
+                    byte[] key = FFSDecryptionKeycaching.getUnwrappedDataKey();
+                    
+                    System.out.println("    key bytes = " +  printbytes(key));
+
+
+//                     if (this.decryptionKey == null) {
+//                         int key_number = decode_keynum(FFScaching, this.trimmed, 0);
+//                         if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
+//                         this.decryptionKey = this.ubiqWebServices.getFPEDecryptionKey(ffs_name, key_number);
+//                     }
+// 
+//                     
+//                     // get the encryption key
+//                     byte[] key = this.decryptionKey.UnwrappedDataKey;
+                    
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
                                         
-                    restoredFromRadix = str_convert_radix(FFScaching, this.trimmed, FFScaching.getOutput_character_set(), base2_charset);
+                    restoredFromRadix = str_convert_radix(this.trimmed, FFScaching.getOutput_character_set(), base2_charset);
                     if (verbose) System.out.println("    converted to base2= " + restoredFromRadix);
                     
                     
@@ -520,7 +571,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                             throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
                     }                    
                     
-                    restoredFromRadix = str_convert_radix(FFScaching, PlainText, base2_charset, FFScaching.getInput_character_set());
+                    restoredFromRadix = str_convert_radix(PlainText, base2_charset, FFScaching.getInput_character_set());
                     if (verbose) System.out.println("    converted to input char set= " + restoredFromRadix);
                     if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
                     merge_to_formatted_output(FFScaching, restoredFromRadix, FFScaching.getInput_character_set());

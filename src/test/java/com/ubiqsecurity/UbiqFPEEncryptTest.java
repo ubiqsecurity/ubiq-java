@@ -223,6 +223,50 @@ public class UbiqFPEEncryptTest
 
 
 
+    @Test
+    public void encryptFPE_MultipleCachedKeys() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+
+            final byte[] tweakFF1 = {
+                (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
+                (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
+                (byte)0x31, (byte)0x30,
+            };
+            
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
+                String original = "123-45-6789";
+                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                String cipher2 = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                
+                assertEquals(cipher, cipher2);  
+                
+                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                String decrypted2 = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                
+                assertEquals(decrypted, decrypted2);
+            
+                assertEquals(original, decrypted);  
+            }
+    
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+            //ex.printStackTrace();
+        }    
+    }
+
+
+
+
+
+
 
 // Disable the masking tests until we decide to utilize the FPEMask module
 
