@@ -161,7 +161,7 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
     
 
 
-    EncryptionKeyResponse getFPEEncryptionKey(FFS_Record ffs, String ffs_name) {
+    FPEKeyResponse getFPEEncryptionKey(FFS_Record ffs, String ffs_name) {
         String jsonRequest="";
                                 // TODO: NEED TO REMOVE THE key_number=%d parameter here.
                                 // But continue to pass it in with getFPEDecryptionKey(). We will get the value from the key-encoded byte in the cipher string.
@@ -177,14 +177,14 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
             // submit HTTP request + expect HTTP response w/ status 'Created' (201)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
             
-            //if (verbose) System.out.println("\n    getFPEEncryptionKey: " + jsonResponse + "\n");  
+            if (verbose) System.out.println("\n    getFPEEncryptionKey: " + jsonResponse + "\n");  
             
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            EncryptionKeyResponse encryptionKeyResponse =
-                    gson.fromJson(jsonResponse, EncryptionKeyResponse.class);
+            FPEKeyResponse encryptionKeyResponse =
+                    gson.fromJson(jsonResponse, FPEKeyResponse.class);
                         
-            ffs.setCurrent_key(encryptionKeyResponse.KeyNumber); 
+            //ffs.setCurrent_key(encryptionKeyResponse.KeyNumber); 
 
             return encryptionKeyResponse;
         } catch (Exception ex) {
@@ -195,7 +195,7 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
 
 
 
-    DecryptionKeyResponse getFPEDecryptionKey(String ffs_name, int key_number) {
+    FPEKeyResponse getFPEDecryptionKey(String ffs_name, int key_number) {
         String jsonRequest="";
         String params = String.format("ffs_name=%s&papi=%s&key_number=%d", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()), key_number);
         String urlString = String.format("%s/%s/fpe/key?%s", this.baseUrl, this.restApiRoot, params);
@@ -207,11 +207,11 @@ System.out.println("getFPEDecryptionKey  params: " + params);
             // submit HTTP request + expect HTTP response w/ status 'OK' (200)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
             
-            //if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");  
+            if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");  
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            DecryptionKeyResponse decryptionKeyResponse = gson.fromJson(jsonResponse, DecryptionKeyResponse.class);
+            FPEKeyResponse decryptionKeyResponse = gson.fromJson(jsonResponse, FPEKeyResponse.class);
 
             return decryptionKeyResponse;
         } catch (Exception ex) {

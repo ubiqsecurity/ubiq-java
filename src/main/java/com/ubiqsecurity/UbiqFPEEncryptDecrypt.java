@@ -24,16 +24,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private AesGcmBlockCipher aesGcmBlockCipher;
     private Gson FFSdata;
     private FFS ffs;
-    
     private String formatted_dest;
     private String trimmed;
-    
-    //private String base10_charset = "0123456789";
     private String base2_charset = "01";
     private int FF1_base2_min_length = 20; // NIST requirement ceil(log2(1000000))
-    
-    private FFSEncryptKeyCache ffsEncryptKeyCache;
-    private FFSDecryptKeyCache ffsDecryptKeyCache;
+    private FFSKeyCache ffsKeyCache;
  
 
     public UbiqFPEEncryptDecrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
@@ -61,8 +56,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 System.out.println("+++++++ IN close()" ); 
             }
             
-            clearEncryptionKeyCache();
-            clearDecryptionKeyCache();
+            clearKeyCache();
             
         }
     }
@@ -130,7 +124,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
   
       
       
-    public String encode_keynum(FFS_Record ffs, String str, int position) {
+    public String encode_keynum(FFS_Record ffs, int key_number, String str, int position) {
         String buf= "";
         if (position < 0) position = 0;
         
@@ -138,22 +132,13 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       
         int ct_value = ffs.getOutput_character_set().indexOf(charBuf);
         
-        if (verbose) System.out.println("str= " + str ); 
-        if (verbose) System.out.println("    charBuf= " + charBuf + "    ct_value= " + ct_value ); 
-        
-        int key_number = ffs.getCurrent_key();
+        //int key_number = ffs.getCurrent_key();
         long msb_encoding_bits = ffs.getMsb_encoding_bits();
-        if (verbose) System.out.println("    key_number= " + key_number + "    msb_encoding_bits= " + msb_encoding_bits );
-        
         
         ct_value =  ct_value + (key_number << msb_encoding_bits);
         
-        if (verbose) System.out.println("    ct_value= " + ct_value );
-        
         char ch= ffs.getOutput_character_set().charAt(ct_value);
-        if (verbose) System.out.println("ch= " + ch ); 
         buf= Parsing.replaceChar(str, ch, position);
-        if (verbose) System.out.println("buf= " + buf ); 
         
         return buf;
     }
@@ -165,26 +150,15 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         
         char charBuf = str.charAt(position);
         int encoded_value = ffs.getOutput_character_set().indexOf(charBuf);
-        if (verbose) System.out.println("    charBuf= " + charBuf + "    encoded_value= " + encoded_value );
         
         long msb_encoding_bits = ffs.getMsb_encoding_bits();
-        key_num =  encoded_value >> msb_encoding_bits;
-        if (verbose) System.out.println("    key_num= " + key_num + "    msb_encoding_bits= " + msb_encoding_bits );
-        
+        key_num =  encoded_value >> msb_encoding_bits;        
          
-        
         char ch= ffs.getOutput_character_set().charAt(encoded_value - (key_num << msb_encoding_bits));
-        if (verbose) System.out.println("ch= " + ch ); 
         this.trimmed= Parsing.replaceChar(str, ch, position);
-        if (verbose) System.out.println("AFTER this.trimmed= " + this.trimmed ); 
-        
-       
+              
         return key_num;
     }
-
-
-
-
 
 
 
@@ -229,9 +203,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         int d = this.formatted_dest.length() - 1;
         int s = convertedToRadix.length() - 1;
         
-        //if (verbose) System.out.println("@@@@ this.formatted_dest= " + this.formatted_dest); 
-        //if (verbose) System.out.println("    convertedToRadix= " + convertedToRadix); 
-        
         // Merge PT to formatted output
         while (s >= 0 && d >= 0) {
             // Find the first available destination character
@@ -247,8 +218,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             d = d - 1;
         }
         
-        //if (verbose) System.out.println("    AFTER this.formatted_dest= " + this.formatted_dest); 
-        //if (verbose) System.out.println("    AFTER convertedToRadix= " + convertedToRadix); 
         return;
     }
  
@@ -289,26 +258,16 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
        
        
-    
-    
+ 
     // allows user to forceably clear the encryption key cache resulting in a subsequent server access when key is needed
-    public void clearEncryptionKeyCache() {
-        if (this.ffsEncryptKeyCache != null) {
-            if (verbose) System.out.println("++++++++++++ clearing EncryptKeyCache" ); 
-            this.ffsEncryptKeyCache.invalidateAllCache();
+    public void clearKeyCache() {
+        if (this.ffsKeyCache != null) {
+            if (verbose) System.out.println("++++++++++++ clearing KeyCache" ); 
+            this.ffsKeyCache.invalidateAllCache();
         }
     }
-    
 
-    // allows user to forceably clear the decryption key cache resulting in a subsequent server access when key is needed
-    public void clearDecryptionKeyCache() {
-        if (this.ffsDecryptKeyCache != null) {
-            if (verbose) System.out.println("++++++++++++ clearing DecryptKeyCache" ); 
-            this.ffsDecryptKeyCache.invalidateAllCache();   
-        } 
-    }
-    
-       
+        
  
     public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak) 
         throws IllegalStateException, InvalidCipherTextException {
@@ -343,22 +302,19 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                         throw new IllegalStateException("encryption in progress");
                     } 
                     
-                    
-                    
-                    
-                    
-                    if (ffsEncryptKeyCache == null) {
-                            ffsEncryptKeyCache = new FFSEncryptKeyCache(this.ubiqWebServices, FFScaching, ffs_name);
+
+                    if (ffsKeyCache == null) {
+                            ffsKeyCache = new FFSKeyCache(this.ubiqWebServices, FFScaching, ffs_name);
                     }
-                    FFS_EncryptionKeyRecord FFSEncryptionKeycaching = ffsEncryptKeyCache.FFSEncryptionKeyCache.get(cachingKey);
+                    FFS_KeyRecord FFSKeycaching = ffsKeyCache.FFSKeyCache.get(cachingKey);
                     
                     
                     // decrypt the datakey from the keys found in the cache
-                    String EncryptedPrivateKey = FFSEncryptionKeycaching.getEncryptedPrivateKey();
-                    String WrappedDataKey = FFSEncryptionKeycaching.getWrappedDataKey();
+                    String EncryptedPrivateKey = FFSKeycaching.getEncryptedPrivateKey();
+                    String WrappedDataKey = FFSKeycaching.getWrappedDataKey();
                     byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
                     
-                    System.out.println("    key bytes = " + printbytes(key));
+                    if (verbose) System.out.println("    key bytes = " + printbytes(key));
 
                     
                     // check key 'usage count' against server-specified limit
@@ -440,8 +396,13 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     int firstNonPassthrough= findFirstIndexExclusive(this.formatted_dest, FFScaching.getPassthrough_character_set());
                     if (verbose) System.out.println("   firstNonPassthrough= " + firstNonPassthrough);
                     
+                    
+                    int key_number = FFSKeycaching.getKeyNumber();
+                    if (verbose) System.out.println("$$$$$$$$ KeyNumber= " + key_number);
+                    
+                    
                     // encode the key into the cipher
-                    this.formatted_dest = encode_keynum(FFScaching, this.formatted_dest, firstNonPassthrough);
+                    this.formatted_dest = encode_keynum(FFScaching, key_number, this.formatted_dest, firstNonPassthrough);
                     
                     
                     
@@ -509,23 +470,22 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
 
                    
-                    if (ffsDecryptKeyCache == null) {
-                        //int key_number = decode_keynum(FFScaching, this.trimmed, 0);
-                        //if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
-                        ffsDecryptKeyCache = new FFSDecryptKeyCache(this.ubiqWebServices, ffs_name, key_number);
+                    if (ffsKeyCache == null) {
+                        ffsKeyCache = new FFSKeyCache(this.ubiqWebServices, FFScaching, ffs_name);
                     }
                     
                     
-                    FFS_DecryptionKeyRecord FFSDecryptionKeycaching = ffsDecryptKeyCache.FFSDecryptionKeyCache.get(cachingKey);
-                    
+                    cachingKey = ubiqCredentials.getAccessKeyId() + "-" + ffs_name + "-key_number=" + String.valueOf(key_number); 
+                    if (verbose) System.out.println("    cachingKey= " + cachingKey); 
+                    FFS_KeyRecord FFSKeycaching = ffsKeyCache.FFSKeyCache.get(cachingKey);
                     
                     
                     // decrypt the datakey from the keys found in the cache
-                    String EncryptedPrivateKey = FFSDecryptionKeycaching.getEncryptedPrivateKey();
-                    String WrappedDataKey = FFSDecryptionKeycaching.getWrappedDataKey();
+                    String EncryptedPrivateKey = FFSKeycaching.getEncryptedPrivateKey();
+                    String WrappedDataKey = FFSKeycaching.getWrappedDataKey();
                     byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
                     
-                    System.out.println("    key bytes = " +  printbytes(key));
+                    if (verbose) System.out.println("    key bytes = " +  printbytes(key));
 
                         
                                         
