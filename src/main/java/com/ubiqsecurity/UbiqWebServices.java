@@ -177,7 +177,7 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
             // submit HTTP request + expect HTTP response w/ status 'Created' (201)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
             
-            if (verbose) System.out.println("\n    getFPEEncryptionKey: " + jsonResponse + "\n");  
+            //if (verbose) System.out.println("\n    getFPEEncryptionKey: " + jsonResponse + "\n");  
             
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -207,7 +207,7 @@ System.out.println("getFPEDecryptionKey  params: " + params);
             // submit HTTP request + expect HTTP response w/ status 'OK' (200)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
             
-            if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");  
+            //if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");  
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
