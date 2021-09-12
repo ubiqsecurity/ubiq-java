@@ -120,9 +120,51 @@ class UbiqWebServices {
     }
     
     
+ 
+    
+    FPEBillingResponse sendBilling(String payload) {
+        //  url: https://koala.ubiqsecurity.com/api/v0/fpe/billing/sxGesRB8KMwqhiy6k7xC2WL%2F
+        //       https://koala.ubiqsecurity.com/api/v0/api/v0/fpe/billing/sxGesRB8KMwqhiy6k7xC2WL%2F POST
+        String urlString = String.format("%s/%s/fpe/billing/%s", this.baseUrl, this.restApiRoot, encode(this.ubiqCredentials.getAccessKeyId()));
+        if (verbose) System.out.println("\n    sendBilling urlString: " + urlString);
+        
+        String jsonRequest = payload;
+
+        try {
+            HttpRequest signedHttpRequest = buildSignedHttpRequest("POST", urlString, "", jsonRequest,
+                this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+
+
+            // submit HTTP request + expect HTTP response w/ status 'Created' (201)
+            String jsonResponse = submitHttpRequest(signedHttpRequest, 201);
+            if (verbose) System.out.println("    sendBilling jsonResponse: " + jsonResponse);
+
+            // deserialize the JSON response to POJO
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            FPEBillingResponse fpeBillingResponse =
+                    gson.fromJson(jsonResponse, FPEBillingResponse.class);
+                    
+            if (verbose) System.out.println("    fpeBillingResponse.status: " + fpeBillingResponse.status);
+            if (verbose) System.out.println("    fpeBillingResponse.message: " + fpeBillingResponse.message);
+            if (verbose) System.out.println("    fpeBillingResponse.last_valid: " + fpeBillingResponse.last_valid);
+
+            return fpeBillingResponse;
+        } catch (Exception ex) {
+            String jsonResponse = ex.getMessage();
+
+            if (verbose) System.out.println("Server unable to process billing transactions after: " + jsonResponse);
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            FPEBillingResponse fpeBillingResponse =
+                    gson.fromJson(jsonResponse, FPEBillingResponse.class);
+                    
+            return fpeBillingResponse;
+        }
+    }
     
     
     
+    
+        
     
 
 
@@ -455,7 +497,9 @@ System.out.println("httpRequest= " + httpRequest);
         String responseString = httpResponse.body();
 
         if (httpResponse.statusCode() != successCode) {
-            throw new IOException(String.format("Ubiq API request failed: %s", responseString));
+            //throw new IOException(String.format("Ubiq API request failed: %s", responseString));
+            // removing redundant label since occasionally a JSON might be returned that we can parse more easily
+            throw new IOException(String.format(responseString));
         }
 
         return responseString;

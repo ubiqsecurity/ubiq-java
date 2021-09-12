@@ -248,6 +248,11 @@ public class UbiqFPEEncryptTest
                 cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
                 cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
                 cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
                 
                 assertEquals(cipher, cipher2);  
                 
@@ -262,6 +267,11 @@ public class UbiqFPEEncryptTest
                 decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
                 decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
                 decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
                 
                 
                 assertEquals(decrypted, decrypted2);
@@ -271,8 +281,9 @@ public class UbiqFPEEncryptTest
     
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+          ex.printStackTrace();
             fail(ex.toString());
-            //ex.printStackTrace();
+           
         }    
     }
 

@@ -41,6 +41,11 @@ public class FFS  {
          });
     }
     
+    // clear the cache entirely
+    public void invalidateAllCache() {
+        FFSCache.invalidateAll(); 
+    }
+    
     
     // called when FFS is not in cache and need to make remote call
     private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String cachingKey, String ffs_name) {
@@ -50,10 +55,7 @@ public class FFS  {
         FFSRecordResponse ffsRecordResponse;
         ffsRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name);
         
-         
-        
-        // STUB - populate FFS_Record with default values if missing from backend FFS definition
-        //    Some of these would be mandatory and should report an exception
+
         String jsonStr= "{}";                
         Gson gson = new Gson();        
         FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);        

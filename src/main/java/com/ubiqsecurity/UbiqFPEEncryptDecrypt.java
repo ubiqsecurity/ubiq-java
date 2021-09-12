@@ -48,11 +48,13 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         // TESTING ONLY--- 
         encryptCount = 0;
         decryptCount = 0;
-        executor = new FPEProcessor(this);
+        bill = new FPETransactions();
+        
+        executor = new FPEProcessor(this, ubiqWebServices, bill);
         executor.startAsync();
         //Thread.sleep(10000);
         
-        bill = new FPETransactions();
+        
         
     }
     
@@ -69,39 +71,88 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 //                             this.encryptionKey.KeyFingerprint, this.encryptionKey.EncryptionSession);
                 }
             }
-            this.ubiqWebServices = null;
             
             if (verbose) System.out.println("+++++++ IN close()" ); 
             
             clearKeyCache();
             
+            // this stops any remaining backround billing processing since we'll make an explicit final call now
             executor.stopAsync();
             
-            bill.getTransactionAsJSON();
             
             
             
-            
+            //bill.getTransactionAsJSON();
             // TESTING ONLY--- ADD FAKE RECORDS
-            String timestamp= Instant.now().toString();
-            bill.createBillableItem("b94a18d6-00df-4233-9c28-3c61eea512d6", "encrypt", "ALPHANUM_SSN", timestamp, 1);
-            bill.createBillableItem("716365fc-329d-4b27-a285-4016a95867fa", "encrypt", "ALPHANUM_SSN", timestamp, 1);
-            bill.createBillableItem("d5009ee4-339b-4e3b-a668-a4e276627d6d", "encrypt", "ALPHANUM_SSN", timestamp, 1);
-            
-            // TESTING ONLY--- DELETE A RECORD
-            bill.deleteBillableItems("b94a18d6-00df-4233-9c28-3c61eea512d6");
+//             String timestamp= Instant.now().toString();
+//             bill.createBillableItem("b94a18d6-00df-4233-9c28-3c61eea512d6", "encrypt", "ALPHANUM_SSN", timestamp, 1);
+//             bill.createBillableItem("716365fc-329d-4b27-a285-4016a95867fa", "encrypt", "ALPHANUM_SSN", timestamp, 1);
+//             //bill.createBillableItem("BAD-RECORD", "encrypt", "UNKNOWN_FFS", timestamp, 1);
+//             bill.createBillableItem("d5009ee4-339b-4e3b-a668-a4e276627d6d", "encrypt", "ALPHANUM_SSN", timestamp, 1);
+//             
+//             // TESTING ONLY--- DELETE A RECORD
+//             bill.deleteBillableItems("b94a18d6-00df-4233-9c28-3c61eea512d6");
                     
-            bill.getTransactionAsJSON();
+                    
+                    
+                    
+            // Perform a final bill  processing for items that may not have been done by the async executor        
+            bill.processCurrentBills(ubiqWebServices);        
+            
+            
+            
+            
+                    
+//             String payload= bill.getTransactionAsJSON();
+//             System.out.println("1) payload=" + payload);
+//             String lastItemIDToProcess= bill.getLastItemInList();
+//             
+//             FPEBillingResponse fpeBillingResponse;
+//             fpeBillingResponse= this.ubiqWebServices.sendBilling(payload);
+//             if (fpeBillingResponse.status == 201) {
+//                 // all submitted records have been processed by backend so OK to clear the local list
+//                 System.out.println("Payload successfully received and processed by backend.");
+//                 bill.deleteBillableItems(lastItemIDToProcess);
+//             } else {
+//                 System.out.println("WARNING: Backend stopped processing after UUID:"  + fpeBillingResponse.last_valid.id);
+//                 
+//                 // delete our local list up to and including the last record processed by the backend
+//                 String newTopRecord= bill.deleteBillableItems(fpeBillingResponse.last_valid.id);
+//                 payload= bill.getTransactionAsJSON();
+//                 System.out.println("2) payload=" + payload); 
+//                 
+//                 // move the bad record to the end of the list so it won't block the next billing cycle (in case it was a bad record)
+//                 if (newTopRecord.equals("") == false) {
+//                     bill.deprioritizeBadBillingItem(newTopRecord);
+//                     
+//                     payload= bill.getTransactionAsJSON();
+//                     System.out.println("3) payload=" + payload); 
+//                 }
+//             }
+            
+            
+            
             
             // TESTING ONLY -- DELETE ALL RECORDS UP UNTIL ANY NEW UNPROCESSED ONES
-            bill.createBillableItem("1117fb22-6004-4603-99b7-0459e6018b6e", "encrypt", "ALPHANUM_SSN", timestamp, 1);
-            bill.deleteBillableItems();
-            
-            bill.getTransactionAsJSON();    
-            
-            bill.deleteBillableItems(); 
-            bill.getTransactionAsJSON();     
+//             bill.createBillableItem("1117fb22-6004-4603-99b7-0459e6018b6e", "encrypt", "ALPHANUM_SSN", timestamp, 1);
+//             String payload= bill.getTransactionAsJSON();
+//             String lastItemIDToProcess= bill.getLastItemInList();
+//             System.out.println("4) payload=" + payload); 
+//             
+//             bill.deleteBillableItems("");
+//             
+//             payload= bill.getTransactionAsJSON();
+//             lastItemIDToProcess= bill.getLastItemInList();
+//             System.out.println("5) payload=" + payload);    
+//             
+//             bill.deleteBillableItems(""); 
+//             payload= bill.getTransactionAsJSON();  
+//             System.out.println("6) payload=" + payload);   
                     
+
+
+
+            this.ubiqWebServices = null;
             
         }
     }
@@ -342,6 +393,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         if (this.ffsKeyCache != null) {
             if (verbose) System.out.println("++++++++++++ clearing KeyCache" ); 
             this.ffsKeyCache.invalidateAllCache();
+        }
+        if (this.ffs != null) {
+            if (verbose) System.out.println("++++++++++++ clearing FFSCache" ); 
+            this.ffs.invalidateAllCache();
         }
     }
 

@@ -12,10 +12,14 @@ class FPEProcessor extends AbstractScheduledService
     private boolean verbose= true;
     private int secondsToProcess= 1;
     UbiqFPEEncryptDecrypt fpeEncryptDecrypt;
+    UbiqWebServices ubiqWebServices;
+    FPETransactions bill;
 
 
-    public FPEProcessor (UbiqFPEEncryptDecrypt fpeEncryptDecrypt) {
+    public FPEProcessor (UbiqFPEEncryptDecrypt fpeEncryptDecrypt, UbiqWebServices ubiqWebServices, FPETransactions bill) {
         this.fpeEncryptDecrypt= fpeEncryptDecrypt;
+        this.ubiqWebServices= ubiqWebServices;
+        this.bill= bill;
     }
     
     @Override
@@ -27,6 +31,10 @@ class FPEProcessor extends AbstractScheduledService
     protected void runOneIteration() throws Exception {
         // perform periodic list processing here
         if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ Running: " + new java.util.Date());
+        
+        if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ BEFORE processCurrentBills");
+        bill.processCurrentBills(ubiqWebServices);
+        if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ AFTER processCurrentBills");
         
         int encryptCount= fpeEncryptDecrypt.getEncryptCount();
         int decryptCount= fpeEncryptDecrypt.getDecryptCount();

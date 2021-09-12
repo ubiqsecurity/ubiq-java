@@ -25,11 +25,50 @@ public class FPETransactions {
     //private FPETransactionsRecord[] billingArray;
     private ArrayList<FPETransactionsRecord> Bills;
     private String oldestUnprocessedItemID= "";
+    //private String lastSuccessfulProcessedItemID= "";
 
 
     public FPETransactions () {
         Bills = new ArrayList<FPETransactionsRecord>();
     }
+    
+    
+    
+    public void processCurrentBills(UbiqWebServices ubiqWebServices) {
+        FPETransactions bill= this;
+        
+        if (verbose) System.out.println("   IN processCurrentBills");
+        
+        
+        String payload= bill.getTransactionAsJSON();
+        System.out.println("1) payload=" + payload);
+        String lastItemIDToProcess= bill.getLastItemInList();
+        
+        FPEBillingResponse fpeBillingResponse;
+        fpeBillingResponse= ubiqWebServices.sendBilling(payload);
+        if (fpeBillingResponse.status == 201) {
+            // all submitted records have been processed by backend so OK to clear the local list
+            System.out.println("Payload successfully received and processed by backend.");
+            bill.deleteBillableItems(lastItemIDToProcess);
+        } else {
+            System.out.println("WARNING: Backend stopped processing after UUID:"  + fpeBillingResponse.last_valid.id);
+            
+            // delete our local list up to and including the last record processed by the backend
+            String newTopRecord= bill.deleteBillableItems(fpeBillingResponse.last_valid.id);
+            payload= bill.getTransactionAsJSON();
+            System.out.println("2) payload=" + payload); 
+            
+            // move the bad record to the end of the list so it won't block the next billing cycle (in case it was a bad record)
+            if (newTopRecord.equals("") == false) {
+                bill.deprioritizeBadBillingItem(newTopRecord);
+                
+                payload= bill.getTransactionAsJSON();
+                System.out.println("3) payload=" + payload); 
+            }
+        }
+
+    }
+      
     
     
     public void createBillableItem(
@@ -44,7 +83,8 @@ public class FPETransactions {
         Bills.add(transaction); // Adding it to the list
         
         // Since part of the list may be in process of being deleted, identify the last unprocessed item
-        if (oldestUnprocessedItemID.equals("")) {
+        if (verbose) System.out.println("       oldestUnprocessedItemID: " + oldestUnprocessedItemID);
+        if (oldestUnprocessedItemID.equals("") == true) {
             oldestUnprocessedItemID= id;
             if (verbose) System.out.println("       SET unprocessed record: " + id);
         }
@@ -55,111 +95,210 @@ public class FPETransactions {
     // converts the current list of billable transactions into JSON
     // This JSON is a "snapshot" of the actively building ArrayList<FPETransactionsRecord> so anything
     // added to the ArrayList afterwards is identified by the oldestUnprocessedItemID
-    public void getTransactionAsJSON() {
+    public String getTransactionAsJSON() {
         // clear the oldestUnprocessedItemID since it will be part of the JSON
-        oldestUnprocessedItemID= "";
+        //oldestUnprocessedItemID= "";
         
         // create the JSON from the list
         String json = new Gson().toJson(Bills);
         
-        if (verbose) System.out.println("json=" + json);
+        //if (verbose) System.out.println("json=" + json);
         
+        return json;
+    }
+    
+    
+    public String getLastItemInList() {
+        String id= "";
+        if (Bills.size() > 0) {
+            FPETransactionsRecord tr = Bills.get(Bills.size()-1);
+            id= tr.id;
+        }
+        return id;
+    }
+    
+    
+    // if the server cannot process a record, move it to the end of the local list array so that it doesn't block other transactions
+    public void deprioritizeBadBillingItem(String id) {
+        String  moved_id="";
+        String  action="";
+        String  ffs_name="";
+        String  timestamp="";
+        int     count=0;
+        
+        if ((id == null) || (Bills.size()==1)) {
+            // don't bother changing priority if only one item in list
+            return;
+        }    
+        
+        // locate the item to deprioritize
+        Iterator<FPETransactionsRecord> itr = Bills.iterator();
+        boolean idExists = false;
+        while (itr.hasNext()) {
+            FPETransactionsRecord t = itr.next();
+             
+            if (id.equals(t.id) == true) {
+                idExists= true;
+                if (verbose) System.out.println("Found: " + t.id);
+                moved_id= t.id;
+                action= t.action;
+                ffs_name= t.ffs_name;
+                timestamp= t.timestamp;
+                count= t.count;
+                
+                // delete the record
+                itr.remove();
+                break;
+            }
+        }
+        
+        // add the deleted record to the end of the list
+        if (idExists == true) {   
+            createBillableItem(moved_id, action, ffs_name, timestamp, count);
+            
+            // reset the unprocessed item to the beginning of the list
+            FPETransactionsRecord tr = Bills.get(0);
+            oldestUnprocessedItemID= tr.id;
+            if (verbose) System.out.println("       RESET unprocessed record: " + oldestUnprocessedItemID);
+        }
         
     }
     
     
     
-    
-    
-    // Deletes all id's up to and including the specified id  
+    // Deletes all id's UP TO AND INCLUDING the specified id  
     // Call this when the backend failed to delete the billable items up to id 
-    public boolean deleteBillableItems(String  id) {
-        if (verbose) System.out.println("Deleting all items up to... deleteBillableItems: " + id);
-        if (id == null) {
-            return false;
-        }
+    public String deleteBillableItems(String id) {
+        String newTopRecord= "";
         
         Iterator<FPETransactionsRecord> itr = Bills.iterator();
         
-        //make sure that the current list has the id present before we start deleting records
-        boolean idExists = false;
-        while (itr.hasNext()) {
-            FPETransactionsRecord t = itr.next();
-            
-            
-            if (id.equals(t.id) == true) {
-                idExists= true;
-                if (verbose) System.out.println("Found: " + t.id);
-                break;
-            }
-        }
-        if (idExists == false) {
-            return false;
-        }
         
-        
-        // delete each record up to and including the id
-        itr = Bills.iterator();
-        while (itr.hasNext())
-        {
-            FPETransactionsRecord t = itr.next();
+        // if id is blank, then attempt to delete all items in list
+        if (id == "") {
+            if (verbose) System.out.println("Deleting all items");
+             // delete each record up to the oldestUnprocessedItemID
+            itr = Bills.iterator();
+            while (itr.hasNext())
+            {
+                FPETransactionsRecord t = itr.next();
             
-            if (verbose) System.out.println("t.id: " + t.id);
-            
-            // delete the record
-            itr.remove();
-            
-            // if this record was identified as unprocessed, clear it now
-            if (oldestUnprocessedItemID.equals(t.id)) {
-                oldestUnprocessedItemID= "";
-                if (verbose) System.out.println("       CLEARED unprocessed record: " + t.id);
-            } 
-            
-            // if this is the id of the record the user specified then its the last to be deleted
-            if (id.equals(t.id) == true) {
-                if (verbose) System.out.println("       Deleted all records up to: " + t.id);
-                break;
-            }
+                // if this record was identified as unprocessed, stop deleting
+                if (oldestUnprocessedItemID.equals(t.id)) {
+                    if (verbose) System.out.println("       STOPPED deleting at unprocessed record: " + t.id);
+                    break;
+                } 
 
+                if (verbose) System.out.println("   Deleting t.id: " + t.id);
+            
+                // delete the record
+                itr.remove();
+
+            }
+        
+            if (Bills.size()==1) {
+                // if everything in the list was deleted, reset the oldestUnprocessedItemID
+                oldestUnprocessedItemID= "";
+            }
+            newTopRecord = "";
         }
+        else {
+            if (verbose) System.out.println("Deleting all items up to and including...  " + id);
+       
+        
+            //make sure that the current list has the id present before we start deleting records
+            boolean idExists = false;
+            while (itr.hasNext()) {
+                FPETransactionsRecord t = itr.next();
             
             
-        return true;
+                if (id.equals(t.id) == true) {
+                    idExists= true;
+                    if (verbose) System.out.println("Found: " + t.id);
+                    break;
+                }
+            }
+            if (idExists == false) {
+                return "";
+            }
+        
+        
+            // delete each record up to and including the id
+            itr = Bills.iterator();
+            while (itr.hasNext())
+            {
+                FPETransactionsRecord t = itr.next();
+            
+                if (verbose) System.out.println("   Deleting t.id: " + t.id);
+            
+                // delete the record
+                itr.remove();
+            
+                // if this record was identified as unprocessed, clear it now
+                if (oldestUnprocessedItemID.equals(t.id)) {
+                    oldestUnprocessedItemID= "";
+                    if (verbose) System.out.println("       CLEARED unprocessed record: " + t.id);
+                } 
+            
+                // if this is the id of the record the user specified then its the last to be deleted
+                if (id.equals(t.id) == true) {
+                    if (verbose) System.out.println("       Deleted all records up to and including: " + t.id);
+                
+                    // determine if there is another record after this one and return it's id
+                    if (verbose) System.out.println("   Bills.size(): " + Bills.size());
+                    if (Bills.size() > 0) {
+                        FPETransactionsRecord tr = Bills.get(0);
+                        newTopRecord= tr.id;
+                        if (verbose) System.out.println("   There is a new top record: " + t.id);
+                    } 
+                    break;
+                }
+
+            }
+        }    
+            
+        return newTopRecord;
     }  
      
 
 
     // Deletes all id's up to the unprocessed ones    
     // Call this when the backend successfully deleted all of the billable items
-    public boolean deleteBillableItems() {
-        if (verbose) System.out.println("Deleting all items... deleteBillableItems");
-        
-        Iterator<FPETransactionsRecord> itr = Bills.iterator();
-        
-        
-        
-        // delete each record up to the oldestUnprocessedItemID
-        itr = Bills.iterator();
-        while (itr.hasNext())
-        {
-            FPETransactionsRecord t = itr.next();
-            
-            if (verbose) System.out.println("t.id: " + t.id);
-
-            // if this record was identified as unprocessed, stop deleting
-            if (oldestUnprocessedItemID.equals(t.id)) {
-                if (verbose) System.out.println("       STOPPED deleting at unprocessed record: " + t.id);
-                break;
-            } 
-            
-            // delete the record
-            itr.remove();
-
-        }
-            
-            
-        return true;
-    }  
+//     public boolean deleteBillableItems() {
+//         if (verbose) System.out.println("Deleting all items... deleteBillableItems");
+//         
+//         Iterator<FPETransactionsRecord> itr = Bills.iterator();
+//         
+//         
+//         
+//         // delete each record up to the oldestUnprocessedItemID
+//         itr = Bills.iterator();
+//         while (itr.hasNext())
+//         {
+//             FPETransactionsRecord t = itr.next();
+//             
+// 
+//             // if this record was identified as unprocessed, stop deleting
+//             if (oldestUnprocessedItemID.equals(t.id)) {
+//                 if (verbose) System.out.println("       STOPPED deleting at unprocessed record: " + t.id);
+//                 break;
+//             } 
+// 
+//             if (verbose) System.out.println("   Deleting t.id: " + t.id);
+//             
+//             // delete the record
+//             itr.remove();
+// 
+//         }
+//         
+//         if (Bills.size()==1) {
+//             // if everything in the list was deleted, reset the oldestUnprocessedItemID
+//             oldestUnprocessedItemID= "";
+//         }
+//             
+//             
+//         return true;
+//     }  
 
 
 
