@@ -33,7 +33,8 @@ class FPEProcessor extends AbstractScheduledService
         if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ Running: " + new java.util.Date());
         
         if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ BEFORE processCurrentBills");
-        bill.processCurrentBills(ubiqWebServices);
+        //bill.processCurrentBills(ubiqWebServices);
+        bill.processCurrentBillsAsync(ubiqWebServices, bill);
         if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ AFTER processCurrentBills");
         
         int encryptCount= fpeEncryptDecrypt.getEncryptCount();

@@ -7,15 +7,15 @@ import java.util.concurrent.TimeUnit;
 
 import java.util.ArrayList;
 import java.util.Iterator; 
+import com.google.common.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 
 /*
-
+JSON format os a billing transaction
 [{“id”: “<GUID>”, "action": "encrypt", "ffs_name": <name>, "timestamp": ISO8601, "count" : number},
-
-{“id”: “<GUID>”, "action": "decrypt", "ffs_name": <name>, "timestamp": ISO8601, "count": number }]
-
 */
  
 public class FPETransactions {
@@ -34,6 +34,8 @@ public class FPETransactions {
     
     
     
+    // runs the bill processor and server access at the end before the
+    // UbiqFPEEncryptDecrypt object is terminated
     public void processCurrentBills(UbiqWebServices ubiqWebServices) {
         FPETransactions bill= this;
         
@@ -67,6 +69,20 @@ public class FPETransactions {
             }
         }
 
+    }
+    
+    
+    // runs the bill processor and server access in the background. To be called periodically by FPEProcessor
+    public void processCurrentBillsAsync(UbiqWebServices ubiqWebServices, FPETransactions bill) {
+        ExecutorService execService = Executors.newSingleThreadExecutor();
+        ListeningExecutorService lExecService = MoreExecutors.listeningDecorator(execService);
+
+        ListenableFuture<Integer> asyncTask = lExecService.submit(() -> {
+            //TimeUnit.MILLISECONDS.sleep(500); // long running task
+            bill.processCurrentBills(ubiqWebServices);
+            
+            return 0;
+        });    
     }
       
     
