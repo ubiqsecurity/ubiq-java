@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
 
-public class FFS  {
+class FFS  {
     private boolean verbose= true;
     private String encryption_algorithm;   //e.g. FF1 or FF3_1
     private String name;   //e.g."SSN",

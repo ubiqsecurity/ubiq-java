@@ -10,7 +10,7 @@ import java.util.regex.Matcher;
  * Algorithms to pattern-match encryptable portions of a string
  * and apply masking based on an accompanied regex.
  */
-public class Parsing implements AutoCloseable  {
+class Parsing implements AutoCloseable  {
     private boolean verbose= true;
     private String trimmed_characters;  // Preallocated and filled with char[0] from input characterset.  Should be same length as input string
     private String empty_formatted_output; // Preallocated and filled with char[0] from OUTPUT characterset, Should be same length as input string

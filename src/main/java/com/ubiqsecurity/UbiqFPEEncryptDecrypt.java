@@ -49,7 +49,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         decryptCount = 0;
         bill = new FPETransactions();
         
-        executor = new FPEProcessor(this, ubiqWebServices, bill, 1);
+        executor = new FPEProcessor(ubiqWebServices, bill, 1);
         executor.startAsync();
         //Thread.sleep(10000);
         

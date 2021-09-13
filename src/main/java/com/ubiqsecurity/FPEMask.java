@@ -10,7 +10,7 @@ import java.util.regex.Matcher;
  * Algorithms to pattern-match encryptable portions of a string
  * and apply masking based on an accompanied regex.
  */
-public class FPEMask  {
+class FPEMask  {
     private String encryptable;  
     private String original;
     String regex;

@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
  * For example:
  * [{"id":"305fcb40-ebac-4d99-b98b-52473da23410","action":"encrypt","ffs_name":"ALPHANUM_SSN","timestamp":"2021-09-13T16:20:35.671644Z","count":1}, ...]
  */
-public class FPETransactions {
+class FPETransactions {
     private boolean verbose= true;
     private String jsonStr;    
     private Gson gson;
