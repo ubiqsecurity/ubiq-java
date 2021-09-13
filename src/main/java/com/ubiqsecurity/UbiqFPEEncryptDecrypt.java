@@ -53,7 +53,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     
 
     /**
-     * Destructor runs when object is going away. Clears the caches, stops 
+     * Runs when object is going away. Clears the caches, stops 
      * scheduler, and runs through any remaining bills left in the transaction list.
      *
      */    
@@ -342,7 +342,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     *   
     */               
     public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak) 
-        throws IllegalStateException, InvalidCipherTextException {
+        throws IllegalStateException  {
             if (verbose) System.out.println("\nEncrypting PlainText: " + PlainText);
             String convertedToRadix = "";
             String cipher = "";
@@ -351,7 +351,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             long twkmax= 0;
             
             // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
-            if (ffs == null) {
+            if (ffs == null) {   
                 ffs = new FFS(this.ubiqWebServices, ffs_name);
             }
             
@@ -475,7 +475,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     *   
     */                
     public String decryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String CipherText, byte[] tweak) 
-        throws IllegalStateException, InvalidCipherTextException {
+        throws IllegalStateException {
             String PlainText = "";
             String restoredFromRadix = "";
             String restoredPlainText = "";

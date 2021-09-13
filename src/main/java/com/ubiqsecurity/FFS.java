@@ -20,11 +20,14 @@ class FFS  {
     private boolean fpe_definable;
     public LoadingCache<String, FFS_Record> FFSCache;
     
-
-
-
     
-    
+    /**
+     * FFS constructor
+     *
+     * @param ubiqWebServices   used to specify the webservice object
+     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
+     *
+     */        
     public FFS(UbiqWebServices ubiqWebServices, String ffs_name) {
         
         //create a cache for FFS based on the <encryption_algorithm>-<name>
@@ -41,13 +44,24 @@ class FFS  {
          });
     }
     
-    // clear the cache entirely
+    
+    /**
+    * Clears the FFS cache 
+    *        
+    */              
     public void invalidateAllCache() {
         FFSCache.invalidateAll(); 
     }
     
     
-    // called when FFS is not in cache and need to make remote call
+    /**
+     * Called when FFS data is not in cache and need to make remote call to the server
+     *
+     * @param ubiqWebServices   used to specify the webservice object
+     * @param cachingKey  Format <AccessKeyId>-<FFS Name> used as the record locator 
+     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
+     *
+     */    
     private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String cachingKey, String ffs_name) {
 
         if (verbose) System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
@@ -55,12 +69,10 @@ class FFS  {
         FFSRecordResponse ffsRecordResponse;
         ffsRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name);
         
-
         String jsonStr= "{}";                
         Gson gson = new Gson();        
         FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);        
          
-
         if (ffsRecordResponse.EncryptionAlgorithm == null) {
             if (verbose) System.out.println("Missing encryption_algorithm in FFS definition.");
         } else {
@@ -149,7 +161,9 @@ class FFS  {
 
 
 
-
+/**
+ * Server response elements of the JSON record for the FFS data
+ */
 class FFSRecordResponse {
     @SerializedName("encryption_algorithm")
     String EncryptionAlgorithm;
@@ -203,7 +217,9 @@ class FFSRecordResponse {
 }
 
 
-
+/**
+ * Representation of the JSON record for the FFS data
+ */
 class FFS_Record {
     private String encryption_algorithm;   //e.g. FF1 or FF3_1
     private String name;   //e.g."SSN",
@@ -221,8 +237,6 @@ class FFS_Record {
     private long  tweak_max_len;
     private String Tweak;
 
-
-    
 	
 	public String getAlgorithm() {
 		return encryption_algorithm;

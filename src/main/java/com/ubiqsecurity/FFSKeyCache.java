@@ -7,17 +7,26 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
- 
 import com.google.gson.annotations.SerializedName;
 
+
+
+/**
+ * Caches key information to minimize access to the server. 
+ */
 class FFSKeyCache  {
     private boolean verbose= false;
     public LoadingCache<String, FFS_KeyRecord> FFSKeyCache;
     
 
-
-
-
+    /**
+     * FFSKeyCache constructor
+     *
+     * @param ubiqWebServices   used to specify the webservice object
+     * @param ffs  The FFS record model 
+     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
+     *
+     */    
     public FFSKeyCache(UbiqWebServices ubiqWebServices, FFS_Record ffs, String ffs_name) {
         
         //create a cache for FFS based on the <encryption_algorithm>-<name>
@@ -35,19 +44,29 @@ class FFSKeyCache  {
     }
 
 
-    // clear the cache entirely
+    /**
+    * Clears the encryption key cache 
+    *        
+    */              
     public void invalidateAllCache() {
         FFSKeyCache.invalidateAll(); 
     }
 
     
-    
-    // called when Key data is not in cache and need to make remote call
+ 
+    /**
+     * Called when Key data is not in cache and need to make remote call to the server
+     *
+     * @param ubiqWebServices   used to specify the webservice object
+     * @param cachingKey  Format <AccessKeyId>-<FFS Name> used as the record locator 
+     * @param ffs  The FFS record model 
+     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
+     *
+     */    
     private  FFS_KeyRecord getFFSKeyFromCloudAPI(UbiqWebServices ubiqWebServices, String cachingKey, FFS_Record ffs, String ffs_name) {
         FPEKeyResponse ffsKeyRecordResponse;
         
         if (verbose) System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSKeyFromCloudAPI for caching key: " + cachingKey);
-        
         
         int key_number_loc= cachingKey.lastIndexOf("-key_number=");
         if (key_number_loc > 0 ) {
@@ -81,7 +100,9 @@ class FFSKeyCache  {
 
 
 
-
+/**
+ * Representation of the JSON record for the key data
+ */
 class FFS_KeyRecord {
 
     String EncryptedPrivateKey;
