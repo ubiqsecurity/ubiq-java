@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
 
 class FFSKeyCache  {
-    private boolean verbose= true;
+    private boolean verbose= false;
     public LoadingCache<String, FFS_KeyRecord> FFSKeyCache;
     
 

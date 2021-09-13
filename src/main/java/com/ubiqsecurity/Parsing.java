@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
  * and apply masking based on an accompanied regex.
  */
 class Parsing implements AutoCloseable  {
-    private boolean verbose= true;
+    private boolean verbose= false;
     private String trimmed_characters;  // Preallocated and filled with char[0] from input characterset.  Should be same length as input string
     private String empty_formatted_output; // Preallocated and filled with char[0] from OUTPUT characterset, Should be same length as input string
 

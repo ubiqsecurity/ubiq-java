@@ -66,7 +66,7 @@ import java.util.TimeZone;
 
 
 class UbiqWebServices {
-    private boolean verbose= true;
+    private boolean verbose= false;
     private final String applicationJson = "application/json";
     private final String restApiRoot = "api/v0";
 
@@ -170,8 +170,8 @@ class UbiqWebServices {
         String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()));
         String urlString = String.format("%s/%s/ffs?%s", this.baseUrl, this.restApiRoot, params);
 
-if (verbose) System.out.println("\n    urlString: " + urlString + "\n");
-if (verbose) System.out.println("\n    params: " + params + "\n");
+        if (verbose) System.out.println("\n    urlString: " + urlString + "\n");
+        if (verbose) System.out.println("\n    params: " + params + "\n");
 
         try {
             HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, params, jsonRequest,
@@ -200,12 +200,8 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
 
     FPEKeyResponse getFPEEncryptionKey(FFS_Record ffs, String ffs_name) {
         String jsonRequest="";
-                                // TODO: NEED TO REMOVE THE key_number=%d parameter here.
-                                // But continue to pass it in with getFPEDecryptionKey(). We will get the value from the key-encoded byte in the cipher string.
-        //String params = String.format("ffs_name=%s&papi=%s&key_number=%d", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()), key_number);
         String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()));
         String urlString = String.format("%s/%s/fpe/key?%s", this.baseUrl, this.restApiRoot, params);
-        //System.out.println("getFPEEncryptionKey params: " + params);
         
         try {
             HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, params, jsonRequest,
@@ -221,8 +217,6 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
             FPEKeyResponse encryptionKeyResponse =
                     gson.fromJson(jsonResponse, FPEKeyResponse.class);
                         
-            //ffs.setCurrent_key(encryptionKeyResponse.KeyNumber); 
-
             return encryptionKeyResponse;
         } catch (Exception ex) {
             System.out.println(String.format("getFPEEncryptionKey exception: %s", ex.getMessage()));
@@ -236,14 +230,13 @@ if (verbose) System.out.println("\n    params: " + params + "\n");
         String jsonRequest="";
         String params = String.format("ffs_name=%s&papi=%s&key_number=%d", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()), key_number);
         String urlString = String.format("%s/%s/fpe/key?%s", this.baseUrl, this.restApiRoot, params);
-System.out.println("getFPEDecryptionKey  params: " + params);
+        if (verbose) System.out.println("getFPEDecryptionKey  params: " + params);
         try {
             HttpRequest signedHttpRequest =  buildSignedHttpRequest("GET", urlString, params, jsonRequest,
                 this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
             // submit HTTP request + expect HTTP response w/ status 'OK' (200)
             String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
-            
             //if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");  
 
             // deserialize the JSON response to POJO
@@ -369,14 +362,12 @@ System.out.println("getFPEDecryptionKey  params: " + params);
             IOException {
 
         URL url = new URL(urlString);
-//System.out.println("buildSignedHttpRequest    urlString: " + urlString);
         BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofString(jsonRequest);
         Builder builder = HttpRequest.newBuilder();
         builder.uri(URI.create(urlString));
         builder.method(httpMethod, bodyPublisher);
 
         Map<String, String> headerFields = new HashMap<String, String>();
-//System.out.println("String.valueOf(bodyPublisher.contentLength()= " + String.valueOf(bodyPublisher.contentLength()));
         headerFields.put("Content-Length", String.valueOf(bodyPublisher.contentLength()));
         headerFields.put("Content-Type", this.applicationJson);
         headerFields.put("Accept", this.applicationJson);
@@ -396,7 +387,6 @@ System.out.println("getFPEDecryptionKey  params: " + params);
         } else {
             requestTarget = buildRequestTarget(httpMethod, url);
         }
-//System.out.println("requestTarget: " + requestTarget);
         String signature = buildSignature(headerFields, unixTimeString, requestTarget, publicAccessKey,
                 secretSigningKey);
         headerFields.put("Signature", signature);
@@ -405,17 +395,9 @@ System.out.println("getFPEDecryptionKey  params: " + params);
         headerFields.remove("Content-Length");
         headerFields.remove("Host");
 
-
-// System.out.println("\n#######headerFields#######");
-// headerFields.entrySet().forEach( entry -> {
-//     System.out.println( entry.getKey() + " => " + entry.getValue() );
-// });
-// System.out.println("\n");
-
         for (String fieldName : headerFields.keySet()) {
             builder.header(fieldName, headerFields.get(fieldName));
         }
-//System.out.println("signature= " + signature);
 
         HttpRequest httpRequest = builder.build();      
         return httpRequest;
@@ -484,9 +466,6 @@ System.out.println("getFPEDecryptionKey  params: " + params);
             throws IOException, InterruptedException {
         HttpClient httpClient = HttpClient.newBuilder().build();
         
-System.out.println("httpRequest= " + httpRequest);
-//System.out.println("BodyHandlers.ofString()= " + BodyHandlers.ofString());
-        
         HttpResponse<String> httpResponse = httpClient.send(httpRequest, BodyHandlers.ofString());
 
         String responseString = httpResponse.body();
@@ -519,9 +498,6 @@ System.out.println("httpRequest= " + httpRequest);
 
         MessageDigest messageDigest = MessageDigest.getInstance("SHA-512");
         byte[] hashBytes = messageDigest.digest(jsonRequestBytes);
-// StringBuilder sb = new StringBuilder(hashBytes.length * 2);
-// for(byte b: hashBytes) sb.append(String.format("%02x-", b));
-// System.out.println(sb.toString());
    
         return "SHA-512=" + Base64.getEncoder().encodeToString(hashBytes);
     }
@@ -530,35 +506,11 @@ System.out.println("httpRequest= " + httpRequest);
             String publicAccessKey, String secretSigningKey) throws IOException, NoSuchAlgorithmException, InvalidKeyException {
 
         try (ByteArrayOutputStream hashStream = new ByteArrayOutputStream()) {
-        
-        
-// Date date = new Date();
-// TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
-// SimpleDateFormat DateFor = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss ");
-// String stringDate= DateFor.format(date) + "GMT";
-// System.out.println(stringDate);
-// Sun, 22 Aug 2021 21:01:39 GMT  here
-// Sun, 22 Aug 2021 20:24:11 GMT  unix
-        
-// System.out.println("\n#########buildSignature");
-// System.out.println("(created): " + unixTimeString);
-// System.out.println("(request-target): " + requestTarget);
-// System.out.println("Content-Type: " + headerFields.get("Content-Type"));
-// System.out.println("Digest: " + headerFields.get("Digest"));
-// System.out.println("Host: " + headerFields.get("Host"));
-        
-        
-        
             writeHashableBytes(hashStream, "(created)", unixTimeString);
             writeHashableBytes(hashStream, "(request-target)", requestTarget);
             writeHashableBytes(hashStream, "Content-Type", headerFields.get("Content-Type"));
             writeHashableBytes(hashStream, "Digest", headerFields.get("Digest"));
             writeHashableBytes(hashStream, "Host", headerFields.get("Host"));
-
-
-
-
-
 
             final String HMAC_SHA512 = "HmacSHA512";
 

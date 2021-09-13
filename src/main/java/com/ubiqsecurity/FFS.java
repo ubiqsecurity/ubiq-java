@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
 
 class FFS  {
-    private boolean verbose= true;
+    private boolean verbose= false;
     private String encryption_algorithm;   //e.g. FF1 or FF3_1
     private String name;   //e.g."SSN",
     private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",

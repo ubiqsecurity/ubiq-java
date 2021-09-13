@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
  * [{"id":"305fcb40-ebac-4d99-b98b-52473da23410","action":"encrypt","ffs_name":"ALPHANUM_SSN","timestamp":"2021-09-13T16:20:35.671644Z","count":1}, ...]
  */
 class FPETransactions {
-    private boolean verbose= true;
+    private boolean verbose= false;
     private String jsonStr;    
     private Gson gson;
     private ArrayList<FPETransactionsRecord> Bills;
@@ -56,29 +56,29 @@ class FPETransactions {
         FPETransactions bill= this;
         
         String payload= bill.getTransactionAsJSON();
-        System.out.println("1) payload=" + payload);
+        if (verbose) System.out.println("1) payload=" + payload);
         String lastItemIDToProcess= bill.getLastItemInList();
         
         FPEBillingResponse fpeBillingResponse;
         fpeBillingResponse= ubiqWebServices.sendBilling(payload);
         if (fpeBillingResponse.status == 201) {
             // all submitted records have been processed by backend so OK to clear the local list
-            System.out.println("Payload successfully received and processed by backend.");
+            if (verbose) System.out.println("Payload successfully received and processed by backend.");
             bill.deleteBillableItems(lastItemIDToProcess);
         } else {
-            System.out.println("WARNING: Backend stopped processing after UUID:"  + fpeBillingResponse.last_valid.id);
+            if (verbose) System.out.println("WARNING: Backend stopped processing after UUID:"  + fpeBillingResponse.last_valid.id);
             
             // delete our local list up to and including the last record processed by the backend
             String newTopRecord= bill.deleteBillableItems(fpeBillingResponse.last_valid.id);
             payload= bill.getTransactionAsJSON();
-            System.out.println("2) payload=" + payload); 
+            if (verbose) System.out.println("2) payload=" + payload); 
             
             // move the bad record to the end of the list so it won't block the next billing cycle (in case it was a bad record)
             if (newTopRecord.equals("") == false) {
                 bill.deprioritizeBadBillingItem(newTopRecord);
                 
                 payload= bill.getTransactionAsJSON();
-                System.out.println("3) payload=" + payload); 
+                if (verbose) System.out.println("3) payload=" + payload); 
             }
         }
 
