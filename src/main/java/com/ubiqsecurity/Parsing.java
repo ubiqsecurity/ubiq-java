@@ -7,15 +7,14 @@ import java.util.regex.Matcher;
  
 
 /**
- * Algorithms to pattern-match encryptable portions of a string
- * and apply masking based on an accompanied regex.
+ * Algorithms to parse and build strings based on a given set
+ * of input characters and passthrough characters
  */
 class Parsing implements AutoCloseable  {
     private boolean verbose= false;
     private String trimmed_characters;  // Preallocated and filled with char[0] from input characterset.  Should be same length as input string
     private String empty_formatted_output; // Preallocated and filled with char[0] from OUTPUT characterset, Should be same length as input string
 
-    
  
     /**
      * Constructor assumes default redaction Symbol
@@ -29,22 +28,36 @@ class Parsing implements AutoCloseable  {
     }
     
     
+    /**
+     * Returns the current trimmed_characters value 
+     *
+     * @return    the trimmed_characters 
+     */        
     public String get_trimmed_characters() {
         return this.trimmed_characters;
     }
 
 
+    /**
+     * Returns the current empty_formatted_output value 
+     *
+     * @return    the empty_formatted_output 
+     */        
     public String get_empty_formatted_output() {
         return this.empty_formatted_output;
     }
 
 
+    /**
+     * Performs any wrapup when object is destroyed 
+     *
+     */        
     public void close() {
 
     }
 
 
-     /**
+    /**
      * Append a character at end of a String.
      *
      *
@@ -61,7 +74,7 @@ class Parsing implements AutoCloseable  {
     
 
     
-     /**
+    /**
      * Replaces a character at a position in a String.
      *
      * Convenience function returns String with replaced char 
@@ -80,7 +93,7 @@ class Parsing implements AutoCloseable  {
     }
     
     
-     /**
+    /**
      * Creates a String of a specified size filled with a desired character string.
      *
      * @param stringLength the desired String length
@@ -89,52 +102,48 @@ class Parsing implements AutoCloseable  {
      * @return    the new String  
      */    
     public static String createString(int stringLength, String strCharacter){
-        
         StringBuilder sbString = new StringBuilder(stringLength);
         
         for(int i=0; i < stringLength; i++){
             sbString.append(strCharacter);
         }
-        
         return sbString.toString();
     }
     
     
         
 
+    /**
+     * Performs parsing of a string based on an input character set and
+     * applies the passthrough characters
+     *
+     * @param input_string the String to parse
+     * @param input_character_set the set of characters for the input radix
+     * @param passthrough_character_set the characters that should be allowed to passthrough
+     *
+     * @return    the new String  
+     */    
     public int ubiq_platform_efpe_parsing_parse_input(
-        final String input_string, // Null terminated
-        final String input_character_set, // Null terminated
-        final String passthrough_character_set // Null terminated
+        final String input_string, 
+        final String input_character_set, 
+        final String passthrough_character_set 
       )
       {
-        
-        
         int i = 0;
         int err = 0;
         char ch = '0';
         int trimmedSize = 0;
-        //String startingtrimmed_characters= ""; 
-        
-        
+
         while ((i < input_string.length()) && (err ==0)) {
             ch = input_string.charAt(i);
-  
-            // Print current character
-            //System.out.print(ch + " ");
-            
+    
             // If the input string matches a passthrough character, copy to empty formatted output string
             if ( (passthrough_character_set!= null) && (passthrough_character_set.indexOf(ch) != -1) ) {
-                //System.out.print("Found a passthrough character: " + ch);
                 this.empty_formatted_output = replaceChar(this.empty_formatted_output, ch, i);
             }
             // If the string is in the input character set, copy to trimmed characters
             else if (input_character_set.indexOf(ch) != -1) {
-            
-                //this.trimmed_characters
-                //startingtrimmed_characters = appendChar(startingtrimmed_characters, ch);
                 this.trimmed_characters = replaceChar(this.trimmed_characters, ch, trimmedSize);
-                
                 trimmedSize++;
             }
             else {
@@ -144,27 +153,14 @@ class Parsing implements AutoCloseable  {
                 if (verbose) System.out.println("        passthrough_character_set:  " + passthrough_character_set);
                 err = -1;
             }
-            
-            
             i++;
         }
-        
-        
-        // now that we have a set of trimmed characters, pack the end of the string with the
-        // original trimmed characters.
-        
+
         // Trimmed may be shorter than input so make sure to resize
         this.trimmed_characters = this.trimmed_characters.substring(0, trimmedSize);
-        
 
         return err;
       }
-
-
-
-
-
-    
  
     
     

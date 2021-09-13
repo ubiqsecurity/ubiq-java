@@ -70,15 +70,20 @@ class FPETransactions {
             
             // delete our local list up to and including the last record processed by the backend
             String newTopRecord= bill.deleteBillableItems(fpeBillingResponse.last_valid.id);
-            payload= bill.getTransactionAsJSON();
-            if (verbose) System.out.println("2) payload=" + payload); 
+            
+            if (verbose) {
+                payload= bill.getTransactionAsJSON();
+                System.out.println("2) payload=" + payload); 
+            }
             
             // move the bad record to the end of the list so it won't block the next billing cycle (in case it was a bad record)
             if (newTopRecord.equals("") == false) {
                 bill.deprioritizeBadBillingItem(newTopRecord);
                 
-                payload= bill.getTransactionAsJSON();
-                if (verbose) System.out.println("3) payload=" + payload); 
+                if (verbose) {
+                    payload= bill.getTransactionAsJSON();
+                    System.out.println("3) payload=" + payload); 
+                }
             }
         }
 
@@ -98,9 +103,7 @@ class FPETransactions {
         ListeningExecutorService lExecService = MoreExecutors.listeningDecorator(execService);
 
         ListenableFuture<Integer> asyncTask = lExecService.submit(() -> {
-            //TimeUnit.MILLISECONDS.sleep(500); // long running task
             bill.processCurrentBills(ubiqWebServices);
-            
             return 0;
         });    
     }
@@ -128,7 +131,6 @@ class FPETransactions {
         Bills.add(transaction); // Adding it to the list
         
         // Since part of the list may be in process of being deleted, identify the last unprocessed item
-        //if (verbose) System.out.println("       oldestUnprocessedItemID: " + oldestUnprocessedItemID);
         if (oldestUnprocessedItemID.equals("") == true) {
             oldestUnprocessedItemID= id;
             if (verbose) System.out.println("       SET unprocessed record: " + id);
@@ -252,7 +254,7 @@ class FPETransactions {
                     break;
                 } 
 
-                //if (verbose) System.out.println("   Deleting t.id: " + t.id);
+                if (verbose) System.out.println("   Deleting t.id: " + t.id);
                 // delete the record
                 itr.remove();
 
@@ -272,7 +274,6 @@ class FPETransactions {
             while (itr.hasNext()) {
                 FPETransactionsRecord t = itr.next();
             
-            
                 if (id.equals(t.id) == true) {
                     idExists= true;
                     if (verbose) System.out.println("Found: " + t.id);
@@ -288,7 +289,7 @@ class FPETransactions {
             while (itr.hasNext())
             {
                 FPETransactionsRecord t = itr.next();
-                //if (verbose) System.out.println("   Deleting t.id: " + t.id);
+                if (verbose) System.out.println("   Deleting t.id: " + t.id);
             
                 // delete the record
                 itr.remove();
