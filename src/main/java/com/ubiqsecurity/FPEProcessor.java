@@ -16,10 +16,11 @@ class FPEProcessor extends AbstractScheduledService
     FPETransactions bill;
 
 
-    public FPEProcessor (UbiqFPEEncryptDecrypt fpeEncryptDecrypt, UbiqWebServices ubiqWebServices, FPETransactions bill) {
+    public FPEProcessor (UbiqFPEEncryptDecrypt fpeEncryptDecrypt, UbiqWebServices ubiqWebServices, FPETransactions bill, int secondsToProcess) {
         this.fpeEncryptDecrypt= fpeEncryptDecrypt;
         this.ubiqWebServices= ubiqWebServices;
         this.bill= bill;
+        this.secondsToProcess= secondsToProcess;
     }
     
     @Override
@@ -32,9 +33,9 @@ class FPEProcessor extends AbstractScheduledService
         // perform periodic list processing here
         if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ Running: " + new java.util.Date());
         
-        if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ BEFORE processCurrentBills");
+        if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ BEFORE processCurrentBillsAsync");
         bill.processCurrentBillsAsync(ubiqWebServices, bill);
-        if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ AFTER processCurrentBills");
+        if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ AFTER processCurrentBillsAsync");
         
     }
  

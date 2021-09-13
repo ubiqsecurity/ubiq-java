@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.gson.Gson; 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
-
 import java.util.ArrayList;
 import java.util.Iterator; 
 import com.google.common.util.concurrent.*;
@@ -13,11 +12,12 @@ import java.util.concurrent.Executors;
 
 
 
-/*
-JSON format os a billing transaction
-[{“id”: “<GUID>”, "action": "encrypt", "ffs_name": <name>, "timestamp": ISO8601, "count" : number},
-*/
- 
+/**
+ * Processes encrypt decrypt billing transactions based on the JSON format stored in an ArrayList:
+ * [{"id": GUID, "action": encrypt|decrypt, "ffs_name": name, "timestamp": ISO8601, "count" : number}, ...]
+ * For example:
+ * [{"id":"305fcb40-ebac-4d99-b98b-52473da23410","action":"encrypt","ffs_name":"ALPHANUM_SSN","timestamp":"2021-09-13T16:20:35.671644Z","count":1}, ...]
+ */
 public class FPETransactions {
     private boolean verbose= true;
     private String jsonStr;    
@@ -26,19 +26,34 @@ public class FPETransactions {
     private String oldestUnprocessedItemID= "";
 
 
+    /**
+     * Constructs a new list of bills
+     *
+     */    
     public FPETransactions () {
         Bills = new ArrayList<FPETransactionsRecord>();
     }
     
     
     
-    // runs the bill processor and server access at the end before the
-    // UbiqFPEEncryptDecrypt object is terminated
+    /**
+     * Runs the bill processor by reading the bills ArrayList and sending it
+     * as a JSON to the server.
+     * 
+     * If the server returns 201, then all the items in the list that were
+     * processed are deleted. (Newly added items are not deleted as determined
+     * by lastItemIDToProcess.
+     *
+     * If the server has a problem with the list, only the partial list of
+     * items (if any) are deleted from the ArrayList. The record that 
+     * the server had a problem with is moved to the end of the list to 
+     * prevent blocking the processing of the remaining items next time around.
+     *
+     * @param ubiqWebServices   the UbiqWebServices object
+     *
+     */
     public void processCurrentBills(UbiqWebServices ubiqWebServices) {
         FPETransactions bill= this;
-        
-        if (verbose) System.out.println("   IN processCurrentBills");
-        
         
         String payload= bill.getTransactionAsJSON();
         System.out.println("1) payload=" + payload);
@@ -70,7 +85,14 @@ public class FPETransactions {
     }
     
     
-    // runs the bill processor and server access in the background. To be called periodically by FPEProcessor
+    /**
+     * Runs the bill processor asynchronously by calling processCurrentBills() in
+     * a separate thread.
+     * 
+     * @param ubiqWebServices   the UbiqWebServices object
+     * @param bill              the FPETransactions context
+     *
+     */    
     public void processCurrentBillsAsync(UbiqWebServices ubiqWebServices, FPETransactions bill) {
         ExecutorService execService = Executors.newSingleThreadExecutor();
         ListeningExecutorService lExecService = MoreExecutors.listeningDecorator(execService);
@@ -84,7 +106,17 @@ public class FPETransactions {
     }
       
     
-    
+    /**
+     * Call this whenever a new billable item is created. It adds the transaction
+     * to the bills ArrayList
+     * 
+     * @param id        a unique GUID String
+     * @param action    either "encrypt" or "decrypt"
+     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
+     * @param timestamp the timestamp String in ISO8601 format
+     * @param count     the number of transactions of this type
+     *
+     */        
     public void createBillableItem(
         String  id,
         String  action,
@@ -92,23 +124,26 @@ public class FPETransactions {
         String  timestamp,
         int     count) 
     {
-        
         FPETransactionsRecord transaction = new FPETransactionsRecord(id, action, ffs_name, timestamp, count); // Creating a new object
         Bills.add(transaction); // Adding it to the list
         
         // Since part of the list may be in process of being deleted, identify the last unprocessed item
-        if (verbose) System.out.println("       oldestUnprocessedItemID: " + oldestUnprocessedItemID);
+        //if (verbose) System.out.println("       oldestUnprocessedItemID: " + oldestUnprocessedItemID);
         if (oldestUnprocessedItemID.equals("") == true) {
             oldestUnprocessedItemID= id;
             if (verbose) System.out.println("       SET unprocessed record: " + id);
         }
-        
     }  
     
     
-    // converts the current list of billable transactions into JSON
-    // This JSON is a "snapshot" of the actively building ArrayList<FPETransactionsRecord> so anything
-    // added to the ArrayList afterwards is identified by the oldestUnprocessedItemID
+    
+    /**
+     * Converts the current list of billable transactions into JSON
+     * This JSON is a "snapshot" of the actively building ArrayList so anything
+     * added to the ArrayList afterwards is identified by the oldestUnprocessedItemID.
+     *
+     * @return the JSON
+     */            
     public String getTransactionAsJSON() {
         // create the JSON from the list
         String json = new Gson().toJson(Bills);
@@ -116,6 +151,15 @@ public class FPETransactions {
     }
     
     
+    /**
+     * Returns the last bill in the ArrayList. This is useful to get
+     * a current "snapshot" if the billable items that are about to be
+     * sent to the server for processing. If other bills are added to the
+     * list after this point, we'll know to process those on the next
+     * trip to the server.
+     *
+     * @return    the UUID of the last item
+     */                
     public String getLastItemInList() {
         String id= "";
         if (Bills.size() > 0) {
@@ -126,7 +170,13 @@ public class FPETransactions {
     }
     
     
-    // if the server cannot process a record, move it to the end of the local list array so that it doesn't block other transactions
+    /**
+     * if the server cannot process a record, move it to the end of the 
+     * local list array so that it doesn't block other transactions.
+     *
+     * @param id        a GUID of the item to move
+     *
+     */                
     public void deprioritizeBadBillingItem(String id) {
         String  moved_id="";
         String  action="";
@@ -174,13 +224,18 @@ public class FPETransactions {
     
     
     
-    // Deletes all id's UP TO AND INCLUDING the specified id  
-    // Call this when the backend failed to delete the billable items up to id 
+    /**
+     * Deletes all id's UP TO AND INCLUDING the specified id 
+     * Call this with an id when the backend failed to delete the billable items up that id.
+     * Otherwise call with empty id to delete all items in list.
+     *
+     * @param id        a GUID of the item to delete
+     *
+     * @return      the id of the top item of the bills ArrayList (if any)
+     */                
     public String deleteBillableItems(String id) {
         String newTopRecord= "";
-        
         Iterator<FPETransactionsRecord> itr = Bills.iterator();
-        
         
         // if id is blank, then attempt to delete all items in list
         if (id == "") {
@@ -198,7 +253,6 @@ public class FPETransactions {
                 } 
 
                 //if (verbose) System.out.println("   Deleting t.id: " + t.id);
-            
                 // delete the record
                 itr.remove();
 
@@ -213,7 +267,6 @@ public class FPETransactions {
         else {
             if (verbose) System.out.println("Deleting all items up to and including...  " + id);
        
-        
             //make sure that the current list has the id present before we start deleting records
             boolean idExists = false;
             while (itr.hasNext()) {
@@ -230,13 +283,11 @@ public class FPETransactions {
                 return "";
             }
         
-        
             // delete each record up to and including the id
             itr = Bills.iterator();
             while (itr.hasNext())
             {
                 FPETransactionsRecord t = itr.next();
-            
                 //if (verbose) System.out.println("   Deleting t.id: " + t.id);
             
                 // delete the record
@@ -261,37 +312,34 @@ public class FPETransactions {
                     } 
                     break;
                 }
-
             }
         }    
-            
         return newTopRecord;
     }  
-     
-
-
-     
-        
-
 }
 
 
 
+/**
+ * Representation of the JSON record that is sent to the server for each action
+ */
 class FPETransactionsRecord {
-
     String  id;
     String  action;
     String  ffs_name;
     String  timestamp;
     int     count;
     
-    
-    public FPETransactionsRecord(
-        String  id,
-        String  action,
-        String  ffs_name,
-        String  timestamp,
-        int     count) 
+    /**
+     * Constructs a new transaction record.
+     *
+     * @param id        a unique GUID String
+     * @param action    either "encrypt" or "decrypt"
+     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
+     * @param timestamp the timestamp String in ISO8601 format
+     * @param count     the number of transactions of this type
+     */    
+    public FPETransactionsRecord(String id, String action, String ffs_name, String timestamp, int count) 
     {
         this.id = id;
         this.action = action;
@@ -300,51 +348,40 @@ class FPETransactionsRecord {
         this.count = count;
     }
     
-    
+
+    /**
+     * Setters and Getters
+     */
 	public String getid() {
 		return id;
 	}
 	public void setid(String id) {
 		this.id = id;
 	}    
-    
 	public String getaction() {
 		return action;
 	}
 	public void setaction(String action) {
 		this.action = action;
 	}    
-
 	public String getffs_name() {
 		return ffs_name;
 	}
 	public void setffs_name(String ffs_name) {
 		this.ffs_name = ffs_name;
 	}    
-
 	public String gettimestamp() {
 		return timestamp;
 	}
 	public void settimestamp(String timestamp) {
 		this.timestamp = timestamp;
 	}    
-    
 	public int getcount() {
 		return count;
 	}
 	public void setcount(int count) {
 		this.count = count;
 	}    
-	
-	
-	
-	@Override
-    public String toString() {
-        return "FPETransactionsRecord [id=" + id + ", action=" + action + ", ffs_name=" + ffs_name + ", timestamp=" + timestamp + ", count=" + count + "]";
-    }
-    
-	
-	// ArrayList<FPETransactionsRecord> items;
 	
 } 
 

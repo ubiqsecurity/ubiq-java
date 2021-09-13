@@ -20,7 +20,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private boolean verbose= false;
     private int usesRequested;
     private UbiqWebServices ubiqWebServices; // null when closed
-    private int useCount;
     private EncryptionKeyResponse encryptionKey;
     private DecryptionKeyResponse decryptionKey;
     private AesGcmBlockCipher aesGcmBlockCipher;
@@ -50,7 +49,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         decryptCount = 0;
         bill = new FPETransactions();
         
-        executor = new FPEProcessor(this, ubiqWebServices, bill);
+        executor = new FPEProcessor(this, ubiqWebServices, bill, 1);
         executor.startAsync();
         //Thread.sleep(10000);
         
@@ -60,23 +59,12 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     
 
     public void close() {
-        if (this.ubiqWebServices != null) {
-            if (this.encryptionKey != null) {
-                // if key was used less times than requested, notify the server.
-                if (this.useCount < this.usesRequested) {
-// TODO - Does not work. Need to update this call since KeyFingerprint and EncryptionSession is not provided.
-//                     System.out.println(String.format("UbiqFPEEncryptDecrypt.close: reporting key usage: %d of %d", this.useCount,
-//                             this.usesRequested));
-//                     this.ubiqWebServices.updateEncryptionKeyUsage(this.useCount, this.usesRequested,
-//                             this.encryptionKey.KeyFingerprint, this.encryptionKey.EncryptionSession);
-                }
-            }
-            
+        if (this.ubiqWebServices != null) {            
             if (verbose) System.out.println("+++++++ IN close()" ); 
             
             clearKeyCache();
             
-            // this stops any remaining backround billing processing since we'll make an explicit final call now
+            // this stops any remaining background billing processing since we'll make an explicit final call now
             executor.stopAsync();
             
             
@@ -96,7 +84,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     
                     
                     
-            // Perform a final bill  processing for items that may not have been done by the async executor        
+            // Perform a final bill  processing for items that may not have been done by the async executor   
+            System.out.println("Running processCurrentBills...");     
             bill.processCurrentBills(ubiqWebServices);        
             
             
@@ -158,14 +147,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
     
 
-
-/*
-
-[{“id”: “<GUID>”, "action": "encrypt", "ffs_name": <name>, "timestamp": ISO8601, "count" : number},
-
-{“id”: “<GUID>”, "action": "decrypt", "ffs_name": <name>, "timestamp": ISO8601, "count": number }]
-
-*/    
 
 
 
@@ -382,17 +363,12 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
  
     public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak) 
         throws IllegalStateException, InvalidCipherTextException {
-            
-            //if (verbose) System.out.println("\n@@@@@@@@@@ STARTING ENCRYPT @@@@@@@@@@");
             if (verbose) System.out.println("\nEncrypting PlainText: " + PlainText);
-            
             String convertedToRadix = "";
             String cipher = "";
             String withInsertion = "";
             long twkmin= 0;
             long twkmax= 0;
-            
-            
             
             // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
             if (ffs == null) {
@@ -411,12 +387,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     throw new IllegalStateException("encryption in progress");
                 } 
                 
-
                 if (ffsKeyCache == null) {
                         ffsKeyCache = new FFSKeyCache(this.ubiqWebServices, FFScaching, ffs_name);
                 }
                 FFS_KeyRecord FFSKeycaching = ffsKeyCache.FFSKeyCache.get(cachingKey);
-                
                 
                 // decrypt the datakey from the keys found in the cache
                 String EncryptedPrivateKey = FFSKeycaching.getEncryptedPrivateKey();
@@ -424,19 +398,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
                 
                 if (verbose) System.out.println("    key bytes = " + printbytes(key));
-
-                
-                // check key 'usage count' against server-specified limit
-                //if (this.useCount > this.encryptionKey.MaxUses) {
-                    //throw new RuntimeException("maximum key uses exceeded:  " + this.useCount);    // TODO - Uncomment this line in production to allow checking for usage limit (2)
-                //}
-
-                
-                this.useCount++;
-        
                 
                 ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
-
 
                 convertedToRadix = str_convert_radix(this.trimmed, FFScaching.getInput_character_set(), base2_charset);
                 if (verbose) System.out.println("    converted to base2= " + convertedToRadix);
@@ -454,7 +417,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 if (FFScaching.getTweak_source().equals("constant")) {
                     // these have been explicitly set based on the FFS model
                     if (verbose) System.out.println("    Using tweak from FFS record= " + FFScaching.getTweak());  
-                    //if (verbose) System.out.println("                          Bytes= " + Base64.getDecoder().decode(FFScaching.getTweak()) );
                     twkmin= FFScaching.getMin_tweak_length();
                     twkmax= FFScaching.getMax_tweak_length();
                     tweak= Base64.getDecoder().decode(FFScaching.getTweak());
@@ -466,11 +428,9 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     twkmin= FFScaching.getMin_tweak_length();
                     twkmax= FFScaching.getMax_tweak_length();
                 }
-                 
                
                 final int inputradix = base2_charset.length();
                 final int onputradix = FFScaching.getOutput_character_set().length();
-
         
                 String encryption_algorithm = FFScaching.getAlgorithm();
                 switch(encryption_algorithm) {
@@ -490,24 +450,19 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                         throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
                 }
                 
-                
-                
                 convertedToRadix = str_convert_radix(cipher, base2_charset, FFScaching.getOutput_character_set());
                 if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
                 if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
                 merge_to_formatted_output(FFScaching, convertedToRadix, FFScaching.getOutput_character_set());
                 if (verbose) System.out.println("    encrypted and formatted= " + this.formatted_dest);
                 
-                
                 // Since ct_trimmed may not include empty leading characters, Need to walk through the formated_dest_buf and find
                 // first non-pass through character.  Could be char 0 or MSB with some actual CT
                 int firstNonPassthrough= findFirstIndexExclusive(this.formatted_dest, FFScaching.getPassthrough_character_set());
                 if (verbose) System.out.println("   firstNonPassthrough= " + firstNonPassthrough);
                 
-                
                 int key_number = FFSKeycaching.getKeyNumber();
                 if (verbose) System.out.println("   KeyNumber= " + key_number);
-                
                 
                 // encode the key into the cipher
                 this.formatted_dest = encode_keynum(FFScaching, key_number, this.formatted_dest, firstNonPassthrough);
@@ -548,11 +503,9 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             long twkmin= 0;
             long twkmax= 0;
             
-            
             //System.out.println("\n@@@@@@@@@@ STARTING DECRYPT @@@@@@@@@@");
             if (verbose) System.out.println("\nDecrypting CipherText: " + CipherText);
             
-        
             // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
             if (ffs == null) {
                 ffs = new FFS(this.ubiqWebServices, ffs_name);
@@ -569,26 +522,20 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 } else if (this.aesGcmBlockCipher != null) {
                     throw new IllegalStateException("decryption in progress");
                 }
-                                    
-                
                 
                 ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
                 if (verbose) System.out.println("    this.trimmed= " + this.trimmed);
                 
-                
                 int key_number = decode_keynum(FFScaching, this.trimmed, 0);
                 if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
 
-               
                 if (ffsKeyCache == null) {
                     ffsKeyCache = new FFSKeyCache(this.ubiqWebServices, FFScaching, ffs_name);
                 }
                 
-                
                 cachingKey = ubiqCredentials.getAccessKeyId() + "-" + ffs_name + "-key_number=" + String.valueOf(key_number); 
                 if (verbose) System.out.println("    cachingKey= " + cachingKey); 
                 FFS_KeyRecord FFSKeycaching = ffsKeyCache.FFSKeyCache.get(cachingKey);
-                
                 
                 // decrypt the datakey from the keys found in the cache
                 String EncryptedPrivateKey = FFSKeycaching.getEncryptedPrivateKey();
@@ -596,20 +543,15 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
                 
                 if (verbose) System.out.println("    key bytes = " +  printbytes(key));
-
-                    
                                     
                 restoredFromRadix = str_convert_radix(this.trimmed, FFScaching.getOutput_character_set(), base2_charset);
                 if (verbose) System.out.println("    converted to base2= " + restoredFromRadix);
-                
-                
                 
                 double padlen = Math.ceil( Math.max(FF1_base2_min_length, log2(  FFScaching.getInput_character_set().length()  ) * this.trimmed.length()    ) );
                 if (verbose) System.out.println("    padlen= " + padlen);   
                 
                 restoredFromRadix = pad_text(restoredFromRadix, padlen);
                 if (verbose) System.out.println("    restoredFromRadix= " + restoredFromRadix);  
-                
                 
                 // determine the tweak. Use the one in the FFS, if present, or default to the one user passed in as a parameter
                 if (FFScaching.getTweak_source().equals("constant")) {
@@ -628,11 +570,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     twkmax= FFScaching.getMax_tweak_length();
                 }
 
-                
-
                 final int inputradix = base2_charset.length();
                 final int onputradix = FFScaching.getOutput_character_set().length();
-                
                 
                 // decrypt based on the specified cipher
                 String encryption_algorithm = FFScaching.getAlgorithm();
@@ -657,7 +596,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
                 merge_to_formatted_output(FFScaching, restoredFromRadix, FFScaching.getInput_character_set());
                 if (verbose) System.out.println("    decrypted and formatted= " + this.formatted_dest);
-                
                 
                 // create the billing record
                 UUID uuid = UUID.randomUUID();

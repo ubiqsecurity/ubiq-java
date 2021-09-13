@@ -123,8 +123,6 @@ class UbiqWebServices {
  
     
     FPEBillingResponse sendBilling(String payload) {
-        //  url: https://koala.ubiqsecurity.com/api/v0/fpe/billing/sxGesRB8KMwqhiy6k7xC2WL%2F
-        //       https://koala.ubiqsecurity.com/api/v0/api/v0/fpe/billing/sxGesRB8KMwqhiy6k7xC2WL%2F POST
         String urlString = String.format("%s/%s/fpe/billing/%s", this.baseUrl, this.restApiRoot, encode(this.ubiqCredentials.getAccessKeyId()));
         if (verbose) System.out.println("\n    sendBilling urlString: " + urlString);
         
@@ -141,12 +139,9 @@ class UbiqWebServices {
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            FPEBillingResponse fpeBillingResponse =
-                    gson.fromJson(jsonResponse, FPEBillingResponse.class);
+            FPEBillingResponse fpeBillingResponse = gson.fromJson(jsonResponse, FPEBillingResponse.class);
                     
-            if (verbose) System.out.println("    fpeBillingResponse.status: " + fpeBillingResponse.status);
-            if (verbose) System.out.println("    fpeBillingResponse.message: " + fpeBillingResponse.message);
-            if (verbose) System.out.println("    fpeBillingResponse.last_valid: " + fpeBillingResponse.last_valid);
+            if (verbose) System.out.println("    status: " + fpeBillingResponse.status + ", message: " + fpeBillingResponse.message + ", last_valid: " + fpeBillingResponse.last_valid);
 
             return fpeBillingResponse;
         } catch (Exception ex) {
