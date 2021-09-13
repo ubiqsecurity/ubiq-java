@@ -33,15 +33,9 @@ class FPEProcessor extends AbstractScheduledService
         if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ Running: " + new java.util.Date());
         
         if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ BEFORE processCurrentBills");
-        //bill.processCurrentBills(ubiqWebServices);
         bill.processCurrentBillsAsync(ubiqWebServices, bill);
         if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ AFTER processCurrentBills");
         
-        int encryptCount= fpeEncryptDecrypt.getEncryptCount();
-        int decryptCount= fpeEncryptDecrypt.getDecryptCount();
-        
-        fpeEncryptDecrypt.decrementEncryptCount(encryptCount);
-        fpeEncryptDecrypt.decrementDecryptCount(decryptCount);
     }
  
     @Override
@@ -56,12 +50,6 @@ class FPEProcessor extends AbstractScheduledService
     protected void shutDown() {
         // perform final list processing here
         if (verbose) System.out.println("--$$$$$$$$$$$$$$$$$ Job terminated at: " + new java.util.Date());
-        
-        int encryptCount= fpeEncryptDecrypt.getEncryptCount();
-        int decryptCount= fpeEncryptDecrypt.getDecryptCount();
-        
-        if (verbose) System.out.println("getEncryptCount(): " + encryptCount);
-        if (verbose) System.out.println("getDecryptCount(): " + decryptCount);
         
     }
 }

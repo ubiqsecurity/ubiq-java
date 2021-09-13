@@ -166,29 +166,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 {“id”: “<GUID>”, "action": "decrypt", "ffs_name": <name>, "timestamp": ISO8601, "count": number }]
 
 */    
-    public void incrementEncryptCount(int count) {
-        encryptCount= encryptCount + count;
-    }
-    
-    public void incrementDecryptCount(int count) {
-        decryptCount= decryptCount + count;
-    }
-    
-    public void decrementEncryptCount(int count) {
-        encryptCount= encryptCount - count;
-    }
-    
-    public void decrementDecryptCount(int count) {
-        decryptCount= decryptCount - count;
-    }
-    
-    public int getEncryptCount() {
-        return encryptCount;
-    }
-    
-    public int getDecryptCount() {
-        return decryptCount;
-    }
+
 
 
     public String printbytes(byte[] bytes) {
@@ -535,7 +513,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 this.formatted_dest = encode_keynum(FFScaching, key_number, this.formatted_dest, firstNonPassthrough);
                 
                 // create the billing record
-                incrementEncryptCount(1);
                 UUID uuid = UUID.randomUUID();
                 String timestamp= Instant.now().toString();
                 bill.createBillableItem(uuid.toString(), "encrypt", FFScaching.getName(), timestamp, 1);
@@ -683,7 +660,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 
                 
                 // create the billing record
-                incrementDecryptCount(1);
                 UUID uuid = UUID.randomUUID();
                 String timestamp= Instant.now().toString();
                 bill.createBillableItem(uuid.toString(), "decrypt", FFScaching.getName(), timestamp, 1);
