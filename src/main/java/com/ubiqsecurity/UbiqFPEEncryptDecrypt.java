@@ -9,20 +9,21 @@ import ubiqsecurity.fpe.Bn;
 import java.util.concurrent.ExecutionException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import java.lang.Math;
-
 import java.io.UnsupportedEncodingException;
 import java.util.Base64;
 import java.util.UUID;
 import java.time.Instant;
 
 
+/**
+ * Provides Format Preserving Encryption capability for a variety of field format models (aka FFS models)
+ * This capability must be enabled and configured with FFS models on a per-user account basis.
+ */
 public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private boolean verbose= false;
-    private int usesRequested;
     private UbiqWebServices ubiqWebServices; // null when closed
     private EncryptionKeyResponse encryptionKey;
     private DecryptionKeyResponse decryptionKey;
-    private AesGcmBlockCipher aesGcmBlockCipher;
     private Gson FFSdata;
     private FFS ffs;
     private String formatted_dest;
@@ -31,143 +32,50 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private int FF1_base2_min_length = 20; // NIST requirement ceil(log2(1000000))
     private FFSKeyCache ffsKeyCache;
     private FPEProcessor executor;
-    private int encryptCount;
-    private int decryptCount;
     private FPETransactions bill;
  
-
-    public UbiqFPEEncryptDecrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
+ 
+    /**
+     * UbiqFPEEncryptDecrypt constructor
+     * Sets up the webservices API, task scheduler, and transaction processor
+     *
+     * @param ubiqCredentials   used to specify the API key credentials of the user
+     *
+     */    
+    public UbiqFPEEncryptDecrypt(UbiqCredentials ubiqCredentials) {
         if (verbose) System.out.println("+++++++ NEW OBJECT UbiqFPEEncryptDecrypt +++++++" ); 
-        
-        
-        this.usesRequested = usesRequested;
         this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
         this.FFSdata = new Gson();
-        
-        // TESTING ONLY--- 
-        encryptCount = 0;
-        decryptCount = 0;
         bill = new FPETransactions();
-        
         executor = new FPEProcessor(ubiqWebServices, bill, 1);
         executor.startAsync();
-        //Thread.sleep(10000);
-        
-        
-        
     }
     
 
+    /**
+     * Destructor runs when object is going away. Clears the caches, stops 
+     * scheduler, and runs through any remaining bills left in the transaction list.
+     *
+     */    
     public void close() {
         if (this.ubiqWebServices != null) {            
-            if (verbose) System.out.println("+++++++ IN close()" ); 
-            
             clearKeyCache();
             
             // this stops any remaining background billing processing since we'll make an explicit final call now
             executor.stopAsync();
-            
-            
-            
-            
-            //bill.getTransactionAsJSON();
-            // TESTING ONLY--- ADD FAKE RECORDS
-//             String timestamp= Instant.now().toString();
-//             bill.createBillableItem("b94a18d6-00df-4233-9c28-3c61eea512d6", "encrypt", "ALPHANUM_SSN", timestamp, 1);
-//             bill.createBillableItem("716365fc-329d-4b27-a285-4016a95867fa", "encrypt", "ALPHANUM_SSN", timestamp, 1);
-//             //bill.createBillableItem("BAD-RECORD", "encrypt", "UNKNOWN_FFS", timestamp, 1);
-//             bill.createBillableItem("d5009ee4-339b-4e3b-a668-a4e276627d6d", "encrypt", "ALPHANUM_SSN", timestamp, 1);
-//             
-//             // TESTING ONLY--- DELETE A RECORD
-//             bill.deleteBillableItems("b94a18d6-00df-4233-9c28-3c61eea512d6");
-                    
-                    
-                    
-                    
+                                
             // Perform a final bill  processing for items that may not have been done by the async executor   
-            System.out.println("Running processCurrentBills...");     
             bill.processCurrentBills(ubiqWebServices);        
-            
-            
-            
-            
-                    
-//             String payload= bill.getTransactionAsJSON();
-//             System.out.println("1) payload=" + payload);
-//             String lastItemIDToProcess= bill.getLastItemInList();
-//             
-//             FPEBillingResponse fpeBillingResponse;
-//             fpeBillingResponse= this.ubiqWebServices.sendBilling(payload);
-//             if (fpeBillingResponse.status == 201) {
-//                 // all submitted records have been processed by backend so OK to clear the local list
-//                 System.out.println("Payload successfully received and processed by backend.");
-//                 bill.deleteBillableItems(lastItemIDToProcess);
-//             } else {
-//                 System.out.println("WARNING: Backend stopped processing after UUID:"  + fpeBillingResponse.last_valid.id);
-//                 
-//                 // delete our local list up to and including the last record processed by the backend
-//                 String newTopRecord= bill.deleteBillableItems(fpeBillingResponse.last_valid.id);
-//                 payload= bill.getTransactionAsJSON();
-//                 System.out.println("2) payload=" + payload); 
-//                 
-//                 // move the bad record to the end of the list so it won't block the next billing cycle (in case it was a bad record)
-//                 if (newTopRecord.equals("") == false) {
-//                     bill.deprioritizeBadBillingItem(newTopRecord);
-//                     
-//                     payload= bill.getTransactionAsJSON();
-//                     System.out.println("3) payload=" + payload); 
-//                 }
-//             }
-            
-            
-            
-            
-            // TESTING ONLY -- DELETE ALL RECORDS UP UNTIL ANY NEW UNPROCESSED ONES
-//             bill.createBillableItem("1117fb22-6004-4603-99b7-0459e6018b6e", "encrypt", "ALPHANUM_SSN", timestamp, 1);
-//             String payload= bill.getTransactionAsJSON();
-//             String lastItemIDToProcess= bill.getLastItemInList();
-//             System.out.println("4) payload=" + payload); 
-//             
-//             bill.deleteBillableItems("");
-//             
-//             payload= bill.getTransactionAsJSON();
-//             lastItemIDToProcess= bill.getLastItemInList();
-//             System.out.println("5) payload=" + payload);    
-//             
-//             bill.deleteBillableItems(""); 
-//             payload= bill.getTransactionAsJSON();  
-//             System.out.println("6) payload=" + payload);   
-                    
-
-
-
             this.ubiqWebServices = null;
-            
         }
     }
-    
-
-
-
-
-    public String printbytes(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[ ");
-        for (byte b : bytes) {
-            sb.append(String.format("0x%02X ", b));
-        }
-        sb.append("]");
-        return sb.toString();
-    }
-
     
 
     /**
-    * Checks if an array of Objects is empty or <code>null</code>.
+    * Checks if an array of Objects is empty or null 
     *
     * @param array  the array to test
-    * @return <code>true</code> if the array is empty or <code>null</code>
-    * @since 2.1
+    * @return true if the array is empty or null 
     */
     public static boolean isEmpty(char[] array) {
       if (array == null || array.length == 0) {
@@ -176,16 +84,16 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       return false;
     }
   
+  
     /**
        * Checks if a String is empty ("") or null.
        *
        * @param str  the String to check, may be null
-       * @return <code>true</code> if the String is empty or null
+       * @return true if the String is empty or null
        */
     public static boolean isEmpty(String str) {
       return str == null || str.length() == 0;
     }
-
 
 
     /**
@@ -195,7 +103,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * @param str  the String to check, may be null
     * @param searchChars  the chars to search for, may be null
     * @return the index of any of the chars, -1 if no match or null input
-    * @since 2.0
     */
     public int findFirstIndexExclusive(String str, String searchChars) {
       if (isEmpty(str) || isEmpty(searchChars)) {
@@ -210,7 +117,17 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
   
       
-      
+    /**
+    * Performs encoding operation within a str at a position. Uses the
+    * output character set found in the model.
+    *
+    * @param ffs  The FFS record model 
+    * @param key_number  The value to be encoded
+    * @param str  The given string to receive the encoding 
+    * @param position  The location within the string to encode 
+    *   
+    * @return the updated string
+    */      
     public String encode_keynum(FFS_Record ffs, int key_number, String str, int position) {
         String buf= "";
         if (position < 0) position = 0;
@@ -231,7 +148,17 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         return buf;
     }
     
-
+    
+    /**
+    * Performs decoding operation of a str at a position. Uses the
+    * output character set found in the model.
+    *
+    * @param ffs  The FFS record model 
+    * @param str  The given string to decode
+    * @param position  The location within the string for the decode 
+    *   
+    * @return the value decoded
+    */      
     public int decode_keynum(FFS_Record ffs, String str, int position) {
         int key_num = 0;
         if (position < 0) position = 0;
@@ -248,14 +175,21 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         return key_num;
     }
 
-
-
-
     
-    
+    /**
+    * Parses a given string using the FFS model. Handles the case where the first chraracter
+    * may be "0". The results of the operation will be recorded in the class variables
+    * "trimmed" which is the new string and "formatted_dest" which is the destination
+    * pattern for the string to be eventually applied to.
+    *
+    * @param ffs  The FFS record model 
+    * @param conversion_direction  Positive (1) means input to output, negative (-1) means output to input
+    * @param source_string  The string to parse 
+    *   
+    */          
     public void ubiq_platform_fpe_string_parse(
         FFS_Record ffs, 
-        long conversion_direction, // Positive (1) means input to output, negative (-1) means output to input
+        long conversion_direction, 
         String source_string)    
     {
         String src_char_set= "";
@@ -286,7 +220,16 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
     
     
-    // merge to formatted output for encrypt
+
+    /**
+    * Merges the given string into the  "formatted_dest" pattern using the 
+    * set of provided characters. 
+    *
+    * @param ffs  The FFS record model 
+    * @param convertedToRadix  The string to be placed in the formatted_dest
+    * @param characterSet  The set of characters to use in the final formatted_dest 
+    *   
+    */          
     public void merge_to_formatted_output(FFS_Record ffs, String convertedToRadix, String characterSet) {
         int d = this.formatted_dest.length() - 1;
         int s = convertedToRadix.length() - 1;
@@ -312,8 +255,16 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
  
      
  
-
-    // convert to output radix
+    /**
+    * Converts a given string using input/output radix conversion 
+    *
+    * @param rawtext  The original string
+    * @param input_radix  The set of radix characters used on the input conversion
+    * @param output_radix  The set of radix characters used on the output conversion
+    *   
+    * @return the converted string  
+    *   
+    */          
     public String str_convert_radix(String rawtext, String input_radix, String output_radix) {
         // convert a given string to a numerical location based on a given Input_character_set
         BigInteger r1 = Bn.__bigint_set_str(rawtext, input_radix);
@@ -326,7 +277,15 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     
 
  
-    
+    /**
+    * Pads a given string with 0 characters at least as long as specified length
+    *
+    * @param inputString  The original string
+    * @param length  The desired length of the new string
+    *   
+    * @return the padded string  
+    *   
+    */              
     public String pad_text(String inputString, double length) {
         if (inputString.length() >= length) {
             return inputString;
@@ -341,13 +300,24 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
 
 
+    /**
+    * Performs a log base 2 operation
+    *
+    * @param x  The input value
+    *   
+    * @return the output value
+    *   
+    */              
     public double log2(int x) {
         return (double)(Math.log(x) / Math.log(2));
     }
        
        
  
-    // allows user to forceably clear the encryption key cache resulting in a subsequent server access when key is needed
+    /**
+    * Clears the encryption key and FFS model cache 
+    *        
+    */              
     public void clearKeyCache() {
         if (this.ffsKeyCache != null) {
             if (verbose) System.out.println("++++++++++++ clearing KeyCache" ); 
@@ -360,7 +330,17 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     }
 
         
- 
+    /**
+    * Performs an FPE encryption for a given string based on a given FFS model
+    *
+    * @param ubiqCredentials   used to specify the API key credentials of the user
+    * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
+    * @param PlainText  the plain text to be encrypted
+    * @param tweak  the tweak bytes which are only applied if not already overriden by the FFS model
+    *   
+    * @return the encrypted output string
+    *   
+    */               
     public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak) 
         throws IllegalStateException, InvalidCipherTextException {
             if (verbose) System.out.println("\nEncrypting PlainText: " + PlainText);
@@ -383,10 +363,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 // Obtain encryption key information
                 if (this.ubiqWebServices == null) {
                     throw new IllegalStateException("object closed");
-                } else if (this.aesGcmBlockCipher != null) {
-                    throw new IllegalStateException("encryption in progress");
-                } 
-                
+                }                  
                 if (ffsKeyCache == null) {
                         ffsKeyCache = new FFSKeyCache(this.ubiqWebServices, FFScaching, ffs_name);
                 }
@@ -397,7 +374,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 String WrappedDataKey = FFSKeycaching.getWrappedDataKey();
                 byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
                 
-                if (verbose) System.out.println("    key bytes = " + printbytes(key));
                 
                 ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
 
@@ -420,7 +396,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     twkmin= FFScaching.getMin_tweak_length();
                     twkmax= FFScaching.getMax_tweak_length();
                     tweak= Base64.getDecoder().decode(FFScaching.getTweak());
-                    if (verbose) System.out.println("    tweak bytes = " + printbytes(tweak));
                 } else {
                     // For now, the default case is to use the values in the FFS cache for min/max
                     // and use the tweak that the user passed in as a parameter. Later may need to revise this.
@@ -472,17 +447,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 String timestamp= Instant.now().toString();
                 bill.createBillableItem(uuid.toString(), "encrypt", FFScaching.getName(), timestamp, 1);
                 
-                
-
-                
-     
-                 // scrub the PlainText using regex and passthrough filtering
+                // scrub the PlainText using regex and passthrough filtering
 //                     FPEMask mask = new FPEMask(PlainText, FFScaching.getRegex());
 //                     String encryptableText = mask.getEncryptablePart();
 //                     System.out.println("ENCRYPT encryptablePlaintext:    PlainText= " + PlainText + "   encryptableText= " + encryptableText + "   FFScaching.getRegex()= " + FFScaching.getRegex());
        
-
-                
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
@@ -494,8 +463,18 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       
 
  
- 
-    public  String decryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String CipherText, byte[] tweak) 
+    /**
+    * Performs an FPE decryption for a given string based on a given FFS model
+    *
+    * @param ubiqCredentials   used to specify the API key credentials of the user
+    * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
+    * @param CipherText  the encrypted text to be decrypted
+    * @param tweak  the tweak bytes which are only applied if not already overriden by the FFS model
+    *   
+    * @return the decrypted output string
+    *   
+    */                
+    public String decryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String CipherText, byte[] tweak) 
         throws IllegalStateException, InvalidCipherTextException {
             String PlainText = "";
             String restoredFromRadix = "";
@@ -519,9 +498,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 // Obtain encryption key information
                 if (this.ubiqWebServices == null) {
                     throw new IllegalStateException("object closed");
-                } else if (this.aesGcmBlockCipher != null) {
-                    throw new IllegalStateException("decryption in progress");
-                }
+                } 
                 
                 ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
                 if (verbose) System.out.println("    this.trimmed= " + this.trimmed);
@@ -542,8 +519,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 String WrappedDataKey = FFSKeycaching.getWrappedDataKey();
                 byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
                 
-                if (verbose) System.out.println("    key bytes = " +  printbytes(key));
-                                    
                 restoredFromRadix = str_convert_radix(this.trimmed, FFScaching.getOutput_character_set(), base2_charset);
                 if (verbose) System.out.println("    converted to base2= " + restoredFromRadix);
                 
@@ -561,7 +536,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     twkmin= FFScaching.getMin_tweak_length();
                     twkmax= FFScaching.getMax_tweak_length();
                     tweak= Base64.getDecoder().decode(FFScaching.getTweak());
-                    if (verbose) System.out.println("    tweak bytes = " + printbytes(tweak));
                 } else {
                     // For now, the default case is to use the values in the FFS cache for min/max
                     // and use the tweak that the user passed in as a parameter. Later may need to revise this.
@@ -602,13 +576,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 String timestamp= Instant.now().toString();
                 bill.createBillableItem(uuid.toString(), "decrypt", FFScaching.getName(), timestamp, 1);
 
-                
                 // restore the CipherText using regex and passthrough filtering
 //                     FPEMask mask = new FPEMask(CipherText, FFScaching.getRegex());
 //                     String decryptableText = mask.getEncryptablePart();
 //                     System.out.println("DECRYPT decryptableText:    CipherText= " + CipherText + "   decryptableText= " + decryptableText);
     
-
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
