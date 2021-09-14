@@ -4,45 +4,20 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-
 import org.bouncycastle.crypto.InvalidCipherTextException;
-
 import com.ubiqsecurity.UbiqCredentials;
 import com.ubiqsecurity.UbiqFPEEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
-import com.ubiqsecurity.FFS;
 
-import ubiqsecurity.fpe.Bn;
-
-import java.math.BigInteger;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-
-
+/**
+ * Sample command line application demonstrates how to call the Ubiq FPE
+ * encrypt and decrypt functions.
+ */
 public class UbiqSampleFPE {
-
-
-
-    public static String printbytes(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[ ");
-        for (byte b : bytes) {
-            sb.append(String.format("0x%02X ", b));
-        }
-        sb.append("]");
-        return sb.toString();
-    }
-
- 
     public static void main(String[] args) throws Exception {
-        File tweekFile= null;
-
         try {
             ExampleArgsFPE options = new ExampleArgsFPE();
             JCommander jCommander = JCommander.newBuilder().addObject(options).build();
@@ -51,16 +26,12 @@ public class UbiqSampleFPE {
             
             
             // Sample calls: IMPORTANT, DO NOT USE DOUBLE QUOTES
-            // $ java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -e '01$23-456-78-90' -c credentials -n 'FFS Name' -t tweekfile.txt
-            // $ java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -d '00$01-LrI-6d-EA' -c credentials -n 'FFS Name' -t tweekfile.txt
-
-
             if (options.help) {
                 System.out.println("\n************* Commandline Example *************");
                 System.out.println("Encrypt:");
-                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -e '01$23-456-78-90' -c credentials -n 'FFS Name' -t abcdefghijk");
+                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN'");
                 System.out.println("Decrypt:");
-                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -d '00$01-LrI-6d-EA' -c credentials -n 'FFS Name' -t abcdefghijk");
+                System.out.println("java -cp './build/libs/ubiq-sample.jar:./build/deps/lib/*'  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN'");
                 System.out.println("IMPORTANT, USE ONLY SINGLE QUOTES FOR COMMAND LINE OPTIONS");
                 System.out.println("\n*************** Command Usage *****************\n");
                 jCommander.usage();
@@ -85,13 +56,6 @@ public class UbiqSampleFPE {
                 throw new IllegalArgumentException("ffsname must be specified.");
             }
 
-            if (options.tweekFile!= null) {
-                tweekFile = new File(options.tweekFile);
-                if (!tweekFile.exists()) {
-                    throw new IllegalArgumentException(String.format("Input file for tweek bytes does not exist: %s", options.tweekFile));
-                }
-            }
-
             UbiqCredentials ubiqCredentials;
             if (options.credentials == null) {
                 // no file specified, so fall back to ENV vars and default host, if any
@@ -101,59 +65,34 @@ public class UbiqSampleFPE {
                 ubiqCredentials = UbiqFactory.readCredentialsFromFile(options.credentials, options.profile);
             }
 
-                     
-            byte[] tweekFF1 = {
+            // default tweak in case the FFS model allows for external tweak insertion          
+            byte[] tweakFF1 = {
                 (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                 (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
                 (byte)0x31, (byte)0x30,
             };
             
-            if (options.tweekString!= null) {
-                tweekFF1 = options.tweekString.getBytes();
-                System.out.println("    commandline tweek bytes = " + printbytes(tweekFF1));
-            } else if (options.tweekFile!= null) {
-                tweekFF1 = Files.readAllBytes(Paths.get(options.tweekFile));
-                System.out.println("    file tweek bytes = " + printbytes(tweekFF1));
-            } else {
-                System.out.println("    default tweek bytes = " + printbytes(tweekFF1));
-            }
+            if (options.tweakString!= null) {
+                tweakFF1 = options.tweakString.getBytes();
+            } 
             
             
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, 100)) {
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
             
                 String FfsName = options.ffsname;
                                 
                 if (options.encrypttext!= null) {
                     String plainText = options.encrypttext;
                     
-                    String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, tweekFF1); 
+                    String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, tweakFF1); 
                     System.out.println("ENCRYPTED cipher= " + cipher + "\n");
                 
                 } else if (options.decrypttext!= null) {
                     String cipher = options.decrypttext;
                     
-                    String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, tweekFF1);
+                    String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, tweakFF1);
                     System.out.println("DECRYPTED plaintext= " + plaintext + "\n");
                 }
-                
- 
- 
-
-                ////// TEST 2 - ENCRYPT AND DECRYPT
-//                 final byte[] tweekFF3_1 = {
-//                      (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
-//                      (byte)0x00, (byte)0x00, (byte)0x00,
-//                 };
-//                 String plainText = "335-22-0188";
-//                 System.out.println("\n@@@@@@@@@    simpleEncryptionFF3_1 PIN: " + plainText);
-//                 String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "PIN", plainText, tweekFF3_1, "LDAP"); 
-//                 System.out.println("ENCRYPTED    cipher= " + cipher);
-// 
-//                 System.out.println("\n@@@@@@@@@    simpleDecryptionFF3_1 PIN");
-//                 String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "PIN", cipher, tweekFF3_1, "LDAP");
-//                 System.out.println("DECRYPTED    plaintext= " + plaintext);
-
-
 
             }
 
@@ -165,10 +104,6 @@ public class UbiqSampleFPE {
             System.exit(1);
         }
     }
-    
-  
-
- 
     
 }
 
@@ -195,18 +130,11 @@ class ExampleArgsFPE {
     String ffsname;
 
     @Parameter(
-        names = { "--tweekfile", "-tf" },
-        description = "Set input file name containing tweek bytes",
+        names = { "--tweak", "-t" },
+        description = "Set alpha string to be used as tweak bytes",
         arity = 1,
         required = false)
-    String tweekFile;
-
-    @Parameter(
-        names = { "--tweek", "-t" },
-        description = "Set alpha string to be used as tweek bytes",
-        arity = 1,
-        required = false)
-    String tweekString;
+    String tweakString;
 
     @Parameter(
         names = { "--help", "-h" },
