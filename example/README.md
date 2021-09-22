@@ -195,8 +195,6 @@ Usage: Ubiq Security Example [options]
     --profile, -P
       Identify the profile within the credentials file
       Default: default
-    --tweak, -t
-      Set alpha string to be used as tweak bytes
     --version, -V
       Show program's version number and exit
 </pre>

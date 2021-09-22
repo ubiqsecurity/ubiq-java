@@ -254,7 +254,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             d = d - 1;
         }
         
-        return;
     }
  
  
