@@ -96,9 +96,9 @@ class UbiqWebServices {
       {  
             try {  
                  String encodeURL=URLEncoder.encode( url, StandardCharsets.UTF_8.toString() );  
-                 return encodeURL;  
+                 return encodeURL.replaceAll("\\+", "%20");   
             } catch (UnsupportedEncodingException e) {  
-                 return "Issue while encoding" +e.getMessage();  
+                 return "Issue while encoding: " +e.getMessage();  
             }  
       }  
       
@@ -167,7 +167,7 @@ class UbiqWebServices {
     FFSRecordResponse getFFSDefinition(String ffs_name) {
         //String urlString = String.format("%s/%s/ffs/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId());
         String jsonRequest="";
-        String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()));
+        String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));
         String urlString = String.format("%s/%s/ffs?%s", this.baseUrl, this.restApiRoot, params);
 
         if (verbose) System.out.println("\n    urlString: " + urlString + "\n");
@@ -200,7 +200,7 @@ class UbiqWebServices {
 
     FPEKeyResponse getFPEEncryptionKey(FFS_Record ffs, String ffs_name) {
         String jsonRequest="";
-        String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()));
+        String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));
         String urlString = String.format("%s/%s/fpe/key?%s", this.baseUrl, this.restApiRoot, params);
         
         try {
@@ -228,7 +228,7 @@ class UbiqWebServices {
 
     FPEKeyResponse getFPEDecryptionKey(String ffs_name, int key_number) {
         String jsonRequest="";
-        String params = String.format("ffs_name=%s&papi=%s&key_number=%d", encode(ffs_name).replace("+", "%20"), encode(this.ubiqCredentials.getAccessKeyId()), key_number);
+        String params = String.format("ffs_name=%s&papi=%s&key_number=%d", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()), key_number);
         String urlString = String.format("%s/%s/fpe/key?%s", this.baseUrl, this.restApiRoot, params);
         if (verbose) System.out.println("getFPEDecryptionKey  params: " + params);
         try {

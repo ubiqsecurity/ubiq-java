@@ -33,7 +33,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private FFSKeyCache ffsKeyCache;
     private FPEProcessor executor;
     private FPETransactions bill;
- 
+    private UbiqCredentials ubiqCredentials;
  
     /**
      * UbiqFPEEncryptDecrypt constructor
@@ -44,6 +44,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
      */    
     public UbiqFPEEncryptDecrypt(UbiqCredentials ubiqCredentials) {
         if (verbose) System.out.println("+++++++ NEW OBJECT UbiqFPEEncryptDecrypt +++++++" ); 
+        if (ubiqCredentials == null) {
+            System.out.println("Credentials have not been specified.");
+            return;
+        }
+        this.ubiqCredentials = ubiqCredentials;
         this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
         this.FFSdata = new Gson();
         bill = new FPETransactions();
@@ -333,7 +338,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     /**
     * Performs an FPE encryption for a given string based on a given FFS model
     *
-    * @param ubiqCredentials   used to specify the API key credentials of the user
     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
     * @param PlainText  the plain text to be encrypted
     * @param tweak  the tweak bytes which are only applied if not already overriden by the FFS model
@@ -341,9 +345,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * @return the encrypted output string
     *   
     */               
-    public String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak) 
+    public String encryptFPE(String ffs_name, String PlainText, byte[] tweak) 
         throws IllegalStateException  {
             if (verbose) System.out.println("\nEncrypting PlainText: " + PlainText);
+            UbiqCredentials ubiqCredentials= this.ubiqCredentials;
             String convertedToRadix = "";
             String cipher = "";
             String withInsertion = "";
@@ -466,7 +471,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     /**
     * Performs an FPE decryption for a given string based on a given FFS model
     *
-    * @param ubiqCredentials   used to specify the API key credentials of the user
     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
     * @param CipherText  the encrypted text to be decrypted
     * @param tweak  the tweak bytes which are only applied if not already overriden by the FFS model
@@ -474,8 +478,9 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * @return the decrypted output string
     *   
     */                
-    public String decryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String CipherText, byte[] tweak) 
+    public String decryptFPE(String ffs_name, String CipherText, byte[] tweak) 
         throws IllegalStateException {
+            UbiqCredentials ubiqCredentials= this.ubiqCredentials;
             String PlainText = "";
             String restoredFromRadix = "";
             String restoredPlainText = "";

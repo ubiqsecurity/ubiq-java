@@ -121,7 +121,7 @@ class Parsing implements AutoCloseable  {
      * @param input_character_set the set of characters for the input radix
      * @param passthrough_character_set the characters that should be allowed to passthrough
      *
-     * @return    the new String  
+     * @return    -1 if error encountered  
      */    
     public int ubiq_platform_efpe_parsing_parse_input(
         final String input_string, 

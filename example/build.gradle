@@ -50,9 +50,15 @@ build {
       if (Os.isFamily(Os.FAMILY_WINDOWS)) {
          println('                               java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample [options]')
          println('                      Example: java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -h')
+         println('For FPE:  ')
+         println('                               java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE [options]')
+         println('                      Example: java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE -h')
       } else {
          println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample [options]')
          println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h')
+         println('For FPE:  ')
+         println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE [options]')
+         println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE -h')
       }
    }
 }

@@ -34,8 +34,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
                 String original = "123-45-6789";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -61,8 +61,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
                 String original = " 01&23-456-78-90";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -92,8 +92,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
                 String original = "2006-05-01";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "BIRTH_DATE", original, tweakFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "BIRTH_DATE", cipher, tweakFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE("BIRTH_DATE", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE("BIRTH_DATE", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -120,8 +120,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
                 String original = "A STRING OF AT LEAST 15 UPPER CHARACTERS";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "GENERIC_STRING", original, tweakFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "GENERIC_STRING", cipher, tweakFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE("GENERIC_STRING", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE("GENERIC_STRING", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -148,8 +148,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
                 String original = "1234";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweakFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweakFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE("SO_ALPHANUM_PIN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE("SO_ALPHANUM_PIN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -176,8 +176,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
                 String original = "ABCDE";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweakFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweakFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE("SO_ALPHANUM_PIN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE("SO_ALPHANUM_PIN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -205,8 +205,8 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
                 String original = "ABCD";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", original, tweakFF1); 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "SO_ALPHANUM_PIN", cipher, tweakFF1);
+                String cipher = ubiqEncryptDecrypt.encryptFPE("SO_ALPHANUM_PIN", original, tweakFF1); 
+                String decrypted = ubiqEncryptDecrypt.decryptFPE("SO_ALPHANUM_PIN", cipher, tweakFF1);
             
                 assertEquals(original, decrypted);  
             }
@@ -235,43 +235,43 @@ public class UbiqFPEEncryptTest
             
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
                 String original = "123-45-6789";
-                String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                String cipher2 = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                String cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                String cipher2 = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
                 // clear the key cache and force going back to server
                 ubiqEncryptDecrypt.clearKeyCache();
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
                 // clear the key cache and force going back to server
                 ubiqEncryptDecrypt.clearKeyCache();
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
-                cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
+                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1); 
                 
                 assertEquals(cipher, cipher2);  
                 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                String decrypted2 = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                String decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                String decrypted2 = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
                 // clear the key cache and force going back to server
                 ubiqEncryptDecrypt.clearKeyCache();
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, null);
                 
                 
                 assertEquals(decrypted, decrypted2);
