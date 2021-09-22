@@ -39,7 +39,7 @@ public class UbiqSampleFPE {
             }
 
             if (options.version) {
-                System.out.println("ubiq-java 1.0.0");
+                System.out.println("UbiqSampleFPE 1.0.0");
                 System.exit(0);
             }
             
