@@ -110,7 +110,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * @return the index of any of the chars, -1 if no match or null input
     */
     public int findFirstIndexExclusive(String str, String searchChars) {
-      if (isEmpty(str) || isEmpty(searchChars)) {
+      if (isEmpty(str)) {
           return -1;
       }
       for (int i = 0; i < str.length(); i++) {
@@ -135,7 +135,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     */      
     public String encode_keynum(FFS_Record ffs, int key_number, String str, int position) {
         String buf= "";
-        if (position < 0) position = 0;
+        if (position < 0) {
+            // if a valid non-passthrough location cannot be found then the original string is bad
+            throw new RuntimeException("Bad String encoding position for: " + str);
+        }
         
         char charBuf = str.charAt(position);
       
@@ -166,7 +169,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     */      
     public int decode_keynum(FFS_Record ffs, String str, int position) {
         int key_num = 0;
-        if (position < 0) position = 0;
+        if (position < 0) {
+            // if caller passed an invalid position
+            throw new RuntimeException("Bad String decoding position for: " + str);
+        }
         
         char charBuf = str.charAt(position);
         int encoded_value = ffs.getOutput_character_set().indexOf(charBuf);
