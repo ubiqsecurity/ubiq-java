@@ -258,8 +258,12 @@ import com.ubiqsecurity.UbiqFactory;
 
 
 ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
-String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", "123-45-6789", null); 
+try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+   String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", "123-45-6789", null); 
+}
 ```
+Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE 
+calls, for example when you are bulk processing many such operations in a session.
 
 
 ### Decrypt the encrypted social security cipher
@@ -273,8 +277,12 @@ import com.ubiqsecurity.UbiqFactory;
 
 
 ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
-String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", "W$+-qF-oMMV", null); 
+try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+   String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", "W$+-qF-oMMV", null); 
+}
 ```
+Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE 
+calls, for example when you are bulk processing many such operations in a session.
 
 
 ### Other FFS models to explore
