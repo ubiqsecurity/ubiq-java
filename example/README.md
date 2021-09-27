@@ -133,6 +133,8 @@ java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i readme
 
 
 ## Documentation for UbiqSampleFPE.java
+Format preserving encryption (FPE/eFPE) is an optionally available feature. Please contact support@ubiqsecurity.com to add this capability to your account.
+
 
 See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
 

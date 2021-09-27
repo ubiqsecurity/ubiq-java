@@ -211,9 +211,9 @@ static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials u
 
 
 
-## Introducing FPE/eFPE
+## FPE/eFPE (Optionally Available Feature)
 
-This library incorporates format preserving encryption (FPE) and embedded format preserving encryption (eFPE).
+This library incorporates format preserving encryption (FPE) and embedded format preserving encryption (eFPE). Please contact support@ubiqsecurity.com to add this capability to your account.
 
 ## Requirements
 
