@@ -49,10 +49,10 @@ public class UbiqSampleFPE {
 
 
             if ((options.encrypttext == null) && (options.decrypttext == null)) {
-                throw new IllegalArgumentException("Encryption or Decrytion must be specified.");
+                throw new IllegalArgumentException("Encryption or Decryption must be specified.");
             }
             if (options.encrypttext == options.decrypttext) {
-                throw new IllegalArgumentException("Encryption or Decrytion have to be specified but not both.");
+                throw new IllegalArgumentException("Encryption or Decryption have to be specified but not both.");
             }
 
 
