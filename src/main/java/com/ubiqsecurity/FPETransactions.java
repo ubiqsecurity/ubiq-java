@@ -173,6 +173,16 @@ class FPETransactions {
         return id;
     }
     
+
+    /**
+     * Returns the number of bills in the list
+     *
+     * @return    the number of bills in the list
+     */                
+    public int billCount() {
+        return Bills.size();
+    }
+
     
     /**
      * if the server cannot process a record, move it to the end of the 

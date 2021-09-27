@@ -12,7 +12,8 @@ import java.util.ArrayList;
 class FPEProcessor extends AbstractScheduledService
 {
     private boolean verbose= false;
-    private int secondsToProcess= 1;
+    private int secondsToProcess= 1;  // set the how often the list of bills are sent to the server
+    private int billCountThresholdBeforeDoingAsync= 50;   // set to the minimum number of bills before sending to server
     UbiqWebServices ubiqWebServices;
     FPETransactions bill;
 
@@ -48,8 +49,11 @@ class FPEProcessor extends AbstractScheduledService
         // perform periodic list processing here
         if (verbose) System.out.println("-- Running: " + new java.util.Date());
         
-        bill.processCurrentBillsAsync(ubiqWebServices, bill);
-        if (verbose) System.out.println("--    Sent processCurrentBillsAsync");
+        if (bill.billCount() >= billCountThresholdBeforeDoingAsync) { 
+            bill.processCurrentBillsAsync(ubiqWebServices, bill);
+            if (verbose) System.out.println("--    Sent processCurrentBillsAsync");
+        }
+        
     }
 
     /**
