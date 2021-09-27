@@ -183,6 +183,8 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -h
 <pre>
 Usage: Ubiq Security Example [options]
   Options:
+    --bulk, -b
+      Use the bulk encryption / decryption interfaces
     --creds, -c
       Set the file name with the API credentials
     --decrypttext, -d
@@ -197,6 +199,8 @@ Usage: Ubiq Security Example [options]
     --profile, -P
       Identify the profile within the credentials file
       Default: default
+    --simple, -s
+      Use the simple encryption / decryption interfaces
     --version, -V
       Show program's version number and exit
 </pre>
@@ -207,22 +211,22 @@ Usage: Ubiq Security Example [options]
 
 <pre>
 # Linux / Mac
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN'
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN'
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 
 #### Demonstrate decrypting a social security number and returning the plain text
 
 <pre>
 # Linux / Mac
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN'
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN'
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 
 
