@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.5 - 2021-09-29
+* Added FPE/eFPE capability
+
 ## 0.2.4 - 2021-01-26
 * Update to bouncy castle 1.68
 
