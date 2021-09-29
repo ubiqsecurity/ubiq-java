@@ -39,7 +39,7 @@ public class UbiqSample {
             }
 
             if (options.encrypt == options.decrypt) {
-                throw new IllegalArgumentException("Encryption or Decrytion have to be specified but not both");
+                throw new IllegalArgumentException("Encryption or Decryption have to be specified but not both");
             }
 
             File inputFile = new File(options.inputFile);

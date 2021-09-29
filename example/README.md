@@ -1,9 +1,11 @@
-# Ubiq Security Sample Application using Java Library
+# Ubiq Security Sample Application using Java Library 
 
-This sample application will demonstrate how to encrypt and decrypt data using the different APIs.
+Provided are two sample applications. One called "UbiqSample.java" demonstrates how to encrypt and decrypt typical data that you might 
+encounter in your own applications. The other sample application called "UbiqSampleFPE.java" demonstrates how to encrypt and decrypt
+using format preserving encryption (FPE).
 
 
-### Documentation
+## Documentation for UbiqSample.java
 
 See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
 
@@ -126,5 +128,123 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i readme
 # Windows
 java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -p -c credentials 
 </pre>
+
+
+
+
+## Documentation for UbiqSampleFPE.java
+Format preserving encryption (FPE/eFPE) is an optionally available feature. Please contact support@ubiqsecurity.com to add this capability to your account.
+
+
+See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
+
+## Installation
+
+Install or build the library as described [here](/README.md#installation).
+
+## Build From Source
+
+Use gradlew to compile the sample application
+
+```sh
+#Linux / Mac
+cd example
+./gradlew clean assemble build --refresh-dependencies
+```
+```dos
+# Windows
+cd example
+.\gradlew clean assemble build --refresh-dependencies
+```
+
+## Credentials file
+
+Edit the credentials file with your account credentials created using the Ubiq dashboard. Do make sure that you have the FPE option enabled in the Ubiq dashboard.
+
+```sh
+[default]
+ACCESS_KEY_ID = ...
+SECRET_SIGNING_KEY = ...
+SECRET_CRYPTO_ACCESS_KEY = ...
+```
+## View Program Options
+
+From within the example directory, use the ```java ``` command to execute the sample application
+
+<pre>
+# Linux / Mac
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -h
+</pre>
+<pre>
+# Windows
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -h
+</pre>
+
+<pre>
+Usage: Ubiq Security Example [options]
+  Options:
+    --bulk, -b
+      Use the bulk encryption / decryption interfaces
+    --creds, -c
+      Set the file name with the API credentials
+    --decrypttext, -d
+      Set the cipher text value to decrypt and will return the decrypted text.
+    --encrypttext, -e
+      Set the field text value to encrypt and will return the encrypted cipher 
+      text. 
+  * --ffsname, -n
+      Set the ffs name, for example SSN.
+    --help, -h
+      Print app parameter summary
+    --profile, -P
+      Identify the profile within the credentials file
+      Default: default
+    --simple, -s
+      Use the simple encryption / decryption interfaces
+    --version, -V
+      Show program's version number and exit
+</pre>
+
+
+
+#### Demonstrate encrypting a social security number and returning a cipher text
+
+<pre>
+# Linux / Mac
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
+</pre>
+<pre>
+# Windows
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
+</pre>
+
+#### Demonstrate decrypting a social security number and returning the plain text
+
+<pre>
+# Linux / Mac
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
+</pre>
+<pre>
+# Windows
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
+</pre>
+
+
+
+#### Other FFS models to explore
+
+Depending on your installation, there are a wide variety of FFS models that are available. Each FFS model
+imposes its own set of rules revolving around how the data is formatted and what characters are legal for the
+given format. For example, you would not expect to see alpha characters in a social security number and the model
+will identify that as a formatting error. A few models to consider are:
+
+-   ALPHANUM_SSN 
+-   BIRTH_DATE 
+-   GENERIC_STRING 
+-   SO_ALPHANUM_PIN
+
+Additional information on how to use these FFS models in your own applications is available by contacting
+Ubiq. You may also view some use-cases implemented in the unit test source file "UbiqFPEEncryptTest.java".
+
 
 
