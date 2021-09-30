@@ -21,7 +21,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.1'
     
     //implementation("com.google.guava:guava:30.1.1-jre")
-    compile "com.google.guava:guava:18+"
+    compile "com.google.guava:guava:[18,)"
     
     implementation group: 'org.bouncycastle', name: 'bcprov-ext-jdk15on', version: '1.68'
     implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.68'
