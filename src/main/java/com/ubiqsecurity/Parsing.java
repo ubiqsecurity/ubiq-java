@@ -147,11 +147,13 @@ class Parsing implements AutoCloseable  {
                 trimmedSize++;
             }
             else {
-                System.out.println("   Invalid Character:  " + ch);
+                //System.out.println("Input string has invalid character:  '" + ch + "'");
                 if (verbose) System.out.println("        input_string:  " + input_string);
                 if (verbose) System.out.println("        input_character_set:  " + input_character_set);
                 if (verbose) System.out.println("        passthrough_character_set:  " + passthrough_character_set);
                 err = -1;
+                
+                throw new IllegalArgumentException("Input string has invalid character:  '" + ch + "'");
             }
             i++;
         }

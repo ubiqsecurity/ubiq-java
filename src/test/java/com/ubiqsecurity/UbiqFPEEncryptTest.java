@@ -15,7 +15,8 @@ import java.util.concurrent.ExecutionException;
 
 import java.util.*;
 
-
+import org.junit.Rule;
+import org.junit.rules.ExpectedException;
 
 
 public class UbiqFPEEncryptTest
@@ -290,12 +291,79 @@ public class UbiqFPEEncryptTest
 
 
 
+ 
+
+
+    @Test(expected = Exception.class)
+    public void encryptFPE_InvalidFFS() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+        } catch (Exception ex) {
+        }    
+            
+        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+            String original = "ABCDEFGHI";
+            String cipher = ubiqEncryptDecrypt.encryptFPE("ERROR FFS", original, null); 
+            String decrypted = ubiqEncryptDecrypt.decryptFPE("ERROR FFS", cipher, null);
+        }
+    }
 
 
 
+    @Test(expected = Exception.class)
+    public void encryptFPE_InvalidCredentials() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.createCredentials("a","b","c", "d");
+        } catch (Exception ex) {
+        }    
+            
+        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+            String original = "ABCDEFGHI";
+            String cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, null); 
+            String decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, null);
+        }
+    }
 
 
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_PT_CT() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+        } catch (Exception ex) {
+        }    
+            
+        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+            String original = " 123456789$";
+            String cipher = ubiqEncryptDecrypt.encryptFPE("SSN", original, null); 
+            String decrypted = ubiqEncryptDecrypt.decryptFPE("SSN", cipher, null);
+        }
+    }
 
+ 
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_LEN() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+        } catch (Exception ex) {
+        }    
+            
+        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+            String shortpt = " 1234";
+            String longpt = " 12345678901234567890";
+ 
+            String cipher = ubiqEncryptDecrypt.encryptFPE("SSN", shortpt, null); 
+            cipher = ubiqEncryptDecrypt.encryptFPE("SSN", longpt, null);
+
+            String decrypted = ubiqEncryptDecrypt.decryptFPE("SSN", shortpt, null); 
+            decrypted = ubiqEncryptDecrypt.decryptFPE("SSN", longpt, null);
+        }
+    }
+
+ 
 
 
 
