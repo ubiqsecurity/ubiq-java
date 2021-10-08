@@ -22,6 +22,15 @@ import org.junit.rules.ExpectedException;
 public class UbiqFPEEncryptTest
 {
 
+    static void testCycleEncryption(String ffs_name, String plainText, UbiqCredentials ubiqCredentials) {
+        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+            String result = ubiqEncryptDecrypt.encryptFPE(ffs_name, plainText, null); 
+            result = ubiqEncryptDecrypt.decryptFPE(ffs_name, result, null);
+        }    
+    }
+    
+    
+
     @Test
     public void encryptFPE_1() {
         try {
@@ -44,7 +53,6 @@ public class UbiqFPEEncryptTest
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
             fail(ex.toString());
-            //ex.printStackTrace();
         }    
     }
 
@@ -71,7 +79,6 @@ public class UbiqFPEEncryptTest
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
             fail(ex.toString());
-            //ex.printStackTrace();
         }    
     }
 
@@ -102,7 +109,6 @@ public class UbiqFPEEncryptTest
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
             fail(ex.toString());
-            //ex.printStackTrace();
         }    
     }
 
@@ -130,7 +136,6 @@ public class UbiqFPEEncryptTest
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
             fail(ex.toString());
-            //ex.printStackTrace();
         }    
     }
 
@@ -158,7 +163,6 @@ public class UbiqFPEEncryptTest
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
             fail(ex.toString());
-            //ex.printStackTrace();
         }    
     }
 
@@ -186,7 +190,6 @@ public class UbiqFPEEncryptTest
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
             fail(ex.toString());
-            //ex.printStackTrace();
         }    
     }
 
@@ -215,7 +218,6 @@ public class UbiqFPEEncryptTest
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
             fail(ex.toString());
-            //ex.printStackTrace();
         }    
     }
 
@@ -301,12 +303,8 @@ public class UbiqFPEEncryptTest
             ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
         } catch (Exception ex) {
         }    
-            
-        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-            String original = "ABCDEFGHI";
-            String cipher = ubiqEncryptDecrypt.encryptFPE("ERROR FFS", original, null); 
-            String decrypted = ubiqEncryptDecrypt.decryptFPE("ERROR FFS", cipher, null);
-        }
+        
+        testCycleEncryption("ERROR FFS", "ABCDEFGHI", ubiqCredentials);  
     }
 
 
@@ -318,13 +316,10 @@ public class UbiqFPEEncryptTest
             ubiqCredentials = UbiqFactory.createCredentials("a","b","c", "d");
         } catch (Exception ex) {
         }    
-            
-        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-            String original = "ABCDEFGHI";
-            String cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, null); 
-            String decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, null);
-        }
+        
+        testCycleEncryption("ALPHANUM_SSN", "ABCDEFGHI", ubiqCredentials);  
     }
+
 
 
     @Test(expected = Exception.class)
@@ -334,98 +329,143 @@ public class UbiqFPEEncryptTest
             ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
         } catch (Exception ex) {
         }    
-            
-        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-            String original = " 123456789$";
-            String cipher = ubiqEncryptDecrypt.encryptFPE("SSN", original, null); 
-            String decrypted = ubiqEncryptDecrypt.decryptFPE("SSN", cipher, null);
-        }
+
+        testCycleEncryption("SSN", " 123456789$", ubiqCredentials);      
     }
 
- 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_LEN() {
+    public void encryptFPE_Invalid_LEN_1() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+        } catch (Exception ex) {
+        } 
+        
+        testCycleEncryption("SSN", " 1234", ubiqCredentials);           
+    }
+
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_LEN_2() {
         UbiqCredentials ubiqCredentials= null;
         try {
             ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
         } catch (Exception ex) {
         }    
-            
-        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-            String shortpt = " 1234";
-            String longpt = " 12345678901234567890";
- 
-            String cipher = ubiqEncryptDecrypt.encryptFPE("SSN", shortpt, null); 
-            cipher = ubiqEncryptDecrypt.encryptFPE("SSN", longpt, null);
 
-            String decrypted = ubiqEncryptDecrypt.decryptFPE("SSN", shortpt, null); 
-            decrypted = ubiqEncryptDecrypt.decryptFPE("SSN", longpt, null);
-        }
+        testCycleEncryption("SSN", " 12345678901234567890", ubiqCredentials);           
+    }
+ 
+
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_specific_creds_1() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+            ubiqCredentials = UbiqFactory.createCredentials(ubiqCredentials.getAccessKeyId().substring(0, 1),
+                                                            ubiqCredentials.getSecretSigningKey(),
+                                                            ubiqCredentials.getSecretCryptoAccessKey(),
+                                                            ubiqCredentials.getHost() );
+        } catch (Exception ex) {
+        } 
+        
+        testCycleEncryption("ALPHANUM_SSN", " 123456789", ubiqCredentials);
     }
 
- 
+
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_specific_creds_2() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+            ubiqCredentials = UbiqFactory.createCredentials(ubiqCredentials.getAccessKeyId(),
+                                                            ubiqCredentials.getSecretSigningKey().substring(0, 1),
+                                                            ubiqCredentials.getSecretCryptoAccessKey(),
+                                                            ubiqCredentials.getHost() );
+        } catch (Exception ex) {
+        } 
+        
+        testCycleEncryption("ALPHANUM_SSN", " 123456789", ubiqCredentials);     
+    }
 
 
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_specific_creds_3() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+            ubiqCredentials = UbiqFactory.createCredentials(ubiqCredentials.getAccessKeyId(),
+                                                            ubiqCredentials.getSecretSigningKey(),
+                                                            ubiqCredentials.getSecretCryptoAccessKey().substring(0, 1),
+                                                            ubiqCredentials.getHost() );
+        } catch (Exception ex) {
+        } 
+        
+        testCycleEncryption("ALPHANUM_SSN", " 123456789", ubiqCredentials);     
+    }
 
 
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_specific_creds_4() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+            ubiqCredentials = UbiqFactory.createCredentials(ubiqCredentials.getAccessKeyId(),
+                                                            ubiqCredentials.getSecretSigningKey(),
+                                                            ubiqCredentials.getSecretCryptoAccessKey(),
+                                                            "pi.ubiqsecurity.com" );
+        } catch (Exception ex) {
+        } 
+        
+        testCycleEncryption("ALPHANUM_SSN", " 123456789", ubiqCredentials);     
+    }
 
 
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_specific_creds_5() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+            ubiqCredentials = UbiqFactory.createCredentials(ubiqCredentials.getAccessKeyId(),
+                                                            ubiqCredentials.getSecretSigningKey(),
+                                                            ubiqCredentials.getSecretCryptoAccessKey(),
+                                                            "ps://api.ubiqsecurity.com" );
+        } catch (Exception ex) {
+        } 
+        
+        testCycleEncryption("ALPHANUM_SSN", " 123456789", ubiqCredentials);     
+    }
 
-// Disable the masking tests until we decide to utilize the FPEMask module
-
-//     @Test
-//     public void testMask1() {
-//         
-//         String original = "123-45-6789";
-//         String regex = "(\\d{3})-(\\d{2})-(\\d{4})";
-//         
-//         FPEMask mask = new FPEMask(original, regex);
-//         System.out.println("original: " + original + "  using regex: " + regex);
-//         
-//         String cipher = "987654321";  // assume that this is the result of the fpe encrypt for the encryptable part
-//         String encryptable = mask.getEncryptablePart();
-//         System.out.println("FPEMask determined encryptable part: " + encryptable);
-//         System.out.println("Lets assume this 'encrypts' to cipher: " + cipher);
-//                 
-//         String withInsertion = mask.insertEncryptedPart(cipher);
-//         System.out.println("FPEMask applies insertion of cipher: " + withInsertion);
-//         
-//         String redacted = mask.getRedacted();
-//         System.out.println("FPEMask returns redacted: " + redacted);
-//         
-//         assertEquals(true, true);  // TODO - Determine appropriate test
-//     }
-// 
-// 
-// 
-//     @Test
-//     public void testMask2() {
-// 
-//         String original = "123-45-6789";
-//         String regex = "(\\d{3})-(\\d{2})-\\d{4}";
-//         
-//         FPEMask mask = new FPEMask(original, regex);
-//         System.out.println("original: " + original + "  using regex: " + regex);
-//       
-//         String encryptable = mask.getEncryptablePart();
-//         String cipher = "00000";  // assume that this is the result of the fpe encrypt for the encryptable part
-//         System.out.println("FPEMask determined encryptable part: " + encryptable);
-//         System.out.println("Lets assume this 'encrypts' to cipher: " + cipher);
-//                 
-//         String withInsertion = mask.insertEncryptedPart(cipher);
-//         System.out.println("FPEMask applies insertion of cipher: " + withInsertion);
-//         
-//         String redacted = mask.getRedacted();
-//         System.out.println("FPEMask returns redacted: " + redacted);
-//         
-//             
-//         assertEquals(true, true);  // TODO - Determine appropriate test
-//     }
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_specific_creds_6() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+            ubiqCredentials = UbiqFactory.createCredentials(ubiqCredentials.getAccessKeyId(),
+                                                            ubiqCredentials.getSecretSigningKey(),
+                                                            ubiqCredentials.getSecretCryptoAccessKey(),
+                                                            "https://google.com" );
+        } catch (Exception ex) {
+        } 
+        
+        testCycleEncryption("ALPHANUM_SSN", " 123456789", ubiqCredentials);     
+    }
 
 
-
-
-
+    @Test(expected = Exception.class)
+    public void encryptFPE_Invalid_keynum() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+        } catch (Exception ex) {
+        }    
+        
+        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+                String cipher = ubiqEncryptDecrypt.encryptFPE("SO_ALPHANUM_PIN", " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", null); 
+                StringBuilder newcipher = new StringBuilder(cipher);
+                newcipher.setCharAt(0, '}');
+                String decrypted = ubiqEncryptDecrypt.decryptFPE("SO_ALPHANUM_PIN", newcipher.toString(), null);
+        }
+    }
 
 
 
