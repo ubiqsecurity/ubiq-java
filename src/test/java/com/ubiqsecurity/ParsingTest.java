@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 
 import java.util.*;
-
+import org.junit.rules.ExpectedException;
 
 
 
@@ -48,7 +48,6 @@ public class ParsingTest
 
 
 
-
     @Test
     public void no_passthrough() {
         String pt = "123-45-6789";
@@ -74,8 +73,7 @@ public class ParsingTest
 
 
 
-
-    @Test
+    @Test(expected = Exception.class)
     public void invalid_data() {
         String pt = "123-45-6789";
         String input_character_set = "0123456789";

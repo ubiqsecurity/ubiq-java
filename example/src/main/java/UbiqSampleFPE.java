@@ -120,7 +120,6 @@ public class UbiqSampleFPE {
             System.exit(0);
         } catch (Exception ex) {
             System.out.println(String.format("Exception: %s", ex.getMessage()));
-            ex.printStackTrace();
             System.exit(1);
         }
     }

@@ -387,6 +387,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 
                 ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
 
+                if ((this.trimmed.length() < FFScaching.getMin_input_length()) ||
+                    (this.trimmed.length() > FFScaching.getMax_input_length())) {
+                    throw new RuntimeException("Input length does not match FFS parameters.");
+                }
+
                 convertedToRadix = str_convert_radix(this.trimmed, FFScaching.getInput_character_set(), base2_charset);
                 if (verbose) System.out.println("    converted to base2= " + convertedToRadix);
                 
@@ -512,6 +517,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 
                 ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
                 if (verbose) System.out.println("    this.trimmed= " + this.trimmed);
+                
+                if ((this.trimmed.length() < FFScaching.getMin_input_length()) ||
+                    (this.trimmed.length() > FFScaching.getMax_input_length())) {
+                    throw new RuntimeException("Input length does not match FFS parameters.");
+                }
                 
                 int key_number = decode_keynum(FFScaching, this.trimmed, 0);
                 if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
