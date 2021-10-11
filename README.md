@@ -61,9 +61,8 @@ Use following command to use [gradlew] to build the JAR file
 
 The library needs to be configured with your account credentials which is
 available in your [Ubiq Dashboard][dashboard] [credentials][credentials].
-The credentials can be hardcoded into your application, specified with environment variables,
-loaded from an explicit file, or loaded from a file in your 
-home directory [~/.ubiq/credentials].
+The credentials can be set using environment variables, loaded from an explicitly
+specified file, or read from the default location (~/.ubiq/credentials). 
 
 
 
@@ -225,9 +224,8 @@ This library incorporates format preserving encryption (FPE) and embedded format
 You will need to obtain account credentials in the same way as described above for conventional encryption/decryption. When
 you do this in your [Ubiq Dashboard][dashboard] [credentials][credentials], you'll need to enable the FPE option. If you do not
 see the FPE option, you may need to upgrade your plan as this is an optional capability available on upgraded accounts.
-The credentials can be hardcoded into your application, specified with environment variables,
-loaded from an explicit file, or loaded from a file in your 
-home directory [~/.ubiq/credentials].
+The credentials can be set using environment variables, loaded from an explicitly
+specified file, or read from the default location (~/.ubiq/credentials).
 
 
 ### Referencing the Ubiq Security library
