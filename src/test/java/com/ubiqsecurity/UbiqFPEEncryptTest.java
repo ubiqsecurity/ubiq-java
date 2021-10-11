@@ -3,20 +3,15 @@ package com.ubiqsecurity;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import java.math.BigInteger;
-
-
 import java.util.Arrays;
 import ubiqsecurity.fpe.FF1;
 import ubiqsecurity.fpe.FF3_1;
 import com.ubiqsecurity.UbiqFactory;
-
 import java.util.concurrent.ExecutionException;
-
-
 import java.util.*;
-
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
+
 
 
 public class UbiqFPEEncryptTest
@@ -467,6 +462,17 @@ public class UbiqFPEEncryptTest
         }
     }
 
+
+    @Test(expected = Exception.class)
+    public void encryptFPE_Error_handling_invalid_ffs() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+            ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+        } catch (Exception ex) {
+        }    
+        
+        testCycleEncryption("ERROR_MSG", " 01121231231231231& 1 &2311200 ", ubiqCredentials);  
+    }
 
 
 }
