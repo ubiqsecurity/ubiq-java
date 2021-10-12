@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.6 - 2021-10-12
+* Improved error handling / reporting in FPE/eFPE processing
+
 ## 0.2.5 - 2021-09-29
 * Added FPE/eFPE capability
 
