@@ -177,7 +177,7 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -h
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -h
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE  -h
 </pre>
 
 <pre>
@@ -215,7 +215,7 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '1
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 
 #### Demonstrate decrypting a social security number and returning the plain text
@@ -226,7 +226,7 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 
 
