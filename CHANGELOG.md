@@ -1,5 +1,8 @@
 # Changelog
 
+## - 2022-02-16
+* Improved error handling with billing messages during library shutdown
+
 ## 0.2.6 - 2021-10-12
 * Improved error handling / reporting in FPE/eFPE processing
 
