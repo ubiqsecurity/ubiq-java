@@ -65,9 +65,6 @@ class FPETransactions {
             // all submitted records have been processed by backend so OK to clear the local list
             if (verbose) System.out.println("Payload successfully received and processed by backend.");
             bill.deleteBillableItems(lastItemIDToProcess);
-        } else if (fpeBillingResponse.status == 504) {
-          if (verbose) System.out.println("fpeBillingResponse.status == 504.  Ignoring lost billing items");
-          bill.deleteBillableItems(lastItemIDToProcess);
         } else if (fpeBillingResponse.status == 400) {
             if (verbose) System.out.println("WARNING: Backend stopped processing after UUID:"  + fpeBillingResponse.last_valid.id);
 
@@ -88,8 +85,13 @@ class FPETransactions {
                     System.out.println("3) payload=" + payload);
                 }
             }
+        } else if (fpeBillingResponse.status == 504) {
+            if (verbose) System.out.println("fpeBillingResponse.status == 504.  Ignoring lost billing items");
+            bill.deleteBillableItems(lastItemIDToProcess);
         } else {
+            // Go ahead and ignore messages if we get another error.  V3 will handle differently
             if (verbose) System.out.println("Cannot process bills, server returning error code: "  + fpeBillingResponse.status);
+            bill.deleteBillableItems(lastItemIDToProcess);
         }
 
     }
