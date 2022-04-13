@@ -198,7 +198,7 @@ class UbiqWebServices {
 
 
 
-    FPEKeyResponse getFPEEncryptionKey(FFS_Record ffs, String ffs_name) {
+    FPEKeyResponse getFPEEncryptionKey(String ffs_name) {
         String jsonRequest="";
         String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));
         String urlString = String.format("%s/%s/fpe/key?%s", this.baseUrl, this.restApiRoot, params);
