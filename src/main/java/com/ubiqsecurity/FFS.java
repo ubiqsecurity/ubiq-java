@@ -11,68 +11,61 @@ import com.google.gson.annotations.SerializedName;
 
 class FFS  {
     private boolean verbose= false;
-    private String encryption_algorithm;   //e.g. FF1 or FF3_1
-    private String name;   //e.g."SSN",
-    private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",
-    private String tweak_source;   //e.g. "generated",
-    private long min_input_length;   //e.g. 9 
-    private long max_input_length;   //e.g. 9
-    private boolean fpe_definable;
-    public LoadingCache<String, FFS_Record> FFSCache;
-    
-    
+    public LoadingCache<String, FFS_Record> FFSCache; // FFS Name / Contents of the FFS from the server
+
+
     /**
      * FFS constructor
      *
      * @param ubiqWebServices   used to specify the webservice object
      * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
      *
-     */        
-    public FFS(UbiqWebServices ubiqWebServices, String ffs_name) {
-        
+     */
+    public FFS(UbiqWebServices ubiqWebServices) {
+
         //create a cache for FFS based on the <encryption_algorithm>-<name>
-        FFSCache = 
+        FFSCache =
             CacheBuilder.newBuilder()
             .maximumSize(100)                               // maximum 100 records can be cached
-            .expireAfterAccess(30, TimeUnit.MINUTES)        // cache will expire after 30 minutes of access
+            .expireAfterAccess(24 * 60 * 3, TimeUnit.MINUTES)        // cache will expire after 30 minutes of access
             .build(new CacheLoader<String, FFS_Record>() {  // build the cacheloader
                 @Override
-                public FFS_Record load(String cachingKey) throws Exception {
+                public FFS_Record load(String ffs_name) throws Exception {
                    //make the expensive call
-                   return getFFSFromCloudAPI(ubiqWebServices, cachingKey, ffs_name);   // <AccessKeyId>-<FFS Name> 
-                } 
+                   return getFFSFromCloudAPI(ubiqWebServices, ffs_name);   // FFS_Name - returns the contents of the FFS
+                }
          });
     }
-    
-    
+
+
     /**
-    * Clears the FFS cache 
-    *        
-    */              
+    * Clears the FFS cache
+    *
+    */
     public void invalidateAllCache() {
-        FFSCache.invalidateAll(); 
+        FFSCache.invalidateAll();
     }
-    
-    
+
+
     /**
      * Called when FFS data is not in cache and need to make remote call to the server
      *
      * @param ubiqWebServices   used to specify the webservice object
-     * @param cachingKey  Format <AccessKeyId>-<FFS Name> used as the record locator 
+     * @param cachingKey  Format <AccessKeyId>-<FFS Name> used as the record locator
      * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
      *
-     */    
-    private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String cachingKey, String ffs_name) {
+     */
+    private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String ffs_name) {
 
-        if (verbose) System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSFromCloudAPI for caching key: " + cachingKey);
-        
+        if (verbose) System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSFromCloudAPI for ffs_name: " + ffs_name);
+
         FFSRecordResponse ffsRecordResponse;
         ffsRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name);
-        
-        String jsonStr= "{}";                
-        Gson gson = new Gson();        
-        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);      
-        
+
+        String jsonStr= "{}";
+        Gson gson = new Gson();
+        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
+
         // If the server fails, we would have already sent a getFFSDefinition exception
         if (ffsRecordResponse!= null) {
             if (ffsRecordResponse.EncryptionAlgorithm == null) {
@@ -80,7 +73,7 @@ class FFS  {
             } else {
                 ffs.setAlgorithm(ffsRecordResponse.EncryptionAlgorithm);
             }
-         
+
             if (ffsRecordResponse.FfsName == null) {
                 if (verbose) System.out.println("Missing name in FFS definition.");
             } else {
@@ -153,13 +146,13 @@ class FFS  {
                 ffs.setTweak(ffsRecordResponse.Tweak);
             }
         }
-          
+
         return ffs;
     }
-    
-    
-    
-}    
+
+
+
+}
 
 
 
@@ -175,7 +168,7 @@ class FFSRecordResponse {
 
     @SerializedName("regex")
     String Regex;
-    
+
     @SerializedName("tweak_source")
     String TweakSource;
 
@@ -193,7 +186,7 @@ class FFSRecordResponse {
 
     @SerializedName("output_character_set")
     String OutputCharacterSet;
-    
+
     @SerializedName("encryption_session")
     String EncryptionSession;
 
@@ -205,7 +198,7 @@ class FFSRecordResponse {
 
     @SerializedName("msb_encoding_bits")
     long MsbEncodingBits = -1;
-    
+
     @SerializedName("tweak_min_len")
     long MinTweakLength = -1;
 
@@ -227,61 +220,61 @@ class FFS_Record {
     private String name;   //e.g."SSN",
     private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",   // "(\d{3})-(\d{2})-\d{4}",  last 4 in the clear
     private String tweak_source;   //e.g. "generated",
-    private long min_input_length;   //e.g. 9 
+    private long min_input_length;   //e.g. 9
     private long max_input_length;   //e.g. 9
     private boolean fpe_definable;
     private String input_character_set;   //  "alphabet (inut/output radix)
     private String output_character_set;  // not for fpe (most likely)
-    private String passthrough_character_set;  
+    private String passthrough_character_set;
     private long max_key_rotations;
     private long msb_encoding_bits;
     private long  tweak_min_len;
     private long  tweak_max_len;
     private String Tweak;
 
-	
+
 	public String getAlgorithm() {
 		return encryption_algorithm;
 	}
 	public void setAlgorithm(String encryption_algorithm) {
 		this.encryption_algorithm = encryption_algorithm;
 	}
-		
+
 	public String getName() {
 		return name;
 	}
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	public String getRegex() {
 		return regex;
 	}
 	public void setRegex(String regex) {
 		this.regex = regex;
 	}
-	
+
 	public String getTweak_source() {
 		return tweak_source;
 	}
 	public void setTweak_source(String tweak_source) {
 		this.tweak_source = tweak_source;
 	}
-	
+
 	public long getMin_input_length() {
 		return min_input_length;
 	}
 	public void setMin_input_length(long min_input_length) {
 		this.min_input_length = min_input_length;
 	}
-	
+
 	public long getMax_input_length() {
 		return max_input_length;
 	}
 	public void setMax_input_length(long max_input_length) {
 		this.max_input_length = max_input_length;
 	}
-	
+
 	public boolean getFpe_definable() {
 		return fpe_definable;
 	}
@@ -323,14 +316,14 @@ class FFS_Record {
 	public void setMin_tweak_length(long tweak_min_len) {
 		this.tweak_min_len = tweak_min_len;
 	}
-	
+
 	public long getMax_tweak_length() {
 		return tweak_max_len;
 	}
 	public void setMax_tweak_length(long tweak_max_len) {
 		this.tweak_max_len = tweak_max_len;
 	}
-	
+
 	public String getTweak() {
 		return Tweak;
 	}
@@ -339,6 +332,6 @@ class FFS_Record {
 	}
 
 
-	
-	
-} 
+
+
+}

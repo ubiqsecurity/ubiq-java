@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.8 - 2022-04-13
+* Fixed a Field Format Specification caching issue and added appropriate unittests
+
 ## 0.2.7 - 2022-02-16
 * Improved error handling with billing messages during library shutdown
 
