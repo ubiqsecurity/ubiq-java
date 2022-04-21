@@ -13,6 +13,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Base64;
 import java.util.UUID;
 import java.time.Instant;
+import java.io.IOException;
 
 
 /**
@@ -490,7 +491,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             long twkmin= 0;
             long twkmax= 0;
 
-            //System.out.println("\n@@@@@@@@@@ STARTING DECRYPT @@@@@@@@@@");
             if (verbose) System.out.println("\nDecrypting CipherText: " + CipherText);
 
             // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
@@ -598,16 +598,20 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
 
 
+    public static String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak)
+            throws IOException, InvalidCipherTextException, IllegalStateException {
 
+      try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+          return ubiqEncryptDecrypt.encryptFPE(ffs_name, PlainText, tweak);
+      }
+    }
 
+    public static String decryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String CipherText, byte[] tweak)
+            throws IOException, InvalidCipherTextException, IllegalStateException {
 
-
-
-
-
-
-
-
-
+      try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+          return ubiqEncryptDecrypt.decryptFPE(ffs_name, CipherText, tweak);
+      }
+    }
 
 }

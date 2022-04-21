@@ -23,8 +23,8 @@ public class UbiqSampleFPE {
             JCommander jCommander = JCommander.newBuilder().addObject(options).build();
             jCommander.setProgramName("Ubiq Security Example");
             jCommander.parse(args);
-            
-            
+
+
             // Sample calls: IMPORTANT, DO NOT USE DOUBLE QUOTES
             if (options.help) {
                 System.out.println("\n************* Commandline Example *************");
@@ -42,7 +42,7 @@ public class UbiqSampleFPE {
                 System.out.println("UbiqSampleFPE 1.0.0");
                 System.exit(0);
             }
-            
+
             if ((options.simple!= null) && (options.bulk!= null)) {
                 throw new IllegalArgumentException("Cannot select both simple and bulk API options.");
             }
@@ -69,14 +69,14 @@ public class UbiqSampleFPE {
                 ubiqCredentials = UbiqFactory.readCredentialsFromFile(options.credentials, options.profile);
             }
 
-            
+
             String FfsName = options.ffsname;
-            
+
             if (Boolean.TRUE.equals(options.bulk)) {
                 // demonstrate setting up the UbiqFPEEncryptDecrypt manually so that it could be used
                 // multiple times whenever many operations are to be performed in a session.
-                
-                // default tweak in case the FFS model allows for external tweak insertion          
+
+                // default tweak in case the FFS model allows for external tweak insertion
                 byte[] tweakFF1 = {
                     (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
                     (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
@@ -84,19 +84,19 @@ public class UbiqSampleFPE {
                 };
                 if (options.tweakString!= null) {
                     tweakFF1 = options.tweakString.getBytes();
-                } 
+                }
 
                 try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-                                
+
                     if (options.encrypttext!= null) {
                         String plainText = options.encrypttext;
-                    
-                        String cipher = ubiqEncryptDecrypt.encryptFPE(FfsName, plainText, tweakFF1); 
+
+                        String cipher = ubiqEncryptDecrypt.encryptFPE(FfsName, plainText, tweakFF1);
                         System.out.println("ENCRYPTED cipher= " + cipher + "\n");
-                
+
                     } else if (options.decrypttext!= null) {
                         String cipher = options.decrypttext;
-                    
+
                         String plaintext = ubiqEncryptDecrypt.decryptFPE(FfsName, cipher, tweakFF1);
                         System.out.println("DECRYPTED plaintext= " + plaintext + "\n");
                     }
@@ -106,16 +106,16 @@ public class UbiqSampleFPE {
                 // demonstrates a simpler single-shot encrypt/decrypt and default tweak
                 if (options.encrypttext!= null) {
                     String plainText = options.encrypttext;
-                
+
                     simpleEncryption(FfsName, plainText, ubiqCredentials);
-            
+
                 } else if (options.decrypttext!= null) {
                     String cipher = options.decrypttext;
-                
+
                     simpleDecryption(FfsName, cipher, ubiqCredentials);
                 }
             }
-            
+
 
             System.exit(0);
         } catch (Exception ex) {
@@ -123,7 +123,7 @@ public class UbiqSampleFPE {
             System.exit(1);
         }
     }
-    
+
 
     /**
      * Demonstrates case when you only need to perform a single operation and have
@@ -133,13 +133,12 @@ public class UbiqSampleFPE {
      * @param plainText   the text you wish to encrypt
      * @param ubiqCredentials   used to specify the API key credentials of the user
      *
-     */        
+     */
     private static void simpleEncryption(String FfsName, String plainText, UbiqCredentials ubiqCredentials)
             throws IOException, IllegalStateException, InvalidCipherTextException {
-        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-            String cipher = ubiqEncryptDecrypt.encryptFPE(FfsName, plainText, null); 
-            System.out.println("ENCRYPTED cipher= " + cipher + "\n");
-        }
+
+        String cipher = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, null);
+        System.out.println("ENCRYPTED cipher= " + cipher + "\n");
     }
 
     /**
@@ -150,18 +149,17 @@ public class UbiqSampleFPE {
      * @param cipher   the text you wish to decrypt
      * @param ubiqCredentials   used to specify the API key credentials of the user
      *
-     */            
+     */
     private static void simpleDecryption(String FfsName, String cipher, UbiqCredentials ubiqCredentials)
             throws IOException, IllegalStateException, InvalidCipherTextException {
-        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-            String plainText = ubiqEncryptDecrypt.decryptFPE(FfsName, cipher, null); 
-            System.out.println("DECRYPTED plainText= " + plainText + "\n");
-        }
+
+        String plainText = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, null);
+        System.out.println("DECRYPTED plainText= " + plainText + "\n");
     }
-    
-    
-    
-    
+
+
+
+
 }
 
 class ExampleArgsFPE {
@@ -178,7 +176,7 @@ class ExampleArgsFPE {
         arity = 1,
         required = false)
     String decrypttext;
-    
+
     @Parameter(
         names = { "--simple", "-s" },
         description = "Use the simple encryption / decryption interfaces",

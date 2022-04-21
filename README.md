@@ -1,9 +1,8 @@
-## Ubiq Security Java Library
+# Ubiq Security Java Library
 
 The Ubiq Security Java library provides convenient interaction with the Ubiq Security Platform API from applications written in the Java language.  It includes a pre-defined set of classes that will provide simple interfaces to encrypt and decrypt data.
 
-This library also incorporates format preserving encryption (FPE), available as an optional add-on to your user account. FPE allows encrypting so that the output cipher text is in the same format as the original plaintext. This includes preserving special characters and control over what characters are permitted in the cipher text. For example, consider encrypting a social security number '123-45-6789'. The cipher text will maintain the dashes and look something like: 'W$+-qF-oMMV'.
-Additionally, Ubiq supports embedded format preserving encryption (eFPE) providing the ability to store additional meta data within the cipher text.
+This library also incorporates Ubiq Format Preserving Encryption (FPE).  FPE allows encrypting so that the output cipher text is in the same format as the original plaintext. This includes preserving special characters and control over what characters are permitted in the cipher text. For example, consider encrypting a social security number '123-45-6789'. The cipher text will maintain the dashes and look something like: 'W$+-qF-oMMV'.
 
 ## Documentation
 
@@ -14,7 +13,7 @@ See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
 ### Requirements
 Java 11 or later
 
-### Gradle Users
+#### Gradle Users
 
 Add this dependency to your project's build file:
 
@@ -22,7 +21,7 @@ Add this dependency to your project's build file:
 implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity', version: 'latest.release'
 ```
 
-### Maven users
+#### Maven users
 Add this dependency to your project's POM:
 where X.Y.Z represents the appropriate version number.
 
@@ -35,10 +34,10 @@ where X.Y.Z represents the appropriate version number.
 ```
 
 
-### Others
+#### Others
 You'll need to manually install the following JARs:
 
--  The Ubiq Security JAR from appropriate version in <https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity/> 
+-  The Ubiq Security JAR from appropriate version in <https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity/>
 
 #### Building from source:
 
@@ -51,10 +50,10 @@ Use following command to use [gradlew] to build the JAR file
 # windows
 .\gradlew assemble build
 ```
-## Requirements
+### Requirements
 
--   OpenJDK 11 or later 
--   This library has dependancies on ubiq-fpe-java library available for download in the Ubiq GitHub/GitLab repository.
+-   OpenJDK 11 or later
+-   This library has dependencies on ubiq-fpe-java library available for download in the Ubiq GitHub/GitLab repository.
 
 
 ## Usage
@@ -62,7 +61,7 @@ Use following command to use [gradlew] to build the JAR file
 The library needs to be configured with your account credentials which is
 available in your [Ubiq Dashboard][dashboard] [credentials][credentials].
 The credentials can be set using environment variables, loaded from an explicitly
-specified file, or read from the default location (~/.ubiq/credentials). 
+specified file, or read from the default location (~/.ubiq/credentials).
 
 
 
@@ -76,7 +75,7 @@ import com.ubiqsecurity.UbiqEncrypt;
 import com.ubiqsecurity.UbiqFactory;
 ```
 
-### Read credentials from a specific file and use a specific profile 
+### Read credentials from a specific file and use a specific profile
 ```java
 UbiqCredentials credentials = UbiqFactory.readCredentialsFromFile("some-credential-file", "some-profile");
 ```
@@ -101,7 +100,7 @@ UbiqCredentials credentials = UbiqFactory.createCredentials("<yourAccessKey>", "
 
 ### Runtime exceptions
 
-Unsuccessful requests raise exceptions. The exception object will contain the error details. 
+Unsuccessful requests raise exceptions. The exception object will contain the error details.
 
 ### Encrypt a simple block of data
 
@@ -207,23 +206,19 @@ static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials u
 }
 ```
 
+## Ubiq Format Preserving Encryption
 
-
-
-## FPE/eFPE (Optionally Available Feature)
-
-This library incorporates format preserving encryption (FPE) and embedded format preserving encryption (eFPE). Please contact support@ubiqsecurity.com to add this capability to your account.
+This library incorporates Ubiq Format Preserving Encryption (FPE).
 
 ## Requirements
 
--   Please follow the same requirements as described above for the non-FPE functionality. 
--   FPE/eFPE requires an additional library called ubiq-fpe-java available for download in the Ubiq GitHub/GitLab repository.
+-   Please follow the same requirements as described above for the non-FPE functionality.
+-   FPE requires an additional library called [ubiq-fpe-java] available for download in the Ubiq GitHub/GitLab repository.
 
 ## Usage
 
 You will need to obtain account credentials in the same way as described above for conventional encryption/decryption. When
-you do this in your [Ubiq Dashboard][dashboard] [credentials][credentials], you'll need to enable the FPE option. If you do not
-see the FPE option, you may need to upgrade your plan as this is an optional capability available on upgraded accounts.
+you do this in your [Ubiq Dashboard][dashboard] [credentials][credentials], you'll need to enable the FPE option.
 The credentials can be set using environment variables, loaded from an explicitly
 specified file, or read from the default location (~/.ubiq/credentials).
 
@@ -239,67 +234,109 @@ import com.ubiqsecurity.UbiqFactory;
 
 ### Reading and setting credentials
 
-The FPE/eFPE functions work with the credentials file and/or environmental variables in the same way as described 
+The FPE functions work with the credentials file and/or environmental variables in the same way as described
 earlier in this document. You'll only need to make sure that the API keys you pull from the Ubiq dashboard are enabled for
-FPE/eFPE capability. 
+FPE capability.
 
 
-### Encrypt a social security text field
-
-Lets assume you have a field containing a social security number "123-45-6789". You are able to encrypt the contents of that field
-by adding these lines to your program:
-
-```java
-import ubiqsecurity.UbiqCredentials;
-import ubiqsecurity.UbiqFPEEncryptDecrypt;
-import com.ubiqsecurity.UbiqFactory;
-
-
-ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
-try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-   String cipher = ubiqEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", "123-45-6789", null); 
-}
-```
-Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE 
-calls, for example when you are bulk processing many such operations in a session.
-
-
-### Decrypt the encrypted social security cipher
-
-To decrypt the cipher (e.g. "W$+-qF-oMMV") of a social security number, perform the following:
+### Encrypt a social security text field - simple interface
+Pass credentials, the name of a Field Format Specification, FFS, and data into the encryption function.
+The encrypted data will be returned.
 
 ```java
 import ubiqsecurity.UbiqCredentials;
 import ubiqsecurity.UbiqFPEEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
+String FfsName = "SSN";
+String plainText = "123-45-6789";
 
-ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+
+String cipher = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, null);
+System.out.println("ENCRYPTED cipher= " + cipher + "\n");
+
+```
+
+### Decrypt a social security text field - simple interface
+Pass credentials, the name of a Field Format Specification, FFS, and data into the decryption function.
+The plain text data will be returned.
+
+```java
+import ubiqsecurity.UbiqCredentials;
+import ubiqsecurity.UbiqFPEEncryptDecrypt;
+import com.ubiqsecurity.UbiqFactory;
+
+String FfsName = "SSN";
+String cipherText = "7\"c-`P-fGj?";
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+
+String plainText = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipherText, null);
+System.out.println("DECRYPTED plain text= " + plainText + "\n");
+
+```
+### Encrypt a social security text field - bulk interface
+Create an Encryption / Decryption object with the credentials and then allow repeatedly call encrypt
+data using a Field Format Specification, FFS, and the data.  The encrypted data will be returned after each call
+
+
+Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE
+calls, for example when you are bulk processing many such encrypt / decrypt operations in a session.
+
+
+
+```java
+import ubiqsecurity.UbiqCredentials;
+import ubiqsecurity.UbiqFPEEncryptDecrypt;
+import com.ubiqsecurity.UbiqFactory;
+
+String FfsName = "SSN";
+String plainText = "123-45-6789";
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+// Create single object but use many times
 try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-   String plaintext = ubiqEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", "W$+-qF-oMMV", null); 
+  // Can call encryptFPE / decryptFPE many times without creating new UbiqFPEEncryptDecrypt object.
+  String cipherText = ubiqEncryptDecrypt.encryptFPE(FfsName, plainText, null);
 }
 ```
-Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE 
-calls, for example when you are bulk processing many such operations in a session.
+
+### Decrypt a social security text field - bulk interface
+Create an Encryption / Decryption object with the credentials and then repeatedly decrypt
+data using a Field Format Specification, FFS, and the data.  The decrypted data will be returned after each call.
 
 
-### Other FFS models to explore
+Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE
+calls, for example when you are bulk processing many such encrypt / decrypt operations in a session.
 
-Depending on your installation, there are a wide variety of FFS models that are available. Each FFS model
-imposes its own set of rules revolving around how the data is formatted and what characters are legal for the
-given format. For example, you would not expect to see alpha characters in a social security number and the model
-will identify that as a formatting error. A few models to consider are:
 
--   ALPHANUM_SSN 
--   BIRTH_DATE 
--   GENERIC_STRING 
--   SO_ALPHANUM_PIN
+
+```java
+import ubiqsecurity.UbiqCredentials;
+import ubiqsecurity.UbiqFPEEncryptDecrypt;
+import com.ubiqsecurity.UbiqFactory;
+
+String FfsName = "SSN";
+String cipherText = "7\"c-`P-fGj?";
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+// Create single object but use many times
+try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+  // Can call encryptFPE / decryptFPE many times without creating new UbiqFPEEncryptDecrypt object.
+  String plainText = ubiqEncryptDecrypt.encryptFPE(FfsName, cipherText, null);
+}
+```
+
 
 Additional information on how to use these FFS models in your own applications is available by contacting
-Ubiq. You may also view some use-cases implemented in the unit test source file "UbiqFPEEncryptTest.java".
+Ubiq. You may also view some use-cases implemented in the unit test [UbiqFPEEncryptTest.java] and the sample application [UbiqSampleFPE.java] source code
 
 
 
 [dashboard]:https://dashboard.ubiqsecurity.com/
 [credentials]:https://dev.ubiqsecurity.com/docs/how-to-create-api-keys
 [gradlew]:https://docs.gradle.org/current/userguide/gradle_wrapper.html
+[UbiqFPEEncryptTest.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/src/test/java/com/ubiqsecurity/UbiqFPEEncryptTest.java
+[ubiq-fpe-java]:https://gitlab.com/ubiqsecurity/ubiq-fpe-java
+[UbiqSampleFPE.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/example/src/main/java/UbiqSampleFPE.java
