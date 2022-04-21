@@ -259,6 +259,33 @@ public class UbiqFPEEncryptTest
     }
 
 
+    @Test
+    public void encryptFPE_Simple() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+
+            String pt_generic = "A STRING OF AT LEAST 15 UPPER CHARACTERS";
+            String ct_generic = "";
+            String ct_generic_2 = "";
+            String pt_generic_2 = "";
+
+            {
+              try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+                  ct_generic = ubiqEncryptDecrypt.encryptFPE("GENERIC_STRING", pt_generic, null);
+              }
+            }
+
+            ct_generic_2 = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, "GENERIC_STRING", pt_generic, null);
+            pt_generic_2 = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, "GENERIC_STRING", ct_generic, null);
+
+            assertEquals(ct_generic, ct_generic_2);
+            assertEquals(pt_generic, pt_generic_2);
+
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+        }
+    }
 
 
     @Test
