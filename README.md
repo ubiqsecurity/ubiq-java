@@ -2,7 +2,7 @@
 
 The Ubiq Security Java library provides convenient interaction with the Ubiq Security Platform API from applications written in the Java language.  It includes a pre-defined set of classes that will provide simple interfaces to encrypt and decrypt data.
 
-This library also incorporates Ubiq Format Preserving Encryption (FPE).  FPE allows encrypting so that the output cipher text is in the same format as the original plaintext. This includes preserving special characters and control over what characters are permitted in the cipher text. For example, consider encrypting a social security number '123-45-6789'. The cipher text will maintain the dashes and look something like: 'W$+-qF-oMMV'.
+This library also incorporates Ubiq Format Preserving Encryption (eFPE).  eFPE allows encrypting so that the output cipher text is in the same format as the original plaintext. This includes preserving special characters and control over what characters are permitted in the cipher text. For example, consider encrypting a social security number '123-45-6789'. The cipher text will maintain the dashes and look something like: 'W$+-qF-oMMV'.
 
 ## Documentation
 
@@ -208,17 +208,17 @@ static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials u
 
 ## Ubiq Format Preserving Encryption
 
-This library incorporates Ubiq Format Preserving Encryption (FPE).
+This library incorporates Ubiq Format Preserving Encryption (eFPE).
 
 ## Requirements
 
--   Please follow the same requirements as described above for the non-FPE functionality.
--   FPE requires an additional library called [ubiq-fpe-java] available for download in the Ubiq GitHub/GitLab repository.
+-   Please follow the same requirements as described above for the non-eFPE functionality.
+-   eFPE requires an additional library called [ubiq-fpe-java] available for download in the Ubiq GitHub/GitLab repository.
 
 ## Usage
 
 You will need to obtain account credentials in the same way as described above for conventional encryption/decryption. When
-you do this in your [Ubiq Dashboard][dashboard] [credentials][credentials], you'll need to enable the FPE option.
+you do this in your [Ubiq Dashboard][dashboard] [credentials][credentials], you'll need to enable the eFPE option.
 The credentials can be set using environment variables, loaded from an explicitly
 specified file, or read from the default location (~/.ubiq/credentials).
 
@@ -234,9 +234,9 @@ import com.ubiqsecurity.UbiqFactory;
 
 ### Reading and setting credentials
 
-The FPE functions work with the credentials file and/or environmental variables in the same way as described
+The eFPE functions work with the credentials file and/or environmental variables in the same way as described
 earlier in this document. You'll only need to make sure that the API keys you pull from the Ubiq dashboard are enabled for
-FPE capability.
+eFPE capability.
 
 
 ### Encrypt a social security text field - simple interface
