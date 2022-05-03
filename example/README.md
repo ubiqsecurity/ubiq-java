@@ -1,6 +1,6 @@
-# Ubiq Security Sample Application using Java Library 
+# Ubiq Security Sample Application using Java Library
 
-Provided are two sample applications. One called "UbiqSample.java" demonstrates how to encrypt and decrypt typical data that you might 
+Provided are two sample applications. One called "UbiqSample.java" demonstrates how to encrypt and decrypt typical data that you might
 encounter in your own applications. The other sample application called "UbiqSampleFPE.java" demonstrates how to encrypt and decrypt
 using format preserving encryption (FPE).
 
@@ -44,11 +44,11 @@ From within the example directory, use the ```java ``` command to execute the sa
 
 <pre>
 # Linux / Mac
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h 
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -h 
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -h
 </pre>
 
 <pre>
@@ -57,12 +57,12 @@ Usage: Ubiq Security Example [options]
     --creds, -c
       Set the file name with the API credentials
     --decrypt, -d
-      Decrypt the contents of the input file and write the results to output 
-      file 
+      Decrypt the contents of the input file and write the results to output
+      file
       Default: false
     --encrypt, -e
-      Encrypt the contents of the input file and write the results to output 
-      file 
+      Encrypt the contents of the input file and write the results to output
+      file
       Default: false
     --help, -h
       Print app parameter summary
@@ -122,11 +122,11 @@ java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i README
 
 <pre>
 # Linux / Mac
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -p -c credentials 
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -p -c credentials
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -p -c credentials 
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -p -c credentials
 </pre>
 
 
@@ -190,8 +190,8 @@ Usage: Ubiq Security Example [options]
     --decrypttext, -d
       Set the cipher text value to decrypt and will return the decrypted text.
     --encrypttext, -e
-      Set the field text value to encrypt and will return the encrypted cipher 
-      text. 
+      Set the field text value to encrypt and will return the encrypted cipher
+      text.
   * --ffsname, -n
       Set the ffs name, for example SSN.
     --help, -h
@@ -228,23 +228,3 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W
 # Windows
 java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
-
-
-
-#### Other FFS models to explore
-
-Depending on your installation, there are a wide variety of FFS models that are available. Each FFS model
-imposes its own set of rules revolving around how the data is formatted and what characters are legal for the
-given format. For example, you would not expect to see alpha characters in a social security number and the model
-will identify that as a formatting error. A few models to consider are:
-
--   ALPHANUM_SSN 
--   BIRTH_DATE 
--   GENERIC_STRING 
--   SO_ALPHANUM_PIN
-
-Additional information on how to use these FFS models in your own applications is available by contacting
-Ubiq. You may also view some use-cases implemented in the unit test source file "UbiqFPEEncryptTest.java".
-
-
-
