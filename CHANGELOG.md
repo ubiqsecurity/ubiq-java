@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.10 - 2023-01-09
+* Performance improvements and support arbitrary radix / charactersets 
+* Resolve https://nvd.nist.gov/vuln/detail/CVE-2022-25647 by updating to version 2.10
+
 ## 0.2.9 - 2022-05-03
 * Added simple interfaces for fpe encryption
 

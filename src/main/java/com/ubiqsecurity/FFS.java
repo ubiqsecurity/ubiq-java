@@ -46,7 +46,6 @@ class FFS  {
         FFSCache.invalidateAll();
     }
 
-
     /**
      * Called when FFS data is not in cache and need to make remote call to the server
      *

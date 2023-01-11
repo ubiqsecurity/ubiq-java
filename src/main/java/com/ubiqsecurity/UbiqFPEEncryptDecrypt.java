@@ -23,17 +23,22 @@ import java.io.IOException;
 public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private boolean verbose= false;
     private UbiqWebServices ubiqWebServices; // null when closed
-    private EncryptionKeyResponse encryptionKey;
-    private DecryptionKeyResponse decryptionKey;
     private FFS ffs;
-    private String formatted_dest;
-    private String trimmed;
-    private String base2_charset = "01";
-    private int FF1_base2_min_length = 20; // NIST requirement ceil(log2(1000000))
-    private FFSKeyCache ffsKeyCache;
+    private FFXCache ffxCache;
     private FPEProcessor executor;
     private FPETransactions bill;
     private UbiqCredentials ubiqCredentials;
+
+
+    class ParsedData {
+      String formatted_dest;
+      String trimmed;
+
+      ParsedData(String formatted_dest, String trimmed) {
+        this.formatted_dest = formatted_dest;
+        this.trimmed = trimmed;
+      }
+    }
 
     /**
      * UbiqFPEEncryptDecrypt constructor
@@ -128,18 +133,13 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * @param ffs  The FFS record model
     * @param key_number  The value to be encoded
     * @param str  The given string to receive the encoding
-    * @param position  The location within the string to encode
     *
     * @return the updated string
     */
-    public String encode_keynum(FFS_Record ffs, int key_number, String str, int position) {
+    public String encode_keynum(FFS_Record ffs, int key_number, String str) {
         String buf= "";
-        if (position < 0) {
-            // if a valid non-passthrough location cannot be found then the original string is bad
-            throw new RuntimeException("Bad String encoding position for: " + str);
-        }
 
-        char charBuf = str.charAt(position);
+        char charBuf = str.charAt(0);
 
         int ct_value = ffs.getOutput_character_set().indexOf(charBuf);
         if (verbose) System.out.println("ct_value: " + ct_value);
@@ -150,7 +150,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         ct_value =  ct_value + (key_number << msb_encoding_bits);
 
         char ch= ffs.getOutput_character_set().charAt(ct_value);
-        buf= Parsing.replaceChar(str, ch, position);
+        buf= Parsing.replaceChar(str, ch, 0);
 
         return buf;
     }
@@ -161,26 +161,26 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * output character set found in the model.
     *
     * @param ffs  The FFS record model
-    * @param str  The given string to decode
+    * @param parsed_data  The given string to decode
     * @param position  The location within the string for the decode
     *
     * @return the value decoded
     */
-    public int decode_keynum(FFS_Record ffs, String str, int position) {
+    public int decode_keynum(final FFS_Record ffs, ParsedData parsed_data, final int position) {
         int key_num = 0;
         if (position < 0) {
             // if caller passed an invalid position
-            throw new RuntimeException("Bad String decoding position for: " + str);
+            throw new RuntimeException("Bad String decoding position for: " + parsed_data.trimmed);
         }
 
-        char charBuf = str.charAt(position);
+        char charBuf = parsed_data.trimmed.charAt(position);
         int encoded_value = ffs.getOutput_character_set().indexOf(charBuf);
 
         long msb_encoding_bits = ffs.getMsb_encoding_bits();
         key_num =  encoded_value >> msb_encoding_bits;
 
         char ch= ffs.getOutput_character_set().charAt(encoded_value - (key_num << msb_encoding_bits));
-        this.trimmed= Parsing.replaceChar(str, ch, position);
+        parsed_data.trimmed = Parsing.replaceChar(parsed_data.trimmed, ch, position);
 
         return key_num;
     }
@@ -196,8 +196,9 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * @param conversion_direction  Positive (1) means input to output, negative (-1) means output to input
     * @param source_string  The string to parse
     *
+    * @return A parsed data structured containing the trimmed string and the formatted output string
     */
-    public void ubiq_platform_fpe_string_parse(
+    public ParsedData ubiq_platform_fpe_string_parse(
         FFS_Record ffs,
         long conversion_direction,
         String source_string)
@@ -206,6 +207,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         char dest_zeroth_char= '0';
         char source_zeroth_char= '0';
 
+        ParsedData ret = null;
 
         if (conversion_direction > 0) { // input to output
             src_char_set= ffs.getInput_character_set();
@@ -224,9 +226,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
             int status = parsing.ubiq_platform_efpe_parsing_parse_input(source_string, src_char_set, ffs.getPassthrough_character_set());
 
-            this.trimmed= parsing.get_trimmed_characters();
-            this.formatted_dest= parsing.get_empty_formatted_output();
+            ret = new ParsedData(parsing.get_empty_formatted_output(), parsing.get_trimmed_characters());
+            // this.trimmed= parsing.get_trimmed_characters();
+            // this.formatted_dest= parsing.get_empty_formatted_output();
          }
+         return ret;
     }
 
 
@@ -236,29 +240,32 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * set of provided characters.
     *
     * @param ffs  The FFS record model
+    * @param formatted_dest The formatted destination string 
     * @param convertedToRadix  The string to be placed in the formatted_dest
     * @param characterSet  The set of characters to use in the final formatted_dest
     *
+    * @return the correctly formatted output string
     */
-    public void merge_to_formatted_output(FFS_Record ffs, String convertedToRadix, String characterSet) {
-        int d = this.formatted_dest.length() - 1;
+    public String merge_to_formatted_output(FFS_Record ffs, final String formatted_dest, final String convertedToRadix, final String characterSet) {
+      String ret = formatted_dest;
+      int d = ret.length() - 1;
         int s = convertedToRadix.length() - 1;
 
         // Merge PT to formatted output
         while (s >= 0 && d >= 0) {
             // Find the first available destination character
-            while (d >=0 && this.formatted_dest.charAt(d) != characterSet.charAt(0)) {
+            while (d >=0 && ret.charAt(d) != characterSet.charAt(0)) {
                 d--;
             }
 
             // Copy the encrypted text into the formatted output string
             if (d >= 0) {
-                this.formatted_dest = Parsing.replaceChar(this.formatted_dest, convertedToRadix.charAt(s), d);
+                ret = Parsing.replaceChar(ret, convertedToRadix.charAt(s), d);
             }
             s = s - 1;
             d = d - 1;
         }
-
+      return ret;
     }
 
 
@@ -274,12 +281,20 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * @return the converted string
     *
     */
-    public String str_convert_radix(String rawtext, String input_radix, String output_radix) {
-        // convert a given string to a numerical location based on a given Input_character_set
-        BigInteger r1 = Bn.__bigint_set_str(rawtext, input_radix);
+    public String str_convert_radix(final String rawtext, final String input_radix, final String output_radix) {
+      boolean verbose = false;
+      if (verbose) System.out.println("rawtext: '" + rawtext + "'");
+      if (verbose) System.out.println("input_radix: '" + input_radix + "'");
+      if (verbose) System.out.println("output_radix: '" + output_radix + "'");
 
-        // convert a numerical location code to a string based on its location in an Output_character_set
-        String output = Bn.__bigint_get_str(output_radix, r1);
+        // convert a given string to a numerical location based on a given Input_character_set
+        BigInteger r1 = FF1.number(rawtext, input_radix);
+
+        if (verbose) System.out.println("r1: '" + r1.toString(10) + "'");
+
+
+        // Convert to output string - making sure to pad to original length
+        String output = FF1.str(rawtext.length(), output_radix, r1);
 
         return output;
     }
@@ -328,15 +343,15 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     *
     */
     public void clearKeyCache() {
-        if (this.ffsKeyCache != null) {
-            if (verbose) System.out.println("++++++++++++ clearing KeyCache" );
-            this.ffsKeyCache.invalidateAllCache();
-        }
         if (this.ffs != null) {
             if (verbose) System.out.println("++++++++++++ clearing FFSCache" );
             this.ffs.invalidateAllCache();
         }
-    }
+        if (this.ffxCache != null) {
+          if (verbose) System.out.println("++++++++++++ clearing FFXCache" );
+          this.ffxCache.invalidateAllCache();
+      }
+  }
 
 
     /**
@@ -352,126 +367,109 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     public String encryptFPE(String ffs_name, String PlainText, byte[] tweak)
         throws IllegalStateException  {
             if (verbose) System.out.println("\nEncrypting PlainText: " + PlainText);
-            UbiqCredentials ubiqCredentials= this.ubiqCredentials;
-            String convertedToRadix = "";
             String cipher = "";
-            String withInsertion = "";
-            long twkmin= 0;
-            long twkmax= 0;
 
-            // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
-            if (ffs == null) {
-                ffs = new FFS(this.ubiqWebServices);
-            }
-
-            // attempt to load the FPEAlgorithm from the local cache
             try {
-                FFS_Record FFScaching = ffs.FFSCache.get(ffs_name);
 
-                // Obtain encryption key information
-                if (this.ubiqWebServices == null) {
-                    throw new IllegalStateException("object closed");
-                }
-                if (ffsKeyCache == null) {
-                        ffsKeyCache = new FFSKeyCache(this.ubiqWebServices);
-                }
-                FFS_KeyId keyId = new FFS_KeyId(ffs_name, null);
-                FFS_KeyRecord FFSKeycaching = ffsKeyCache.FFSKeyCache.get(keyId);
+              FFS_Record FFScaching = getFFS(ffs_name);
+              FFX_Ctx ctx = getCtx(FFScaching, null);
 
-                // decrypt the datakey from the keys found in the cache
-                String EncryptedPrivateKey = FFSKeycaching.getEncryptedPrivateKey();
-                String WrappedDataKey = FFSKeycaching.getWrappedDataKey();
-                byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
+              cipher = encryptData(FFScaching, ctx, PlainText, tweak);
 
-
-                ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
-
-                if ((this.trimmed.length() < FFScaching.getMin_input_length()) ||
-                    (this.trimmed.length() > FFScaching.getMax_input_length())) {
-                    throw new RuntimeException("Input length does not match FFS parameters.");
-                }
-
-                convertedToRadix = str_convert_radix(this.trimmed, FFScaching.getInput_character_set(), base2_charset);
-                if (verbose) System.out.println("    converted to base2= " + convertedToRadix);
-
-                // Figure out how long to pad the binary string.  Formula is input_radix^len = 2^Y which is log2(input_radix) * len
-                // Due to FF1 constraints, the there is a minimum length for a base2 string, so make sure to be at least that long too
-                // or fpe will fail
-                double padlen = Math.ceil( Math.max(FF1_base2_min_length, log2(  FFScaching.getInput_character_set().length()  ) * this.trimmed.length()       ));
-                if (verbose) System.out.println("    padlen= " + padlen);
-
-                convertedToRadix = pad_text(convertedToRadix, padlen);
-                if (verbose) System.out.println("    convertedToRadix (padded base2)= " + convertedToRadix);
-
-                // determine the tweak. Use the one in the FFS, if present, or default to the one user passed in as a parameter
-                if (FFScaching.getTweak_source().equals("constant")) {
-                    // these have been explicitly set based on the FFS model
-                    if (verbose) System.out.println("    Using tweak from FFS record= " + FFScaching.getTweak());
-                    twkmin= FFScaching.getMin_tweak_length();
-                    twkmax= FFScaching.getMax_tweak_length();
-                    tweak= Base64.getDecoder().decode(FFScaching.getTweak());
-                } else {
-                    // For now, the default case is to use the values in the FFS cache for min/max
-                    // and use the tweak that the user passed in as a parameter. Later may need to revise this.
-                    if (verbose) System.out.println("    Using tweak specified by user= " + tweak);
-                    twkmin= FFScaching.getMin_tweak_length();
-                    twkmax= FFScaching.getMax_tweak_length();
-                }
-
-                final int inputradix = base2_charset.length();
-                final int onputradix = FFScaching.getOutput_character_set().length();
-
-                String encryption_algorithm = FFScaching.getAlgorithm();
-                switch(encryption_algorithm) {
-                    case "FF1":
-                        if (verbose) System.out.println("    twkmin= " + twkmin + "    twkmax= " + twkmax +   "    tweak.length= " + tweak.length +   "    key.length= " + key.length);
-                        FF1 ctxFF1 = new FF1(key, tweak, twkmin, twkmax, inputradix);
-                        cipher = ctxFF1.encrypt(convertedToRadix);
-                        if (verbose) System.out.println("    cipher= " + cipher);
-                    break;
-                    case "FF3_1":
-                        FF3_1 ctxFF3_1 = new FF3_1(key, tweak, inputradix);
-                        cipher = ctxFF3_1.encrypt(convertedToRadix);
-                        if (verbose) System.out.println("     cipher= " + cipher);
-
-                    break;
-                    default:
-                        throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
-                }
-
-                convertedToRadix = str_convert_radix(cipher, base2_charset, FFScaching.getOutput_character_set());
-                if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
-                if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
-                merge_to_formatted_output(FFScaching, convertedToRadix, FFScaching.getOutput_character_set());
-                if (verbose) System.out.println("    encrypted and formatted= " + this.formatted_dest);
-
-                // Since ct_trimmed may not include empty leading characters, Need to walk through the formated_dest_buf and find
-                // first non-pass through character.  Could be char 0 or MSB with some actual CT
-                int firstNonPassthrough= findFirstIndexExclusive(this.formatted_dest, FFScaching.getPassthrough_character_set());
-                if (verbose) System.out.println("   firstNonPassthrough= " + firstNonPassthrough);
-
-                int key_number = FFSKeycaching.getKeyNumber();
-                if (verbose) System.out.println("   KeyNumber= " + key_number);
-
-                // encode the key into the cipher
-                this.formatted_dest = encode_keynum(FFScaching, key_number, this.formatted_dest, firstNonPassthrough);
-
-                // create the billing record
-                UUID uuid = UUID.randomUUID();
-                String timestamp= Instant.now().toString();
-                bill.createBillableItem(uuid.toString(), "encrypt", FFScaching.getName(), timestamp, 1);
+              // create the billing record
+              UUID uuid = UUID.randomUUID();
+              String timestamp= Instant.now().toString();
+              // TODO - Remove for now until refactor billing structured  bill.createBillableItem(uuid.toString(), "encrypt", FFScaching.getName(), timestamp, 1);
 
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
 
-        return this.formatted_dest;
+        return cipher;
+    }
+
+    /**
+     * Local encrypt function where the FFS and the CTX are loaded.
+     * TODO - Need to change to make skip any instance variables.
+     */
+    private String encryptData(final FFS_Record FFScaching, final FFX_Ctx cfx, final String PlainText, byte[] tweak)
+      throws IllegalStateException, ExecutionException  {
+        if (verbose) System.out.println("\nEncrypting PlainText: " + PlainText);
+        String convertedToRadix = "";
+        String cipher = "";
+        String formatted_dest = "";
+
+        // attempt to load the FPEAlgorithm from the local cache
+        ParsedData parsedData = ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
+
+        // Make sure the trimmed string is valid for the FFS
+        if ((parsedData.trimmed.length() < FFScaching.getMin_input_length()) ||
+            (parsedData.trimmed.length() > FFScaching.getMax_input_length())) {
+            throw new RuntimeException("Input length does not match FFS parameters.");
+        }
+
+        // Encrypt the data
+        switch(FFScaching.getAlgorithm()) {
+            case "FF1":
+                cipher = cfx.getFF1().encrypt(parsedData.trimmed, tweak);
+            break;
+            case "FF3_1":
+                cipher = cfx.getFF3_1().encrypt(parsedData.trimmed, tweak);
+            break;
+            default:
+                throw new RuntimeException("Unknown FPE Algorithm: " + FFScaching.getAlgorithm());
+        }
+
+        // Convert to output character set
+        convertedToRadix = str_convert_radix(cipher, FFScaching.getInput_character_set(), FFScaching.getOutput_character_set());
+        if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
+        if (verbose) System.out.println("    formatted destination= " + parsedData.formatted_dest);
+
+        // Encode the key number since it will be the first character.
+        int key_number = cfx.getKeyNumber();
+        if (verbose) System.out.println("   KeyNumber= " + key_number);
+        String encoded_value = encode_keynum(FFScaching, key_number, convertedToRadix);
+
+        formatted_dest = merge_to_formatted_output(FFScaching, parsedData.formatted_dest, encoded_value, FFScaching.getOutput_character_set());
+        if (verbose) System.out.println("    encrypted and formatted= " + formatted_dest);
+
+
+        return formatted_dest;
     }
 
 
+    public String[] encryptForSearch(final String ffs_name, final String PlainText, byte[] tweak)
+        throws IllegalStateException  {
+          boolean verbose= false;
 
+          String[] ret = null;
 
+          if (verbose) System.out.println("\nencryptForSearch: " + PlainText);
 
+          try {
+          // Get the FFS for the FFS_Name and the CTX which will have the current key_number
+            FFS_Record FFScaching = getFFS(ffs_name);
+
+            FFX_Ctx ctx = getCtx(FFScaching, null);
+            
+            int current_key_number = ctx.getKeyNumber();
+            ret = new String[current_key_number + 1];
+
+            for (int key = 0; key <= current_key_number; key++) {
+              ctx = ffxCache.FFXCache.get(new FFS_KeyId(FFScaching, key));
+              ret[key] = encryptData(FFScaching, ctx, PlainText, tweak);
+            }
+
+          } catch (ExecutionException e) {
+            e.printStackTrace();
+          }
+
+          // Then get the ctx for each key_number and encrypt using that ctx
+          // Return the array of Cipher Text values.
+          return ret;
+    }
+
+    
     /**
     * Performs an FPE decryption for a given string based on a given FFS model
     *
@@ -482,121 +480,97 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     * @return the decrypted output string
     *
     */
-    public String decryptFPE(String ffs_name, String CipherText, byte[] tweak)
+    public String decryptFPE(final String ffs_name, final String CipherText, byte[] tweak)
         throws IllegalStateException {
-            UbiqCredentials ubiqCredentials= this.ubiqCredentials;
+          boolean verbose = false;
             String PlainText = "";
             String restoredFromRadix = "";
-            String restoredPlainText = "";
-            long twkmin= 0;
-            long twkmax= 0;
+            String formatted_dest = "";
 
             if (verbose) System.out.println("\nDecrypting CipherText: " + CipherText);
 
-            // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
-            if (ffs == null) {
-                ffs = new FFS(this.ubiqWebServices);
-            }
-
             // attempt to load the FPEAlgorithm from the local cache
             try {
-                FFS_Record FFScaching = ffs.FFSCache.get(ffs_name);
+                FFS_Record FFScaching = getFFS(ffs_name);
 
-                // Obtain encryption key information
-                if (this.ubiqWebServices == null) {
-                    throw new IllegalStateException("object closed");
-                }
+                // Parse the cipher text into trimmed and formatted output
+                ParsedData parsed_data = ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
+                if (verbose) System.out.println("    parsed_data.trimmed= " + parsed_data.trimmed);
+                if (verbose) System.out.println("    parsed_data.formatted_dest= " + parsed_data.formatted_dest);
 
-                ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
-                if (verbose) System.out.println("    this.trimmed= " + this.trimmed);
-
-                if ((this.trimmed.length() < FFScaching.getMin_input_length()) ||
-                    (this.trimmed.length() > FFScaching.getMax_input_length())) {
+                // Make sure the trimmed string is valid for the FFS
+                if ((parsed_data.trimmed.length() < FFScaching.getMin_input_length()) ||
+                    (parsed_data.trimmed.length() > FFScaching.getMax_input_length())) {
                     throw new RuntimeException("Input length does not match FFS parameters.");
                 }
 
-                int key_number = decode_keynum(FFScaching, this.trimmed, 0);
+                // Get the key number from the cipher text
+                int key_number = decode_keynum(FFScaching, parsed_data, 0);
                 if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
 
-                if (ffsKeyCache == null) {
-                    ffsKeyCache = new FFSKeyCache(this.ubiqWebServices);
+                FFX_Ctx cfx = getCtx(FFScaching, key_number);
+
+                if (verbose) System.out.println("    cachingKey= " + FFScaching.getName() + " " + cfx.getKeyNumber());
+
+                restoredFromRadix = str_convert_radix(parsed_data.trimmed, FFScaching.getOutput_character_set(), FFScaching.getInput_character_set());
+                if (verbose) System.out.println("    converted to input character set= " + restoredFromRadix);
+
+                // Encrypt the data
+                switch(FFScaching.getAlgorithm()) {
+                  case "FF1":
+                    PlainText = cfx.getFF1().decrypt(restoredFromRadix, tweak);
+                  break;
+                  case "FF3_1":
+                    PlainText = cfx.getFF3_1().decrypt(restoredFromRadix, tweak);
+                  break;
+                  default:
+                      throw new RuntimeException("Unknown FPE Algorithm: " + FFScaching.getAlgorithm());
                 }
 
-                FFS_KeyId keyId = new FFS_KeyId(ffs_name, key_number);
-                if (verbose) System.out.println("    cachingKey= " + keyId.ffs_name + " " + keyId.key_number);
-                FFS_KeyRecord FFSKeycaching = ffsKeyCache.FFSKeyCache.get(keyId);
-
-                // decrypt the datakey from the keys found in the cache
-                String EncryptedPrivateKey = FFSKeycaching.getEncryptedPrivateKey();
-                String WrappedDataKey = FFSKeycaching.getWrappedDataKey();
-                byte[] key = this.ubiqWebServices.getUnwrappedKey(EncryptedPrivateKey, WrappedDataKey);
-
-                restoredFromRadix = str_convert_radix(this.trimmed, FFScaching.getOutput_character_set(), base2_charset);
-                if (verbose) System.out.println("    converted to base2= " + restoredFromRadix);
-
-                double padlen = Math.ceil( Math.max(FF1_base2_min_length, log2(  FFScaching.getInput_character_set().length()  ) * this.trimmed.length()    ) );
-                if (verbose) System.out.println("    padlen= " + padlen);
-
-                restoredFromRadix = pad_text(restoredFromRadix, padlen);
-                if (verbose) System.out.println("    restoredFromRadix= " + restoredFromRadix);
-
-                // determine the tweak. Use the one in the FFS, if present, or default to the one user passed in as a parameter
-                if (FFScaching.getTweak_source().equals("constant")) {
-                    // these have been explicitly set based on the FFS model
-                    if (verbose) System.out.println("    Using tweak from FFS record= " + FFScaching.getTweak());
-                    //if (verbose) System.out.println("                          Bytes= " + Base64.getDecoder().decode(FFScaching.getTweak()) );
-                    twkmin= FFScaching.getMin_tweak_length();
-                    twkmax= FFScaching.getMax_tweak_length();
-                    tweak= Base64.getDecoder().decode(FFScaching.getTweak());
-                } else {
-                    // For now, the default case is to use the values in the FFS cache for min/max
-                    // and use the tweak that the user passed in as a parameter. Later may need to revise this.
-                    if (verbose) System.out.println("    Using tweak specified by user= " + tweak);
-                    twkmin= FFScaching.getMin_tweak_length();
-                    twkmax= FFScaching.getMax_tweak_length();
-                }
-
-                final int inputradix = base2_charset.length();
-                final int onputradix = FFScaching.getOutput_character_set().length();
-
-                // decrypt based on the specified cipher
-                String encryption_algorithm = FFScaching.getAlgorithm();
-                switch(encryption_algorithm) {
-                    case "FF1":
-                        if (verbose) System.out.println("    twkmin= " + twkmin + "    twkmax= " + twkmax +   "    tweak.length= " + tweak.length +   "    key.length= " + key.length );
-                        FF1 ctxFF1 = new FF1(key, tweak, twkmin, twkmax, inputradix);
-                        PlainText = ctxFF1.decrypt(restoredFromRadix);
-                        if (verbose) System.out.println("    PlainText (pt base2)= " + PlainText);
-                    break;
-                    case "FF3_1":
-                        FF3_1 ctxFF3_1 = new FF3_1(key, tweak, inputradix);
-                        PlainText = ctxFF3_1.decrypt(restoredFromRadix);
-                        if (verbose) System.out.println("    PlainText= " + PlainText);
-                    break;
-                    default:
-                        throw new RuntimeException("Unknown FPE Algorithm: " + encryption_algorithm);
-                }
-
-                restoredFromRadix = str_convert_radix(PlainText, base2_charset, FFScaching.getInput_character_set());
-                if (verbose) System.out.println("    converted to input char set= " + restoredFromRadix);
-                if (verbose) System.out.println("    formatted destination= " + this.formatted_dest);
-                merge_to_formatted_output(FFScaching, restoredFromRadix, FFScaching.getInput_character_set());
-                if (verbose) System.out.println("    decrypted and formatted= " + this.formatted_dest);
+                formatted_dest = merge_to_formatted_output(FFScaching, parsed_data.formatted_dest, PlainText, FFScaching.getInput_character_set());
+                if (verbose) System.out.println("    decrypted and formatted= " + formatted_dest);
 
                 // create the billing record
                 UUID uuid = UUID.randomUUID();
                 String timestamp= Instant.now().toString();
-                bill.createBillableItem(uuid.toString(), "decrypt", FFScaching.getName(), timestamp, 1);
+                // TODO - Remove for now until refactor billing structured bill.createBillableItem(uuid.toString(), "decrypt", FFScaching.getName(), timestamp, 1);
 
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
 
-
-        return this.formatted_dest;
+        return formatted_dest;
     }
 
+    private FFS_Record getFFS(final String ffs_name)
+      throws IllegalStateException, ExecutionException {
+        if (this.ubiqWebServices == null) {
+          throw new IllegalStateException("object closed");
+        }
 
+        // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
+        if (this.ffs == null) {
+          this.ffs = new FFS(this.ubiqWebServices);
+        }
+
+        // Get the FFS definition based on the supplied name.
+        return this.ffs.FFSCache.get(ffs_name);
+    }
+
+    private FFX_Ctx getCtx(final FFS_Record ffsRecord, final Integer key_number) 
+      throws IllegalStateException, ExecutionException {
+        if (this.ubiqWebServices == null) {
+          throw new IllegalStateException("object closed");
+        }
+
+        // Get the FFX object (either FF1 or FF3_1) based on the FFS name.  Needs the 
+        // entire FFS since it includes algorithm so create the correct FF1 or FF3_1 object
+        if (this.ffxCache == null) {
+          this.ffxCache = new FFXCache(this.ubiqWebServices);
+        }
+
+        return this.ffxCache.FFXCache.get(new FFS_KeyId(ffsRecord, key_number));
+    }
 
     public static String encryptFPE(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak)
             throws IOException, InvalidCipherTextException, IllegalStateException {
@@ -614,4 +588,12 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       }
     }
 
+    public static String[] encryptForSearch(UbiqCredentials ubiqCredentials, String ffs_name, String PlainText, byte[] tweak)
+            throws IOException, InvalidCipherTextException, IllegalStateException {
+
+      try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+          return ubiqEncryptDecrypt.encryptForSearch(ffs_name, PlainText, tweak);
+      }
+    }
+    
 }
