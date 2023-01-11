@@ -3,6 +3,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 import java.nio.file.Files;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -71,20 +72,15 @@ public class UbiqSampleFPE {
 
 
             String FfsName = options.ffsname;
+            byte[] tweakFF1 = null;
+
+            if (options.tweakString!= null) {
+              tweakFF1 = Base64.getDecoder().decode(options.tweakString);
+            }
 
             if (Boolean.TRUE.equals(options.bulk)) {
                 // demonstrate setting up the UbiqFPEEncryptDecrypt manually so that it could be used
                 // multiple times whenever many operations are to be performed in a session.
-
-                // default tweak in case the FFS model allows for external tweak insertion
-                byte[] tweakFF1 = {
-                    (byte)0x39, (byte)0x38, (byte)0x37, (byte)0x36,
-                    (byte)0x35, (byte)0x34, (byte)0x33, (byte)0x32,
-                    (byte)0x31, (byte)0x30,
-                };
-                if (options.tweakString!= null) {
-                    tweakFF1 = options.tweakString.getBytes();
-                }
 
                 try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
 
@@ -107,12 +103,12 @@ public class UbiqSampleFPE {
                 if (options.encrypttext!= null) {
                     String plainText = options.encrypttext;
 
-                    simpleEncryption(FfsName, plainText, ubiqCredentials);
+                    simpleEncryption(FfsName, plainText, ubiqCredentials, tweakFF1);
 
                 } else if (options.decrypttext!= null) {
                     String cipher = options.decrypttext;
 
-                    simpleDecryption(FfsName, cipher, ubiqCredentials);
+                    simpleDecryption(FfsName, cipher, ubiqCredentials, tweakFF1);
                 }
             }
 
@@ -132,12 +128,13 @@ public class UbiqSampleFPE {
      * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
      * @param plainText   the text you wish to encrypt
      * @param ubiqCredentials   used to specify the API key credentials of the user
+     * @param tweak   used to provide variation in the encryption algorithm
      *
      */
-    private static void simpleEncryption(String FfsName, String plainText, UbiqCredentials ubiqCredentials)
+    private static void simpleEncryption(String FfsName, String plainText, UbiqCredentials ubiqCredentials, byte[] tweak )
             throws IOException, IllegalStateException, InvalidCipherTextException {
 
-        String cipher = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, null);
+        String cipher = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, tweak);
         System.out.println("ENCRYPTED cipher= " + cipher + "\n");
     }
 
@@ -148,12 +145,13 @@ public class UbiqSampleFPE {
      * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
      * @param cipher   the text you wish to decrypt
      * @param ubiqCredentials   used to specify the API key credentials of the user
+     * @param tweak   used to provide variation in the encryption algorithm
      *
      */
-    private static void simpleDecryption(String FfsName, String cipher, UbiqCredentials ubiqCredentials)
+    private static void simpleDecryption(String FfsName, String cipher, UbiqCredentials ubiqCredentials, byte[] tweak)
             throws IOException, IllegalStateException, InvalidCipherTextException {
 
-        String plainText = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, null);
+        String plainText = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipher, tweak);
         System.out.println("DECRYPTED plainText= " + plainText + "\n");
     }
 
@@ -198,7 +196,7 @@ class ExampleArgsFPE {
 
     @Parameter(
         names = { "--tweak", "-t" },
-        description = "Set alpha string to be used as tweak bytes",
+        description = "Tweak encoded as a base64 string",
         arity = 1,
         required = false)
     String tweakString;
