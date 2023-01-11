@@ -47,6 +47,7 @@ public class UbiqFPEEncryptTest
 
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            ex.printStackTrace();
             fail(ex.toString());
         }
     }
@@ -289,6 +290,90 @@ public class UbiqFPEEncryptTest
 
 
     @Test
+    public void encryptSearch() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+
+            String pt_generic = "A STRING OF AT LEAST 15 UPPER CHARACTERS";
+            String ct_generic = "";
+            String pt_alphanum = "ABCD";
+            String ct_alphanum = "";
+
+            boolean match = false;
+            UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials);
+            ct_generic = ubiqEncryptDecrypt.encryptFPE("GENERIC_STRING", pt_generic, null);
+            ct_alphanum = ubiqEncryptDecrypt.encryptFPE("SO_ALPHANUM_PIN", pt_alphanum, null);
+
+            String ct_generic_array[] = ubiqEncryptDecrypt.encryptForSearch("GENERIC_STRING", pt_generic, null);
+            String ct_alphanum_array[] = ubiqEncryptDecrypt.encryptForSearch("SO_ALPHANUM_PIN", pt_alphanum, null);
+
+            match = false;
+            for (String ct : ct_generic_array) {
+              match = match || (ct.equals(ct_generic));
+            }
+
+            if (!match) {
+              fail("Unable to find matching value for '" + pt_generic + "'");
+            }
+
+            match = false;
+            for (String ct : ct_alphanum_array) {
+              match = match || (ct.equals(ct_alphanum));
+            }
+
+            if (!match) {
+              fail("Unable to find matching value for '" + pt_alphanum + "'");
+            }
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+        }
+    }
+
+    @Test
+    public void encryptSearchSimple() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
+
+            String pt_generic = "A STRING OF AT LEAST 15 UPPER CHARACTERS";
+            String ct_generic = "";
+            String pt_alphanum = "ABCD";
+            String ct_alphanum = "";
+
+            boolean match = false;
+            {
+              UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials);
+              ct_generic = ubiqEncryptDecrypt.encryptFPE("GENERIC_STRING", pt_generic, null);
+              ct_alphanum = ubiqEncryptDecrypt.encryptFPE("SO_ALPHANUM_PIN", pt_alphanum, null);
+            }
+
+            String ct_generic_array[] =  UbiqFPEEncryptDecrypt.encryptForSearch(ubiqCredentials, "GENERIC_STRING", pt_generic, null);
+            String ct_alphanum_array[] =  UbiqFPEEncryptDecrypt.encryptForSearch(ubiqCredentials, "SO_ALPHANUM_PIN", pt_alphanum, null);
+
+            match = false;
+            for (String ct : ct_generic_array) {
+              match = match || (ct.equals(ct_generic));
+            }
+
+            if (!match) {
+              fail("Unable to find matching value for '" + pt_generic + "'");
+            }
+
+            match = false;
+            for (String ct : ct_alphanum_array) {
+              match = match || (ct.equals(ct_alphanum));
+            }
+
+            if (!match) {
+              fail("Unable to find matching value for '" + pt_alphanum + "'");
+            }
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+        }
+    }
+
+    @Test
     public void encryptFPE_MultipleCachedKeys() {
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
@@ -301,9 +386,12 @@ public class UbiqFPEEncryptTest
 
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
                 String original = "123-45-6789";
+                String pt_generic = "A STRING OF AT LEAST 15 UPPER CHARACTERS";
+
                 String cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
                 String cipher2 = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
                 // clear the key cache and force going back to server
+
                 ubiqEncryptDecrypt.clearKeyCache();
                 cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
                 // clear the key cache and force going back to server
@@ -317,7 +405,7 @@ public class UbiqFPEEncryptTest
                 cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
                 cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
                 cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
+                String cipher_generic = ubiqEncryptDecrypt.encryptFPE("GENERIC_STRING", pt_generic, tweakFF1);
                 cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
 
                 assertEquals(cipher, cipher2);
@@ -336,9 +424,8 @@ public class UbiqFPEEncryptTest
                 decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
                 decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
                 decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decryptFPE("GENERIC_STRING", cipher_generic, tweakFF1);
                 decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, null);
-
 
                 assertEquals(decrypted, decrypted2);
 
@@ -353,9 +440,63 @@ public class UbiqFPEEncryptTest
         }
     }
 
+/*
+    @Test
+    public void encryptFPE_Speed() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
 
+            String pt_generic = "A STRING OF AT LEAST 15 UPPER CHARACTERS";
+            String ct_generic = "";
+            String tmp = "";
 
+            String pt_alphanum = "ABCD";
+            String ct_alphanum = "";
 
+            
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+              long start = System.nanoTime();
+              int count = 1000000;
+              for (int i = 0; i < count; i++) {
+                ct_generic = ubiqEncryptDecrypt.encryptFPE("GENERIC_STRING", pt_generic, null);
+              }
+              long finish = System.nanoTime();
+              System.out.println(String.format("Encrypt %s %d records in %.4f seconds or %.4f ms/rec", "GENERIC_STRING", count,  ((finish - start) / 1000000000.0), ((finish - start) / 1000000.0)/count));
+
+              start = System.nanoTime();
+              for (int i = 0; i < count; i++) {
+                tmp = ubiqEncryptDecrypt.decryptFPE("GENERIC_STRING", ct_generic, null);
+              }
+              finish = System.nanoTime();
+              System.out.println(String.format("Decrypt %s %d records in %.4f seconds or %.4f ms/rec", "GENERIC_STRING", count,  ((finish - start) / 1000000000.0), ((finish - start) / 1000000.0)/count));
+              assertEquals(pt_generic, tmp);
+
+            }
+
+            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+              long start = System.nanoTime();
+              int count = 1000000;
+              for (int i = 0; i < count; i++) {
+                ct_alphanum = ubiqEncryptDecrypt.encryptFPE("SO_ALPHANUM_PIN", pt_alphanum, null);
+              }
+              long finish = System.nanoTime();
+              System.out.println(String.format("Encrypt %s %d records in %.4f seconds or %.4f ms/rec", "SO_ALPHANUM_PIN", count,  ((finish - start) / 1000000000.0), ((finish - start) / 1000000.0)/ count));
+
+              start = System.nanoTime();
+              for (int i = 0; i < count; i++) {
+                tmp = ubiqEncryptDecrypt.decryptFPE("SO_ALPHANUM_PIN", ct_alphanum, null);
+              }
+              finish = System.nanoTime();
+              System.out.println(String.format("Decrypt %s %d records in %.4f seconds or %.4f ms/rec", "SO_ALPHANUM_PIN", count,  ((finish - start) / 1000000000.0), ((finish - start) / 1000000.0)/ count));
+              assertEquals(pt_alphanum, tmp);
+            }
+
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+        }
+    }
+ */
 
 
 
