@@ -69,6 +69,7 @@ class UbiqWebServices {
     private boolean verbose= false;
     private final String applicationJson = "application/json";
     private final String restApiRoot = "api/v0";
+    private final String restApiV3Root = "api/v3";
 
     private UbiqCredentials ubiqCredentials;
     private String baseUrl;
@@ -122,37 +123,34 @@ class UbiqWebServices {
 
 
 
-    FPEBillingResponse sendBilling(String payload) {
-        String urlString = String.format("%s/%s/fpe/billing/%s", this.baseUrl, this.restApiRoot, encode(this.ubiqCredentials.getAccessKeyId()));
-        if (verbose) System.out.println("\n    sendBilling urlString: " + urlString);
+    FPEBillingResponse sendTrackingEvents(String payload) {
+      String csu = "sendTrackingEvents";
+      String urlString = String.format("%s/%s/tracking/events", this.baseUrl, this.restApiV3Root);
+        if (verbose) System.out.printf("%s  urlString: %s\n", csu, urlString);
 
         String jsonRequest = payload;
-
+        FPEBillingResponse fpeBillingResponse = new FPEBillingResponse(200, "");
         try {
           HttpRequest signedHttpRequest = buildSignedHttpRequest("POST", urlString, "", jsonRequest,
               this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-
           // submit HTTP request + expect HTTP response w/ status 'Created' (201)
-          String jsonResponse = submitHttpRequest(signedHttpRequest, 201);
+          String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
           if (verbose) System.out.println("    sendBilling jsonResponse: " + jsonResponse);
+          if (jsonResponse != null && !jsonResponse.isBlank()) {
 
-          // deserialize the JSON response to POJO
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            FPEBillingResponse fpeBillingResponse = gson.fromJson(jsonResponse, FPEBillingResponse.class);
+            if (verbose) System.out.println("    jsonResponse is NOT NULL");
 
-            if (verbose) System.out.println("    status: " + fpeBillingResponse.status + ", message: " + fpeBillingResponse.message + ", last_valid: " + fpeBillingResponse.last_valid);
+            // We know success is 200, so just add the json response
+            fpeBillingResponse = new FPEBillingResponse(200, jsonResponse);
 
-            return fpeBillingResponse;
+            if (verbose) System.out.println("  RETURN  status: " + fpeBillingResponse.status + ", message: " + fpeBillingResponse.message );
+          }
+          return fpeBillingResponse;
         } catch (Exception ex) {
-            String jsonResponse = ex.getMessage();
 
-            if (verbose) System.out.println("Server unable to process billing transactions after: " + jsonResponse);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            FPEBillingResponse fpeBillingResponse =
-                    gson.fromJson(jsonResponse, FPEBillingResponse.class);
+            return new FPEBillingResponse(400, "Server Error: " + ex.getMessage());
 
-            return fpeBillingResponse;
         }
     }
 

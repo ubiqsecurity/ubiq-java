@@ -25,9 +25,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     private UbiqWebServices ubiqWebServices; // null when closed
     private FFS ffs;
     private FFXCache ffxCache;
-    private FPEProcessor executor;
-    private FPETransactions bill;
+    private BillingEventsProcessor executor;
+    private BillingEvents billing_events;
     private UbiqCredentials ubiqCredentials;
+    private UbiqConfiguration ubiqConfiguration;
 
 
     class ParsedData {
@@ -48,17 +49,24 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
      *
      */
     public UbiqFPEEncryptDecrypt(UbiqCredentials ubiqCredentials) {
-        if (verbose) System.out.println("+++++++ NEW OBJECT UbiqFPEEncryptDecrypt +++++++" );
-        if (ubiqCredentials == null) {
-            System.out.println("Credentials have not been specified.");
-            return;
-        }
-        this.ubiqCredentials = ubiqCredentials;
-        this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
-        bill = new FPETransactions();
-        executor = new FPEProcessor(ubiqWebServices, bill, 1);
-        executor.startAsync();
+      this(ubiqCredentials, UbiqFactory.defaultConfiguration());
     }
+
+
+    public UbiqFPEEncryptDecrypt(UbiqCredentials ubiqCredentials, UbiqConfiguration ubiqConfiguration) {
+      if (verbose) System.out.println("+++++++ NEW OBJECT UbiqFPEEncryptDecrypt +++++++" );
+      if (ubiqCredentials == null) {
+          System.out.println("Credentials have not been specified.");
+          return;
+      }
+      this.ubiqConfiguration = ubiqConfiguration;
+      this.ubiqCredentials = ubiqCredentials;
+      this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
+      this.billing_events = new BillingEvents(this.ubiqConfiguration);
+      executor = new BillingEventsProcessor(this.ubiqWebServices, this.billing_events, this.ubiqConfiguration);
+     executor.startAsync();
+      // executor.startUp();
+  }
 
 
     /**
@@ -67,14 +75,15 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
      *
      */
     public void close() {
-        if (this.ubiqWebServices != null) {
+      if (verbose) System.out.println("Close");
+      if (this.ubiqWebServices != null) {
             clearKeyCache();
 
             // this stops any remaining background billing processing since we'll make an explicit final call now
-            executor.stopAsync();
+            // executor.stopAsync();
+            executor.shutDown();
 
-            // Perform a final bill  processing for items that may not have been done by the async executor
-            bill.processCurrentBills(ubiqWebServices);
+            // Perform a final billing_events  processing for items that may not have been done by the async executor
             this.ubiqWebServices = null;
         }
     }
@@ -376,11 +385,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
               cipher = encryptData(FFScaching, ctx, PlainText, tweak);
 
-              // create the billing record
-              UUID uuid = UUID.randomUUID();
-              String timestamp= Instant.now().toString();
-              // TODO - Remove for now until refactor billing structured  bill.createBillableItem(uuid.toString(), "encrypt", FFScaching.getName(), timestamp, 1);
-
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
@@ -433,6 +437,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         formatted_dest = merge_to_formatted_output(FFScaching, parsedData.formatted_dest, encoded_value, FFScaching.getOutput_character_set());
         if (verbose) System.out.println("    encrypted and formatted= " + formatted_dest);
 
+        // create the billing record
+        billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), FFScaching.getName(), "", BillingEvents.BillingAction.ENCRYPT, BillingEvents.DatasetType.STRUCTURED, key_number,1);
 
         return formatted_dest;
     }
@@ -531,9 +537,9 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 if (verbose) System.out.println("    decrypted and formatted= " + formatted_dest);
 
                 // create the billing record
-                UUID uuid = UUID.randomUUID();
-                String timestamp= Instant.now().toString();
-                // TODO - Remove for now until refactor billing structured bill.createBillableItem(uuid.toString(), "decrypt", FFScaching.getName(), timestamp, 1);
+
+                billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), ffs_name, "", BillingEvents.BillingAction.DECRYPT, BillingEvents.DatasetType.STRUCTURED, key_number,1);
+
 
             } catch (ExecutionException e) {
                 e.printStackTrace();

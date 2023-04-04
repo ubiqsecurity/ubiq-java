@@ -7,29 +7,43 @@ import java.security.SecureRandom;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
 public class UbiqEncrypt implements AutoCloseable {
+    private boolean verbose= false;
     private int usesRequested;
 
     private UbiqWebServices ubiqWebServices; // null when closed
-    private int useCount;
     private EncryptionKeyResponse encryptionKey;
     private AesGcmBlockCipher aesGcmBlockCipher;
+    private BillingEvents billing_events;
+    private BillingEventsProcessor executor;
+    private UbiqCredentials ubiqCredentials;
+    private UbiqConfiguration ubiqConfiguration;
 
     public UbiqEncrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
+      this(ubiqCredentials, usesRequested, UbiqFactory.defaultConfiguration());
+    }
+   
+
+    public UbiqEncrypt(UbiqCredentials ubiqCredentials, int usesRequested, UbiqConfiguration ubiqConfiguration) {
         this.usesRequested = usesRequested;
+        this.ubiqCredentials = ubiqCredentials;
+        this.ubiqConfiguration = ubiqConfiguration;
+
         this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
+
+        billing_events = new BillingEvents(this.ubiqConfiguration);
+        executor = new BillingEventsProcessor(this.ubiqWebServices, this.billing_events, this.ubiqConfiguration);
+        executor.startAsync();
+
     }
 
     public void close() {
+      if (verbose) System.out.println("Close");
+
         if (this.ubiqWebServices != null) {
-            if (this.encryptionKey != null) {
-                // if key was used less times than requested, notify the server.
-                if (this.useCount < this.usesRequested) {
-                    System.out.println(String.format("UbiqEncrypt.close: reporting key usage: %d of %d", this.useCount,
-                            this.usesRequested));
-                    this.ubiqWebServices.updateEncryptionKeyUsage(this.useCount, this.usesRequested,
-                            this.encryptionKey.KeyFingerprint, this.encryptionKey.EncryptionSession);
-                }
-            }
+
+            // this stops any remaining background billing processing since we'll make an explicit final call now
+            // executor.stopAsync();
+            executor.shutDown();
 
             this.ubiqWebServices = null;
         }
@@ -47,12 +61,7 @@ public class UbiqEncrypt implements AutoCloseable {
             this.encryptionKey = this.ubiqWebServices.getEncryptionKey(this.usesRequested);
         }
 
-        // check key 'usage count' against server-specified limit
-        if (this.useCount > this.encryptionKey.MaxUses) {
-            throw new RuntimeException("maximum key uses exceeded");
-        }
-
-        this.useCount++;
+        billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), "", "", BillingEvents.BillingAction.ENCRYPT, BillingEvents.DatasetType.UNSTRUCTURED, 0,1);
 
         AlgorithmInfo algorithmInfo = new AlgorithmInfo(this.encryptionKey.SecurityModel.Algorithm);
 
