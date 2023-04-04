@@ -16,4 +16,33 @@ public abstract class UbiqFactory {
     public static UbiqCredentials readCredentialsFromFile(String pathname, String profile) throws IOException {
         return new UbiqCredentials(pathname, profile, DEFAULT_UBIQ_HOST);
     }
+
+    public static UbiqConfiguration defaultConfiguration() {
+      UbiqConfiguration cfg;
+      try {
+        cfg = readConfigurationFromFile(null);
+      } catch (IllegalArgumentException e) {
+        cfg = createConfiguration(null,null,null,null);
+      } catch (IOException e) {
+        cfg = createConfiguration(null,null,null,null);
+      }
+      return cfg;
+    }
+
+    public static UbiqConfiguration createConfiguration(      
+      Integer eventReportingWakeInterval,
+      Integer eventReportingMinimumCount,
+      Integer eventReportingFlushInterval,
+      Boolean eventReportingTrapExceptions) {
+        
+      return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount, 
+          eventReportingFlushInterval, eventReportingTrapExceptions);
+    }
+
+
+    public static UbiqConfiguration readConfigurationFromFile(String pathname) throws IOException {
+        return new UbiqConfiguration(pathname);
+    }
+
+
 }

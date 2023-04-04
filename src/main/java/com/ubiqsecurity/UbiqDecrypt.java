@@ -8,20 +8,40 @@ import java.util.Arrays;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
 public class UbiqDecrypt implements AutoCloseable {
+    private boolean verbose= false;
     private UbiqWebServices ubiqWebServices; // null on close
 
     private CipherHeader cipherHeader; // extracted from beginning of ciphertext
     private ByteQueue byteQueue;
     private DecryptionKeyResponse decryptionKey;
     private AesGcmBlockCipher aesGcmBlockCipher;
+    private BillingEvents billing_events;
+    private BillingEventsProcessor executor;
+    private UbiqCredentials ubiqCredentials;
+    private UbiqConfiguration ubiqConfiguration;
 
     public UbiqDecrypt(UbiqCredentials ubiqCredentials) {
-        this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
+      this(ubiqCredentials, UbiqFactory.defaultConfiguration());
+    }
+
+    public UbiqDecrypt(UbiqCredentials ubiqCredentials, UbiqConfiguration ubiqConfiguration) {
+      this.ubiqCredentials = ubiqCredentials;
+      this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
+      this.ubiqConfiguration = ubiqConfiguration;
+
+      billing_events = new BillingEvents(this.ubiqConfiguration);
+      executor = new BillingEventsProcessor(this.ubiqWebServices, this.billing_events, this.ubiqConfiguration);
+      executor.startAsync();
     }
 
     public void close() {
-        if (this.ubiqWebServices != null) {
-            // reports decryption key usage to server, if applicable
+      if (verbose) System.out.println("Close");
+      if (this.ubiqWebServices != null) {
+
+            // this stops any remaining background billing processing since we'll make an explicit final call now
+            // executor.stopAsync();
+            executor.shutDown();
+
             reset();
 
             this.ubiqWebServices = null;
@@ -116,7 +136,7 @@ public class UbiqDecrypt implements AutoCloseable {
                                 ? this.cipherHeader.serialize()
                                 : null);
 
-                    this.decryptionKey.KeyUseCount++;
+                    billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), "", "", BillingEvents.BillingAction.DECRYPT, BillingEvents.DatasetType.UNSTRUCTURED, 0,1);
                 }
             } else {
                 // holding pattern... need more header bytes
@@ -174,11 +194,6 @@ public class UbiqDecrypt implements AutoCloseable {
         assert this.ubiqWebServices != null;
 
         if (decryptionKey != null) {
-            if (decryptionKey.KeyUseCount > 0) {
-                this.ubiqWebServices.updateDecryptionKeyUsage(this.decryptionKey.KeyUseCount,
-                        this.decryptionKey.KeyFingerprint, this.decryptionKey.EncryptionSession);
-            }
-
             this.decryptionKey = null;
         }
 
