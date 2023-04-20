@@ -13,7 +13,7 @@ jar {
 repositories {
     mavenCentral()
     jcenter()
-}
+ }
 
 sourceCompatibility = 1.11
 targetCompatibility = 1.11
@@ -22,10 +22,10 @@ dependencies {
     compile "com.google.guava:guava:18+"
     
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.10'
-    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity', version: '0.2.11'
-    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.68'
+    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity', version: '2.0.0'
+    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.70'
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
-    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity-fpe', version: '0.1.4'
+    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity-fpe', version: '2.0.0'
 }
 
 // Copy the JAR files into a local build directory to make it easier to run
