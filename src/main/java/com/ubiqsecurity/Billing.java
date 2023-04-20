@@ -141,8 +141,8 @@ class BillingEvents {
       ExecutorService execService = Executors.newSingleThreadExecutor();
       ListeningExecutorService lExecService = MoreExecutors.listeningDecorator(execService);
 
-      Future<Integer> future = execService.submit(new Callable(){
-        public Object call() throws Exception {
+      Future<Integer> future = execService.submit(new Callable<Integer>(){
+        public Integer call() throws Exception {
             return BillingEvents.processBillingEvents(ubiqWebServices, events);
         }
       });

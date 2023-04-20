@@ -27,9 +27,9 @@ public class UbiqConfigurationTest
       UbiqConfiguration cfg = UbiqFactory.defaultConfiguration();
 
       assertNotNull(cfg);
-      assertEquals(cfg.getEventReportingWakeInterval().compareTo(10),0);
-      assertEquals(cfg.getEventReportingMinimumCount().compareTo(50),0);
-      assertEquals(cfg.getEventReportingFlushInterval().compareTo(90),0);
+      assertEquals(cfg.getEventReportingWakeInterval().compareTo(1),0);
+      assertEquals(cfg.getEventReportingMinimumCount().compareTo(5),0);
+      assertEquals(cfg.getEventReportingFlushInterval().compareTo(10),0);
       assertEquals(cfg.getEventReportingTrapExceptions(), false);
     }
 
@@ -44,12 +44,13 @@ public class UbiqConfigurationTest
       file = File.createTempFile("temp", null);
       file.deleteOnExit();
       UbiqConfiguration cfg = UbiqFactory.readConfigurationFromFile(file.getAbsolutePath());
+      UbiqConfiguration cfg_default = UbiqFactory.defaultConfiguration();
 
       assertNotNull(cfg);
-      assertEquals(cfg.getEventReportingWakeInterval().compareTo(10),0);
-      assertEquals(cfg.getEventReportingMinimumCount().compareTo(50),0);
-      assertEquals(cfg.getEventReportingFlushInterval().compareTo(90),0);
-      assertEquals(cfg.getEventReportingTrapExceptions(), false);
+      assertEquals(cfg.getEventReportingWakeInterval().compareTo(cfg_default.getEventReportingWakeInterval()),0);
+      assertEquals(cfg.getEventReportingMinimumCount().compareTo(cfg_default.getEventReportingMinimumCount()),0);
+      assertEquals(cfg.getEventReportingFlushInterval().compareTo(cfg_default.getEventReportingFlushInterval()),0);
+      assertEquals(cfg.getEventReportingTrapExceptions(), cfg_default.getEventReportingTrapExceptions());
      
     }
 

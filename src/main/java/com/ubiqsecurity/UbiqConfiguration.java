@@ -29,9 +29,9 @@ public class UbiqConfiguration {
      * When this interval (seconds) is reached, all billing events will be sent.
      */
 
-    private Integer eventReportingWakeInterval = 10;
-    private Integer eventReportingMinimumCount = 50;
-    private Integer eventReportingFlushInterval = 90;
+    private Integer eventReportingWakeInterval = 1;
+    private Integer eventReportingMinimumCount = 5;
+    private Integer eventReportingFlushInterval = 10;
     private Boolean eventReportingTrapExceptions = false;
 
     UbiqConfiguration(
