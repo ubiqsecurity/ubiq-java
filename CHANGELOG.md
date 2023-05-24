@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.1 - 2023-05-17
+* Updated to use standard data sets for unit tests
+
 ## 2.0.0 - 2023-04-19
 * Updated usage configuration defaults.
 * Updated bouncycastle version
