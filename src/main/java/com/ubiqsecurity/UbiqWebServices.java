@@ -24,6 +24,8 @@ import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.google.gson.*;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -155,8 +157,38 @@ class UbiqWebServices {
     }
 
 
+    // Get the search keys using the fpe/def_keys endpoint
+    JsonObject getFpeDefKeys(String ffs_name) {
 
+      boolean verbose = false;
+      String jsonRequest="";
+      String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));
+      String urlString = String.format("%s/%s/fpe/def_keys?%s", this.baseUrl, this.restApiRoot, params);
 
+      if (verbose) System.out.println("\n    urlString: " + urlString + "\n");
+      if (verbose) System.out.println("\n    params: " + params + "\n");
+
+      try {
+        HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, params, jsonRequest,
+            this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+
+        // submit HTTP request + expect HTTP response w/ status 'Created' (201)
+        String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
+
+        if (verbose) System.out.println("\n    getFpeDefKeys: " + jsonResponse + "\n");
+
+        JsonParser parser = new JsonParser();
+
+        // deserialize the JSON response to POJO
+        JsonObject results = parser.parse(jsonResponse).getAsJsonObject();
+
+        return results;
+      } catch (Exception ex) {
+          System.out.println(String.format("getFpeDefKeys exception: %s", ex.getMessage()));
+          return null;
+      }
+
+    }
 
 
 

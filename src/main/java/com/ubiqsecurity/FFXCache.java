@@ -132,38 +132,6 @@ class FFXCache  {
 
 }
 
-/**
- * Representation of the JSON record for the key data
- */
-class FFS_KeyRecord2 {
-
-    String EncryptedPrivateKey;
-    String WrappedDataKey;
-    int KeyNumber;
-
-
-	public String getEncryptedPrivateKey() {
-		return EncryptedPrivateKey;
-	}
-	public void setEncryptedPrivateKey(String EncryptedPrivateKey) {
-		this.EncryptedPrivateKey = EncryptedPrivateKey;
-	}
-
-	public String getWrappedDataKey() {
-		return WrappedDataKey;
-	}
-	public void setWrappedDataKey(String WrappedDataKey) {
-		this.WrappedDataKey = WrappedDataKey;
-	}
-
-	public int getKeyNumber() {
-		return KeyNumber;
-	}
-	public void setKeyNumber(int KeyNumber) {
-		this.KeyNumber = KeyNumber;
-	}
-}
-
 class FFX_Ctx {
   protected FF1 ctxFF1;
   protected FF3_1 ctxFF3_1;
@@ -232,7 +200,7 @@ class FFS_KeyId {
 
   FFS_KeyId(FFS_Record ffs, Integer number) {
     this.ffs = ffs;
-    this.key_number = number; // May be NULL - indicating an encrypt
+    this.key_number = number; // May be NULL - indicating an encrypt using currently active key
   }
 
   @Override
@@ -249,10 +217,20 @@ class FFS_KeyId {
     if (obj == null) return false;
     if (getClass() != obj.getClass()) return false;
     final FFS_KeyId other = (FFS_KeyId) obj;
+
+    // If FFS in both are NULL, return FALSE
     if (((this.ffs == null) == (other.ffs == null)) && (this.ffs == null)) return false;
-    if (this.ffs.getName() != other.ffs.getName()) {
+
+    // Use string value equals not object reference equals.
+    if (!this.ffs.getName().equals(other.ffs.getName())) {
         return false;
-    } else return (this.key_number == other.key_number);
+    }
+    // If one key number is NULL and the other isn't, return false
+    if ((this.key_number == null) != (other.key_number == null)) return false;
+    // If both keys are NULL, return true
+    if (((this.key_number == null) == (other.key_number == null)) && (this.key_number == null)) return true;
+    // Compare value of the key number
+    return (this.key_number.equals(other.key_number));
   }
 
 }
