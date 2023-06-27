@@ -63,8 +63,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       this.ubiqCredentials = ubiqCredentials;
       this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
       this.billing_events = new BillingEvents(this.ubiqConfiguration);
+      this.ffxCache = new FFXCache(this.ubiqWebServices);
+      this.ffs = new FFS(this.ubiqWebServices);
       executor = new BillingEventsProcessor(this.ubiqWebServices, this.billing_events, this.ubiqConfiguration);
-     executor.startAsync();
+      executor.startAsync();
       // executor.startUp();
   }
 
@@ -450,10 +452,14 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
           String[] ret = null;
 
+          // Load the search keys for this Dataset (FFS)
+          LoadSearchKeys.loadKeys(this.ubiqCredentials, this.ubiqWebServices, this.ffs, this.ffxCache, ffs_name);
+
           if (verbose) System.out.println("\nencryptForSearch: " + PlainText);
 
           try {
-          // Get the FFS for the FFS_Name and the CTX which will have the current key_number
+            // Get the FFS for the FFS_Name and the CTX which will have the current key_number - Everything should
+            // already be loaded into the cache because of the load search keys function above.
             FFS_Record FFScaching = getFFS(ffs_name);
 
             FFX_Ctx ctx = getCtx(FFScaching, null);
@@ -470,8 +476,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             e.printStackTrace();
           }
 
-          // Then get the ctx for each key_number and encrypt using that ctx
-          // Return the array of Cipher Text values.
           return ret;
     }
 
@@ -550,13 +554,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
     private FFS_Record getFFS(final String ffs_name)
       throws IllegalStateException, ExecutionException {
-        if (this.ubiqWebServices == null) {
+        if (this.ffs == null || this.ffs.FFSCache == null) {
           throw new IllegalStateException("object closed");
-        }
-
-        // setup the cached FFS so that the ffs data may persist between encrypt/decrypt calls
-        if (this.ffs == null) {
-          this.ffs = new FFS(this.ubiqWebServices);
         }
 
         // Get the FFS definition based on the supplied name.
@@ -565,14 +564,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
     private FFX_Ctx getCtx(final FFS_Record ffsRecord, final Integer key_number) 
       throws IllegalStateException, ExecutionException {
-        if (this.ubiqWebServices == null) {
+        if (this.ffxCache == null || this.ffxCache.FFXCache == null) {
           throw new IllegalStateException("object closed");
-        }
-
-        // Get the FFX object (either FF1 or FF3_1) based on the FFS name.  Needs the 
-        // entire FFS since it includes algorithm so create the correct FF1 or FF3_1 object
-        if (this.ffxCache == null) {
-          this.ffxCache = new FFXCache(this.ubiqWebServices);
         }
 
         return this.ffxCache.FFXCache.get(new FFS_KeyId(ffsRecord, key_number));

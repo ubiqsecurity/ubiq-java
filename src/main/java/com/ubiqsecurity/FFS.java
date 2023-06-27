@@ -224,12 +224,12 @@ class FFS_Record {
     private boolean fpe_definable;
     private String input_character_set;   //  "alphabet (inut/output radix)
     private String output_character_set;  // not for fpe (most likely)
-    private String passthrough_character_set;
+    private String passthrough;
     private long max_key_rotations;
     private long msb_encoding_bits;
     private long  tweak_min_len;
     private long  tweak_max_len;
-    private String Tweak;
+    private String tweak;
 
 
 	public String getAlgorithm() {
@@ -296,10 +296,10 @@ class FFS_Record {
 	}
 
 	public String getPassthrough_character_set() {
-		return passthrough_character_set;
+		return passthrough;
 	}
 	public void setPassthrough_character_set(String passthrough_character_set) {
-		this.passthrough_character_set = passthrough_character_set;
+		this.passthrough = passthrough_character_set;
 	}
 
 	public long getMsb_encoding_bits() {
@@ -324,10 +324,10 @@ class FFS_Record {
 	}
 
 	public String getTweak() {
-		return Tweak;
+		return tweak;
 	}
 	public void setTweak(String Tweak) {
-		this.Tweak = Tweak;
+		this.tweak = Tweak;
 	}
 
 

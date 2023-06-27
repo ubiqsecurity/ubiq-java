@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.2 - 2023-06-20
+* Performance improvements for EncryptForSearch
+
 ## 2.0.1 - 2023-05-17
 * Updated to use standard data sets for unit tests
 
