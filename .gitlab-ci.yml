@@ -28,7 +28,7 @@ build:
     before_script:
         - apt -y update
     script:
-        - ./gradlew clean assemble build
+        - ./gradlew clean assemble build -x test
 
 test:
     image: openjdk:11.0.11
