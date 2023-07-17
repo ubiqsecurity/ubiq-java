@@ -19,6 +19,8 @@ version = VERSION_NAME
 
 dependencies {
     testImplementation 'junit:junit:4.13.1'
+    testImplementation  group: 'com.beust', name: 'jcommander', version: '1.78'
+    testImplementation  group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
     
     //implementation("com.google.guava:guava:30.1.1-jre")
     compile "com.google.guava:guava:[18,)"
@@ -29,11 +31,24 @@ dependencies {
     implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity-fpe', version: '2.0.0'
 }
 
+sourceSets.all {
+  configurations.getByName(runtimeClasspathConfigurationName) {
+    attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+  }
+  configurations.getByName(compileClasspathConfigurationName) {
+    attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+  }
+}
 
 test {
     testLogging {
         events "passed", "skipped", "failed", "standardOut", "standardError"
     }
+
+    minHeapSize = "512m" // initial heap size
+    maxHeapSize = "1012m" // maximum heap size
+    jvmArgs '-XX:MaxPermSize=256m' // mem argument for the test JVM
+
 }
 
 
