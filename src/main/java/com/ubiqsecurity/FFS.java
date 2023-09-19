@@ -8,6 +8,7 @@ import com.google.common.cache.LoadingCache;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.*;
 
 class FFS  {
     private boolean verbose= false;
@@ -219,18 +220,58 @@ class FFS_Record {
     private String name;   //e.g."SSN",
     private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",   // "(\d{3})-(\d{2})-\d{4}",  last 4 in the clear
     private String tweak_source;   //e.g. "generated",
-    private long min_input_length;   //e.g. 9
-    private long max_input_length;   //e.g. 9
+    private Long min_input_length;   //e.g. 9
+    private Long max_input_length;   //e.g. 9
     private boolean fpe_definable;
     private String input_character_set;   //  "alphabet (inut/output radix)
     private String output_character_set;  // not for fpe (most likely)
     private String passthrough;
-    private long max_key_rotations;
-    private long msb_encoding_bits;
-    private long  tweak_min_len;
-    private long  tweak_max_len;
+    private Long max_key_rotations;
+    private Long msb_encoding_bits;
+    private Long  tweak_min_len;
+    private Long  tweak_max_len;
     private String tweak;
 
+  private static String getString(JsonObject data, String key) {
+    String ret = null;
+    JsonElement value = data.get(key);
+    if (value != null && value.isJsonPrimitive() && value.getAsString() != null) {
+      ret = value.getAsString();
+    }
+    return ret;
+  }
+
+  private static Long getNumber(JsonObject data, String key) {
+    Long ret = null;
+    JsonElement value = data.get(key);
+    if (value != null && value.isJsonPrimitive() && value.getAsNumber() != null) {
+      ret = value.getAsNumber().longValue();
+    }
+    return ret;
+  }
+
+
+  public static FFS_Record parse(JsonObject data) {
+    FFS_Record rec = new FFS_Record();
+    rec.setAlgorithm(getString(data,"encryption_algorithm"));
+    rec.setName(getString(data,"name"));
+    
+    rec.setRegex(getString(data,"regex"));
+    rec.setTweak_source(getString(data,"tweak_source"));
+    rec.setInput_character_set(getString(data,"input_character_set"));
+    rec.setOutput_character_set(getString(data,"output_character_set"));
+    rec.setPassthrough_character_set(getString(data,"passthrough"));
+    rec.setTweak(getString(data,"tweak"));
+
+    rec.setMin_input_length(getNumber(data,"min_input_length"));
+    rec.setMax_input_length(getNumber(data,"max_input_length"));
+    rec.setMax_key_rotations(getNumber(data,"max_key_rotations"));
+    rec.setMsb_encoding_bits(getNumber(data,"msb_encoding_bits"));
+    rec.setMin_tweak_length(getNumber(data,"tweak_min_len"));
+    rec.setMax_tweak_length(getNumber(data,"tweak_max_len"));
+
+    return rec;
+  }
 
 	public String getAlgorithm() {
 		return encryption_algorithm;
@@ -260,17 +301,17 @@ class FFS_Record {
 		this.tweak_source = tweak_source;
 	}
 
-	public long getMin_input_length() {
+	public Long getMin_input_length() {
 		return min_input_length;
 	}
-	public void setMin_input_length(long min_input_length) {
+	public void setMin_input_length(Long min_input_length) {
 		this.min_input_length = min_input_length;
 	}
 
-	public long getMax_input_length() {
+	public Long getMax_input_length() {
 		return max_input_length;
 	}
-	public void setMax_input_length(long max_input_length) {
+	public void setMax_input_length(Long max_input_length) {
 		this.max_input_length = max_input_length;
 	}
 
@@ -302,24 +343,24 @@ class FFS_Record {
 		this.passthrough = passthrough_character_set;
 	}
 
-	public long getMsb_encoding_bits() {
+	public Long getMsb_encoding_bits() {
 		return msb_encoding_bits;
 	}
-	public void setMsb_encoding_bits(long msb_encoding_bits) {
+	public void setMsb_encoding_bits(Long msb_encoding_bits) {
 		this.msb_encoding_bits = msb_encoding_bits;
 	}
 
-	public long getMin_tweak_length() {
+	public Long getMin_tweak_length() {
 		return tweak_min_len;
 	}
-	public void setMin_tweak_length(long tweak_min_len) {
+	public void setMin_tweak_length(Long tweak_min_len) {
 		this.tweak_min_len = tweak_min_len;
 	}
 
-	public long getMax_tweak_length() {
+	public Long getMax_tweak_length() {
 		return tweak_max_len;
 	}
-	public void setMax_tweak_length(long tweak_max_len) {
+	public void setMax_tweak_length(Long tweak_max_len) {
 		this.tweak_max_len = tweak_max_len;
 	}
 
@@ -330,6 +371,12 @@ class FFS_Record {
 		this.tweak = Tweak;
 	}
 
+	public Long getMax_key_rotations() {
+		return max_key_rotations;
+	}
+	public void setMax_key_rotations(Long max_key_rotations) {
+		this.max_key_rotations = max_key_rotations;
+	}
 
 
 

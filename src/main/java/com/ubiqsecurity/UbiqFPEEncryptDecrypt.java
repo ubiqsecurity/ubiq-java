@@ -14,7 +14,9 @@ import java.util.Base64;
 import java.util.UUID;
 import java.time.Instant;
 import java.io.IOException;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.*;
 
 /**
  * Provides Format Preserving Encryption capability for a variety of field format models (aka FFS models)
@@ -552,6 +554,70 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         return formatted_dest;
     }
 
+    // Dataset and Keys - Same payload as api/v0/fpe/def_keys
+    public String loadDatasetDef(final String dataset_def) {
+      JsonParser parser = new JsonParser();
+      JsonObject dataset_data = parser.parse(dataset_def).getAsJsonObject();
+
+      String dataset_name = LoadSearchKeys.loadKeys(
+        this.ubiqCredentials,
+        this.ubiqWebServices,
+        dataset_data,
+        this.ffs,
+        this.ffxCache);
+
+        return dataset_name;
+    }
+
+    // Dataset - same payload as api/v0/ffs
+    public String loadDataset(final String dataset_def) {
+      JsonParser parser = new JsonParser();
+      JsonObject dataset_data = parser.parse(dataset_def).getAsJsonObject();
+
+      String dataset_name = LoadSearchKeys.loadDataset(
+        this.ubiqCredentials,
+        this.ubiqWebServices,
+        dataset_data,
+        this.ffs);
+
+        return dataset_name;
+    }
+
+
+      // FPE Key - same payload as api/v0/fpe/key which includes key number
+      public void loadKeyDef(final String dataset_name, final String key_def, final Boolean current_key_flag) {
+      JsonParser parser = new JsonParser();
+      JsonObject key_data = parser.parse(key_def).getAsJsonObject();
+
+      LoadSearchKeys.loadKeyDef(
+        this.ubiqCredentials,
+        this.ubiqWebServices,
+        key_data,
+        current_key_flag,
+        dataset_name,
+        this.ffs,
+        this.ffxCache);
+    }
+
+    // Returns base64 encoded key
+
+    public String decryptKey(final String key_def) {
+      JsonParser parser = new JsonParser();
+      JsonObject key_data = parser.parse(key_def).getAsJsonObject();
+
+      return LoadSearchKeys.unwrapKey(
+        this.ubiqWebServices,
+        key_data);
+    }
+
+    // data is in base 64, encryption key is in base 64
+    public static JsonObject encryptData(final byte[] data, final String encryption_key) {
+
+      return LoadSearchKeys.encryptKey(
+        data,
+        encryption_key);
+    }
+
     private FFS_Record getFFS(final String ffs_name)
       throws IllegalStateException, ExecutionException {
         if (this.ffs == null || this.ffs.FFSCache == null) {
@@ -594,5 +660,4 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
           return ubiqEncryptDecrypt.encryptForSearch(ffs_name, PlainText, tweak);
       }
     }
-    
 }

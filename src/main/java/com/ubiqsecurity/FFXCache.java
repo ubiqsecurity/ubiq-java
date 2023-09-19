@@ -85,19 +85,11 @@ class FFXCache  {
             ffsKeyRecordResponse= ubiqWebServices.getFPEEncryptionKey(keyId.ffs.getName());
         }
 
-
-        String jsonStr= "{}";
-        Gson gson = new Gson();
         byte[] tweak = null;
-
-        FFS_KeyRecord ffsKey = gson.fromJson(jsonStr, FFS_KeyRecord.class);
 
         if ((ffsKeyRecordResponse.EncryptedPrivateKey == null) || (ffsKeyRecordResponse.WrappedDataKey == null)) {
             if (verbose) System.out.println("Missing keys in FPEKey definition.");
         } else {
-            // ffsKeyRecordResponse.EncryptedPrivateKey;
-            // ffsKeyRecordResponse.WrappedDataKey;
-            //ffsKeyRecordResponse.KeyNumber;
             byte[] key = ubiqWebServices.getUnwrappedKey(ffsKeyRecordResponse.EncryptedPrivateKey, ffsKeyRecordResponse.WrappedDataKey);
 
             if (keyId.ffs.getTweak_source().equals("constant")) {
@@ -122,9 +114,6 @@ class FFXCache  {
               default:
                   throw new RuntimeException("Unknown FPE Algorithm: " + keyId.ffs.getAlgorithm());
           }
-
-
-
         }
         return ctx;
     }

@@ -40,7 +40,7 @@ class AesGcmBlockCipher {
     }
 
     byte[] doFinal() throws IllegalStateException, InvalidCipherTextException {
-        var finalBytes = new byte[32]; // large enough for MAC result
+        byte[] finalBytes = new byte[32]; // large enough for MAC result
         int retLen = this.gcmBlockCipher.doFinal(finalBytes, 0);
         if (retLen < finalBytes.length) {
             byte[] shortenedFinalBytes = new byte[retLen];

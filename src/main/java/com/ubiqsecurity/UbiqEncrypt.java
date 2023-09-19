@@ -104,7 +104,7 @@ public class UbiqEncrypt implements AutoCloseable {
             throw new IllegalStateException("object closed");
         }
 
-        var finalBytes = this.aesGcmBlockCipher.doFinal();
+        byte[] finalBytes = this.aesGcmBlockCipher.doFinal();
         this.aesGcmBlockCipher = null;
         return finalBytes;
     }

@@ -109,8 +109,8 @@ public class TestHarness {
           String pt = ubiqEncryptDecrypt.decryptFPE(data.dataset, data.ciphertext, tweak);
           Instant d = Instant.now();
 
-          timing_encrypt.put(data.dataset, timing_encrypt.get(data.dataset) + Duration.between(s, e).getNano());
-          timing_decrypt.put(data.dataset, timing_decrypt.get(data.dataset) + Duration.between(e, d).getNano());
+          timing_encrypt.put(data.dataset, timing_encrypt.get(data.dataset) + Duration.between(s, e).toNanos());
+          timing_decrypt.put(data.dataset, timing_decrypt.get(data.dataset) + Duration.between(e, d).toNanos());
           dataset_counts.put(data.dataset, dataset_counts.get(data.dataset) + 1);
 
           if (!ct.equals(data.ciphertext) || !pt.equals(data.plaintext)) {

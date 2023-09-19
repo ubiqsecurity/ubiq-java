@@ -113,7 +113,7 @@ public class UbiqSample {
                     byte[] cipherBytes = ubiqEncrypt.begin();
                     cipherStream.write(cipherBytes);
 
-                    var plainBytes = new byte[0x20000];
+                    byte[] plainBytes = new byte[0x20000];
                     int bytesRead = 0;
                     while ((bytesRead = plainStream.read(plainBytes, 0, plainBytes.length)) > 0) {
                         cipherBytes = ubiqEncrypt.update(plainBytes, 0, bytesRead);
@@ -135,7 +135,7 @@ public class UbiqSample {
                     byte[] plainBytes = ubiqDecrypt.begin();
                     plainStream.write(plainBytes);
 
-                    var cipherBytes = new byte[0x20000];
+                    byte[] cipherBytes = new byte[0x20000];
                     int bytesRead = 0;
                     while ((bytesRead = cipherStream.read(cipherBytes, 0, cipherBytes.length)) > 0) {
                         plainBytes = ubiqDecrypt.update(cipherBytes, 0, bytesRead);

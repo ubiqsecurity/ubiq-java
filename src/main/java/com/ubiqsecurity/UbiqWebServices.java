@@ -1,15 +1,32 @@
 package com.ubiqsecurity;
 
+
+import java.math.BigInteger;
+import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import org.apache.http.client.methods.RequestBuilder;
+
 import java.net.URI;
 import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublisher;
-import java.net.http.HttpRequest.Builder;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.*;
+import org.apache.http.Header;
+
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.CloseableHttpClient;
+
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.entity.ContentType;
+
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -23,7 +40,7 @@ import java.util.Map;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
+import java.security.interfaces.RSAPrivateKey;
 import com.google.gson.*;
 
 import com.google.gson.Gson;
@@ -49,9 +66,10 @@ import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateKey;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
+import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateCrtKey;
+import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateKey;
 import java.security.PrivateKey;
 import java.security.Security;
-import java.util.Base64;
 import java.io.IOException;
 import java.io.StringReader;
 
@@ -65,6 +83,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 
 class UbiqWebServices {
@@ -77,6 +97,16 @@ class UbiqWebServices {
     private String baseUrl;
     private static final String version;
 
+    private static String print(byte[] bytes) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("[ ");
+      for (byte b : bytes) {
+          sb.append(String.format("0x%02X ", b));
+      }
+      sb.append("]");
+      return sb.toString();
+   }
+  
     UbiqWebServices(UbiqCredentials ubiqCredentials) {
         this.ubiqCredentials = ubiqCredentials;
 
@@ -133,13 +163,13 @@ class UbiqWebServices {
         String jsonRequest = payload;
         FPEBillingResponse fpeBillingResponse = new FPEBillingResponse(200, "");
         try {
-          HttpRequest signedHttpRequest = buildSignedHttpRequest("POST", urlString, "", jsonRequest,
-              this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-          // submit HTTP request + expect HTTP response w/ status 'Created' (201)
-          String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
+          HttpRequestBase request = buildSignedHttpRequest("POST", urlString, "", jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+
+          String jsonResponse = submitHttpRequest(request, 200);
+
           if (verbose) System.out.println("    sendBilling jsonResponse: " + jsonResponse);
-          if (jsonResponse != null && !jsonResponse.isBlank()) {
+          if (jsonResponse != null && !jsonResponse.isEmpty()) {
 
             if (verbose) System.out.println("    jsonResponse is NOT NULL");
 
@@ -169,11 +199,11 @@ class UbiqWebServices {
       if (verbose) System.out.println("\n    params: " + params + "\n");
 
       try {
-        HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, params, jsonRequest,
-            this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-        // submit HTTP request + expect HTTP response w/ status 'Created' (201)
-        String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
+        HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+
+        // submit HTTP request + expect HTTP response w/ status 'Created' (200)
+        String jsonResponse = submitHttpRequest(request, 200);
 
         if (verbose) System.out.println("\n    getFpeDefKeys: " + jsonResponse + "\n");
 
@@ -204,11 +234,11 @@ class UbiqWebServices {
         if (verbose) System.out.println("\n    params: " + params + "\n");
 
         try {
-            HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, params, jsonRequest,
-                this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-            // submit HTTP request + expect HTTP response w/ status 'Created' (201)
-            String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
+            HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+
+            // submit HTTP request + expect HTTP response w/ status 'Created' (200)
+            String jsonResponse = submitHttpRequest(request, 200);
 
             if (verbose) System.out.println("\n    getFFSDefinition: " + jsonResponse + "\n");
 
@@ -225,22 +255,18 @@ class UbiqWebServices {
     }
 
 
-
-
-
     FPEKeyResponse getFPEEncryptionKey(String ffs_name) {
         String jsonRequest="";
         String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));
         String urlString = String.format("%s/%s/fpe/key?%s", this.baseUrl, this.restApiRoot, params);
 
         try {
-            HttpRequest signedHttpRequest = buildSignedHttpRequest("GET", urlString, params, jsonRequest,
-                this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-            // submit HTTP request + expect HTTP response w/ status 'Created' (201)
-            String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
 
-            //if (verbose) System.out.println("\n    getFPEEncryptionKey: " + jsonResponse + "\n");
+            HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+
+            // submit HTTP request + expect HTTP response w/ status 'Created' (200)
+            String jsonResponse = submitHttpRequest(request, 200);
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -262,12 +288,12 @@ class UbiqWebServices {
         String urlString = String.format("%s/%s/fpe/key?%s", this.baseUrl, this.restApiRoot, params);
         if (verbose) System.out.println("getFPEDecryptionKey  params: " + params);
         try {
-            HttpRequest signedHttpRequest =  buildSignedHttpRequest("GET", urlString, params, jsonRequest,
-                this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+
+            HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
             // submit HTTP request + expect HTTP response w/ status 'OK' (200)
-            String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
-            //if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");
+            String jsonResponse = submitHttpRequest(request, 200);
+            if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -289,13 +315,11 @@ class UbiqWebServices {
         String jsonRequest = String.format("{\"uses\": %s}", uses);
 
         try {
-            HttpRequest signedHttpRequest = buildSignedHttpRequest("POST", urlString, "", jsonRequest,
-                this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
-
+            HttpRequestBase request = buildSignedHttpRequest("POST", urlString, "", jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
             // submit HTTP request + expect HTTP response w/ status 'Created' (201)
-            String jsonResponse = submitHttpRequest(signedHttpRequest, 201);
-            //System.out.println(jsonResponse);
+            String jsonResponse = submitHttpRequest(request, 201);
+            if (verbose) System.out.println(jsonResponse);
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -325,11 +349,10 @@ class UbiqWebServices {
         String jsonRequest = String.format("{\"requested\": %d, \"actual\": %d}", requested, actual);
 
         try {
-            HttpRequest signedHttpRequest = buildSignedHttpRequest("PATCH", urlString, "", jsonRequest,
-                    this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+           HttpRequestBase request = buildSignedHttpRequest("PATCH", urlString, "", jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
             // submit HTTP request + expect HTTP status 'NoContent' (204)
-            String jsonResponse = submitHttpRequest(signedHttpRequest, 204);
+            String jsonResponse = submitHttpRequest(request, 204);
 
             // expect empty response
         } catch (Exception ex) {
@@ -345,11 +368,10 @@ class UbiqWebServices {
         String jsonRequest = String.format("{\"encrypted_data_key\": \"%s\"}", base64DataKey);
 
         try {
-            HttpRequest signedHttpRequest =  buildSignedHttpRequest("POST", urlString, "", jsonRequest,
-                this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+            HttpRequestBase request = buildSignedHttpRequest("POST", urlString, "", jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
             // submit HTTP request + expect HTTP response w/ status 'OK' (200)
-            String jsonResponse = submitHttpRequest(signedHttpRequest, 200);
+            String jsonResponse = submitHttpRequest(request, 200);
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -375,11 +397,10 @@ class UbiqWebServices {
         String jsonRequest = String.format("{\"uses\": %d}", uses);
 
         try {
-            HttpRequest signedHttpRequest = buildSignedHttpRequest("PATCH", urlString, "", jsonRequest,
-                    this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+            HttpRequestBase request = buildSignedHttpRequest("PATCH", urlString, "", jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
             // submit HTTP request + expect HTTP response w/ status 'NoContent' (204)
-            String jsonResponse = submitHttpRequest(signedHttpRequest, 204);
+            String jsonResponse = submitHttpRequest(request, 204);
 
             // expect empty response
         } catch (Exception ex) {
@@ -387,51 +408,86 @@ class UbiqWebServices {
         }
     }
 
-    private HttpRequest buildSignedHttpRequest(String httpMethod, String urlString, String params, String jsonRequest,
-            String publicAccessKey, String secretSigningKey) throws NoSuchAlgorithmException, InvalidKeyException,
-            IOException {
 
-        URL url = new URL(urlString);
-        BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofString(jsonRequest);
-        Builder builder = HttpRequest.newBuilder();
-        builder.uri(URI.create(urlString));
-        builder.method(httpMethod, bodyPublisher);
+    private HttpRequestBase buildSignedHttpRequest
+      (String httpMethod, String urlString, String params, String jsonRequest,
+    String publicAccessKey, String secretSigningKey) throws URISyntaxException, NoSuchAlgorithmException, InvalidKeyException,
+    IOException {
 
-        Map<String, String> headerFields = new HashMap<String, String>();
-        headerFields.put("Content-Length", String.valueOf(bodyPublisher.contentLength()));
-        headerFields.put("Content-Type", this.applicationJson);
-        headerFields.put("Accept", this.applicationJson);
-        headerFields.put("User-Agent", "ubiq-java/" + version);
-        String host = url.getHost();
-        // If port is specified, it needs to be included
-        if (url.getPort() != -1) {
-                host += ":" + url.getPort();
-        }
-        headerFields.put("Host", host);
-        headerFields.put("Digest", buildDigestValue(jsonRequest.getBytes(StandardCharsets.UTF_8)));
+      HttpRequestBase request = null;
+      URI uri = new URI(urlString);
 
-        String unixTimeString = unixTimeAsString();
-        String requestTarget;
-        if (params != "" ) {
-            requestTarget = buildRequestTarget(httpMethod, url) + "?" + params;
-        } else {
-            requestTarget = buildRequestTarget(httpMethod, url);
-        }
-        String signature = buildSignature(headerFields, unixTimeString, requestTarget, publicAccessKey,
-                secretSigningKey);
-        headerFields.put("Signature", signature);
+      // Only available on patch, post, put
+      HttpEntity stringEntity = new StringEntity(jsonRequest,ContentType.APPLICATION_JSON);
+      Map<String, String> headerFields = new HashMap<String, String>();
+      String unixTimeString = unixTimeAsString();
+      headerFields.put("Content-Type", ContentType.APPLICATION_JSON.toString());
 
-        // JDK 11 doesn't allow override of certain automatically-added request headers, so ditch them.
-        headerFields.remove("Content-Length");
-        headerFields.remove("Host");
+      switch (httpMethod) {
+        case "POST":
+          request = new HttpPost(uri);
+          ((HttpEntityEnclosingRequestBase)request).setEntity(stringEntity);
+          headerFields.put("Content-Length", String.valueOf(stringEntity.getContentLength()));
+        break;
 
-        for (String fieldName : headerFields.keySet()) {
-            builder.header(fieldName, headerFields.get(fieldName));
-        }
+        case "GET":
+          request = new HttpGet(uri);
+        break;
 
-        HttpRequest httpRequest = builder.build();
-        return httpRequest;
+        case "PATCH":
+          request = new HttpPatch(uri);
+          ((HttpEntityEnclosingRequestBase)request).setEntity(stringEntity);
+          headerFields.put("Content-Length", String.valueOf(stringEntity.getContentLength()));
+        break;
+
+        case "DELETE":
+          request = new HttpDelete(uri);
+        break;
+
+        case "PUT":
+          request = new HttpPut(uri);
+          ((HttpEntityEnclosingRequestBase)request).setEntity(stringEntity);
+          headerFields.put("Content-Length", String.valueOf(stringEntity.getContentLength()));
+        break;
+
+      }
+
+      headerFields.put("Accept", ContentType.APPLICATION_JSON.toString());
+      headerFields.put("User-Agent", "ubiq-java/" + version);
+
+
+      // Some JDK don't allow override of certain automatically-added request headers, so ditch them.
+
+      String host = uri.getHost();
+      // If port is specified, it needs to be included
+      if (uri.getPort() != -1) {
+              host += ":" + uri.getPort();
+      }
+      headerFields.put("Host", host);
+      headerFields.put("Digest", buildDigestValue(jsonRequest.getBytes(StandardCharsets.UTF_8)));
+
+      String requestTarget;
+      if (params != null && params != "" ) {
+          requestTarget = buildRequestTarget(httpMethod, uri) + "?" + params;
+      } else {
+          requestTarget = buildRequestTarget(httpMethod, uri);
+      }
+
+      String signature = buildSignature(headerFields, unixTimeString, requestTarget, publicAccessKey, secretSigningKey);
+      headerFields.put("Signature", signature);
+
+      // Content length and host are supplied automatically.  Need to include for signature calculation
+      // but not when setting the request headers.
+      headerFields.remove("Content-Length");
+      headerFields.remove("Host");
+
+      for (String fieldName : headerFields.keySet()) {
+        request.addHeader(fieldName, headerFields.get(fieldName));
+      }
+
+      return request;
     }
+
 
     // reference:
     // https://stackoverflow.com/questions/22920131/read-an-encrypted-private-key-with-bouncycastle-spongycastle
@@ -440,9 +496,10 @@ class UbiqWebServices {
             throws IOException, OperatorCreationException, PKCSException, InvalidCipherTextException {
 
         byte[] unwrappedDataKey = null;
+
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
-        }
+        } 
 
         try (PEMParser pemParser = new PEMParser(new StringReader(encryptedPrivateKey))) {
 
@@ -451,7 +508,7 @@ class UbiqWebServices {
                 throw new RuntimeException("Unrecognized Encrypted Private Key format");
             }
 
-            JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider("BC");
+            JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME);
 
             // Decrypt the private key using our secret key
             InputDecryptorProvider decryptProvider  = builder.build(secretCryptoAccessKey.toCharArray());
@@ -459,12 +516,14 @@ class UbiqWebServices {
             PKCS8EncryptedPrivateKeyInfo keyInfo = (PKCS8EncryptedPrivateKeyInfo) object;
             PrivateKeyInfo privateKeyInfo = keyInfo.decryptPrivateKeyInfo(decryptProvider);
 
-            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider("BC");
+            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME);
             PrivateKey privateKey = keyConverter.getPrivateKey(privateKeyInfo);
 
+
             if (!(privateKey instanceof BCRSAPrivateCrtKey)) {
-                throw new RuntimeException("Unrecognized Private Key format");
+                throw new RuntimeException("Unrecognized Private Key format: " + privateKey.getClass().getName() + " " );
             }
+            
             BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
 
             // now that we've decrypted the server-provided empheral key, we can
@@ -486,23 +545,34 @@ class UbiqWebServices {
             // 'UnwrappedDataKey' is used for local encryptions
             byte[] wrappedDataKeyBytes = Base64.getDecoder().decode(wrappedDataKey);
             unwrappedDataKey = rsaEngine.processBlock(wrappedDataKeyBytes, 0, wrappedDataKeyBytes.length);
+
         }
 
         return unwrappedDataKey;
     }
 
-
-    private static String submitHttpRequest(HttpRequest httpRequest, int successCode)
+    private static String submitHttpRequest(HttpRequestBase httpRequest, int successCode)
             throws IOException, InterruptedException {
-        HttpClient httpClient = HttpClient.newBuilder().build();
 
-        HttpResponse<String> httpResponse = httpClient.send(httpRequest, BodyHandlers.ofString());
+        HttpClient httpclient = HttpClients.createDefault();
+        HttpResponse response = httpclient.execute(httpRequest);
+      
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+          response.getEntity().getContent()));
+  
+        String inputLine;
+        StringBuffer r = new StringBuffer();
+      
+          while ((inputLine = reader.readLine()) != null) {
+            r.append(inputLine);
+          }
+          reader.close();
+      
+          String responseString = r.toString();
 
-        String responseString = httpResponse.body();
-
-        if (httpResponse.statusCode() != successCode) {
-            // Making string match the FPEBillingResponse with status and message
-            throw new IOException("{\"status\" : " + httpResponse.statusCode() + ", \"message\" : \"" + String.format(responseString) + "\"}");
+        if (response.getStatusLine().getStatusCode() != successCode) {
+        // Making string match the FPEBillingResponse with status and message
+          throw new IOException("{\"status\" : " + response.getStatusLine().getStatusCode() + ", \"message\" : \"" + String.format(responseString) + "\"}");
         }
 
         return responseString;
@@ -518,8 +588,8 @@ class UbiqWebServices {
         return String.valueOf(unixTime);
     }
 
-    private static String buildRequestTarget(String httpMethod, URL url) {
-        String requestTarget = httpMethod.toLowerCase() + " " + url.getPath();
+    private static String buildRequestTarget(String httpMethod, URI uri) {
+        String requestTarget = httpMethod.toLowerCase() + " " + uri.getPath();
         return requestTarget;
     }
 
