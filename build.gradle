@@ -11,8 +11,8 @@ repositories {
     jcenter()
 }
 
-sourceCompatibility = 1.11
-targetCompatibility = 1.11
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 group = GROUP
 version = VERSION_NAME
@@ -28,7 +28,8 @@ dependencies {
     implementation group: 'org.bouncycastle', name: 'bcprov-ext-jdk15on', version: '1.70'
     implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.70'
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.10'
-    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity-fpe', version: '2.0.0'
+    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity-fpe', version: '2.1.0'
+    implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.14'
 }
 
 sourceSets.all {

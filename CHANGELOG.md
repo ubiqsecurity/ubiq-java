@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.0 - 2023-09-05
+* Port to Java 1.8
+
 ## 2.0.2 - 2023-06-20
 * Performance improvements for EncryptForSearch
 

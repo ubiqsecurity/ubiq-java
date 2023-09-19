@@ -27,7 +27,7 @@ class ByteQueue {
         }
 
         if (count > 0) {
-            var newBuffer = new byte[this.buffer.length + count];
+            byte[] newBuffer = new byte[this.buffer.length + count];
             System.arraycopy(this.buffer, 0, newBuffer, 0, this.buffer.length);
             System.arraycopy(data, offset, newBuffer, this.buffer.length, count);
             this.buffer = newBuffer;
@@ -44,7 +44,7 @@ class ByteQueue {
         System.arraycopy(this.buffer, 0, dequeuedBytes, 0, dequeuedBytes.length);
 
         // strip dequeued bytes from front of original buffer
-        var newBuffer = new byte[this.buffer.length - count];
+        byte[] newBuffer = new byte[this.buffer.length - count];
         System.arraycopy(this.buffer, count, newBuffer, 0, newBuffer.length);
         this.buffer = newBuffer;
 
