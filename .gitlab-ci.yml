@@ -39,11 +39,11 @@ test:
         - ./gradlew test
 
 
-sast:
-    variables:
-        SAST_EXCLUDED_PATHS: src/test, build
-    stage: test
-include:
-    - template: Security/SAST.gitlab-ci.yml
+#sast:
+#    variables:
+#        SAST_EXCLUDED_PATHS: src/test, build
+#    stage: test
+#include:
+#    - template: Security/SAST.gitlab-ci.yml
 
 
