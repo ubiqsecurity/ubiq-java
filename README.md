@@ -11,7 +11,7 @@ See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
 ## Installation
 
 ### Requirements
-Java 11 or later
+Java 8 or later
 
 #### Gradle Users
 
@@ -52,7 +52,7 @@ Use following command to use [gradlew] to build the JAR file
 ```
 ### Requirements
 
--   OpenJDK 11 or later
+-   OpenJDK 8 or later
 -   This library has dependencies on ubiq-fpe-java library available for download in the Ubiq GitHub/GitLab repository.
 
 
@@ -86,9 +86,9 @@ UbiqCredentials credentials = UbiqFactory.readCredentialsFromFile("", "default")
 ```
 
 ### Use the following environment variables to set the credential values
-UBIQ_ACCESS_KEY_ID  
-UBIQ_SECRET_SIGNING_KEY  
-UBIQ_SECRET_CRYPTO_ACCESS_KEY  
+UBIQ_ACCESS_KEY_ID
+UBIQ_SECRET_SIGNING_KEY
+UBIQ_SECRET_CRYPTO_ACCESS_KEY
 ```java
 UbiqCredentials credentials = UbiqFactory.createCredentials(null, null, null, null);
 ```
