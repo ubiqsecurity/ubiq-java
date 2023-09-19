@@ -93,8 +93,6 @@ public class UbiqFPEEncryptTest
           assertEquals(foundCt, true);
 
       }
-  
-
 
     @Test
     public void encryptFPE_ALPHANUM_SSN() {
