@@ -327,6 +327,30 @@ try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCr
   String plainText = ubiqEncryptDecrypt.encryptFPE(FfsName, cipherText, null);
 }
 ```
+## Custom Metadata for Usage Reporting
+There are cases where a developer would like to attach metadata to usage information reported by the application.  Both the structured and unstructured interfaces allow user_defined metadata to be sent with the usage information reported by the libraries.
+
+The <b>addReportingUserDefinedMetadata</b> function accepts a string in JSON format that will be stored in the database with the usage records.  The string must be less than 1024 characters and be a valid JSON format.  The string must include both the <b>{</b> and <b>}</b> symbols.  The supplied value will be used until the object goes out of scope.  Due to asynchronous processing, changing the value may be immediately reflected in subsequent usage.  If immediate changes to the values are required, it would be safer to create a new encrypt / decrypt object and call the <b>addReportingUserDefinedMetadata</b> function with the new values.
+
+Examples are shown below.
+```
+...
+try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+   ubiqEncryptDecrypt.addReportingUserDefinedMetadata("{\"some_meaningful_flag\" : true }")
+   ....
+   // FPE Encrypt and Decrypt operations
+}
+```
+
+```
+...
+try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
+   ubiqEncrypt.addReportingUserDefinedMetadata("{\"some_key\" : \"some_value\" }")
+   ....
+   // Unstructured Encrypt operations
+}
+
+```
 
 
 Additional information on how to use these FFS models in your own applications is available by contacting
