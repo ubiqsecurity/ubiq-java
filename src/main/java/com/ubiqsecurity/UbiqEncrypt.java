@@ -125,4 +125,9 @@ public class UbiqEncrypt implements AutoCloseable {
             }
         }
     }
+
+    public void addReportingUserDefinedMetadata(String jsonString) {
+      billing_events.addUserDefinedMetadata(jsonString);
+    }
+
 }

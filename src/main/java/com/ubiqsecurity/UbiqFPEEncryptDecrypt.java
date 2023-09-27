@@ -660,4 +660,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
           return ubiqEncryptDecrypt.encryptForSearch(ffs_name, PlainText, tweak);
       }
     }
+
+    public void addReportingUserDefinedMetadata(String jsonString) {
+      billing_events.addUserDefinedMetadata(jsonString);
+    }
 }

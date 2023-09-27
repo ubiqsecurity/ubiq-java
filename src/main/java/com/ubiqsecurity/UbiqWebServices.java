@@ -121,7 +121,7 @@ class UbiqWebServices {
     static
     {
         Package pkg = UbiqWebServices.class.getPackage();
-        version = pkg.getImplementationVersion();
+        version = (pkg.getImplementationVersion() == null) ? "unit-test" : pkg.getImplementationVersion();
     }
 
 
