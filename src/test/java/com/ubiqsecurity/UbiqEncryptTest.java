@@ -124,4 +124,24 @@ public class UbiqEncryptTest
         testRt("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456".getBytes());
     }
 
+    @Test
+    public void addReportingUserDefinedMetadataTest(){
+      UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+      UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1);
+      UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials);
+
+      Throwable exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncrypt.addReportingUserDefinedMetadata(""));
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncrypt.addReportingUserDefinedMetadata(null));
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncrypt.addReportingUserDefinedMetadata("null"));
+      ubiqEncrypt.addReportingUserDefinedMetadata("{\"long\" : \"" + String.format("%-5s", "a") + "\"}"); // To prove short format works
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncrypt.addReportingUserDefinedMetadata("{\"long\" : \"" + String.format("%-1025s", "a") + "\"}"));
+
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqDecrypt.addReportingUserDefinedMetadata(""));
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqDecrypt.addReportingUserDefinedMetadata(null));
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqDecrypt.addReportingUserDefinedMetadata("null"));
+      ubiqDecrypt.addReportingUserDefinedMetadata("{\"long\" : \"" + String.format("%-5s", "a") + "\"}"); // To prove short format works
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqDecrypt.addReportingUserDefinedMetadata("{\"long\" : \"" + String.format("%-1025s", "a") + "\"}"));
+
+    }
+
   }

@@ -140,6 +140,7 @@ public class UbiqFPEEncryptTest
 
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
 
+              ubiqEncryptDecrypt.addReportingUserDefinedMetadata("{ \"att_encryption_wrapper\" : true }");
               String ct_generic_2 = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", pt_generic, null);
               String ct_alphanum_2 = ubiqEncryptDecrypt.encryptFPE("BIRTH_DATE", pt_alphanum, null);
 
@@ -584,5 +585,23 @@ public class UbiqFPEEncryptTest
         testCycleEncryption("ERROR_MSG", " 01121231231231231& 1 &2311200 ", ubiqCredentials);
     }
 
+    @Test
+    public void addReportingUserDefinedMetadataTest() {
+      UbiqCredentials ubiqCredentials= null;
+      try {
+        ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+      } catch (Exception ex) {
+      }
+
+      try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+
+
+      Throwable exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncryptDecrypt.addReportingUserDefinedMetadata(""));
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncryptDecrypt.addReportingUserDefinedMetadata(null));
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncryptDecrypt.addReportingUserDefinedMetadata("null"));
+      ubiqEncryptDecrypt.addReportingUserDefinedMetadata("{\"long\" : \"" + String.format("%-5s", "a") + "\"}"); // To prove short format works
+      exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncryptDecrypt.addReportingUserDefinedMetadata("{\"long\" : \"" + String.format("%-1025s", "a") + "\"}"));
+      }
+    }
 
 }

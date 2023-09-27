@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.1 - 2023-09-26
+* Added support for user defined metadata in the billing records.
+
 ## 2.1.0 - 2023-09-05
 * Port to Java 1.8
 

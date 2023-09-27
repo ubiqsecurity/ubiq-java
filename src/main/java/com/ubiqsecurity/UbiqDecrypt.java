@@ -199,4 +199,9 @@ public class UbiqDecrypt implements AutoCloseable {
 
         this.aesGcmBlockCipher = null;
     }
+
+    public void addReportingUserDefinedMetadata(String jsonString) {
+      billing_events.addUserDefinedMetadata(jsonString);
+    }
+
 }

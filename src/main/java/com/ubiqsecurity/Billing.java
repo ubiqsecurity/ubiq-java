@@ -12,8 +12,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Has Billing Events (usage) summed by unique key (dataset, API Key, dataset group, encrypt / decrypt)
@@ -25,6 +27,7 @@ class BillingEvents {
     private static HashMap<String, BillingEvent> billing_events;
     private static Lock lock;
     private static UbiqConfiguration ubiqConfiguration;
+    private String userDefinedMetadata =  null;
 
     static {
       lock = new ReentrantLock();;
@@ -164,7 +167,7 @@ class BillingEvents {
       } finally {
         this.lock.unlock();
       }
-        return BillingEvents.serialize_events(events);
+        return BillingEvents.serialize_events(events, userDefinedMetadata);
     }
 
 
@@ -222,13 +225,13 @@ class BillingEvents {
       }
     }
 
-    public static String serialize_events(HashMap<String, BillingEvent> events)
+    static String serialize_events(HashMap<String, BillingEvent> events, String metadata)
     {
       String str = "";
       String s = "";
 
       for (HashMap.Entry<String, BillingEvent> pair : events.entrySet()) {
-        str += s + pair.getValue().serialize();
+        str += s + pair.getValue().serialize(metadata);
         s = ",";
       }
 
@@ -244,8 +247,24 @@ class BillingEvents {
         this.lock.unlock();
       }
       return size;
-  }
-}
+    }
+
+    public void addUserDefinedMetadata(String jsonString) {
+      if (jsonString == null) {
+        throw new IllegalArgumentException("User defined Metadata cannot be null");
+      }
+      if (jsonString.length() >= 1024) {
+        throw new IllegalArgumentException("User defined Metadata cannot be longer than 1024 characters");
+      }
+      JsonElement element = (new JsonParser()).parse(jsonString);
+      if (!element.isJsonObject()) {
+        throw new IllegalArgumentException("User defined Metadata must be a valid Json object");
+      }
+      userDefinedMetadata = element.toString();
+    }
+
+
+} // BillingEvents
 
 
 /**
@@ -304,7 +323,7 @@ class BillingEvent {
     static
     {
         Package pkg = BillingEvent.class.getPackage();
-        version = pkg.getImplementationVersion();
+        version = (pkg.getImplementationVersion() == null) ? "unit-test" : pkg.getImplementationVersion();
     }
     
     public static String getKey(
@@ -333,16 +352,25 @@ class BillingEvent {
       this.last_call_timestamp = Instant.now();
     }
 
-    public String serialize() {
-        // TODO - Consider String.format("updateDecryptionKeyUsage exception: %s", "value")
-        return "{\"datasets\":\"" + dataset_name + "\", \"dataset_groups\":\"" + dataset_group_name + 
-        "\", \"dataset_type\":\"" + dataset_type.to_s() +
-        "\", \"api_key\":\"" + api_key + "\", \"count\":" + count + 
-      ",  \"key_number\":" + key_number + ",  \"action\":\"" + billing_action.to_s() + 
-      "\", \"product\":\"" + "ubiq-java" + "\", \"product_version\":\"" + version + "\", \"user-agent\":\"" + "ubiq-java/" + version + "\", \"api_version\":\"" + "V3" + 
-      "\", \"last_call_timestamp\":\"" + last_call_timestamp + 
-      "\", \"first_call_timestamp\":\"" + first_call_timestamp + "\"}";
+     String serialize() {
+      return serialize(null);
+    }
 
+
+     String serialize(String userMetadata) {
+        // TODO - Consider String.format("") or creating actual JsonObject 
+        String metadata = "";
+        if (userMetadata != null) {
+          metadata = "\"user_defined\" : " + userMetadata + ",";
+        }
+        return "{\"datasets\":\"" + dataset_name + "\", \"dataset_groups\":\"" + dataset_group_name + "\"," +
+          "\"dataset_type\":\"" + dataset_type.to_s() + "\"," +
+          "\"api_key\":\"" + api_key + "\", \"count\":" + count + "," +
+          "\"key_number\":" + key_number + ",  \"action\":\"" + billing_action.to_s() + "\"," +
+          "\"product\":\"" + "ubiq-java" + "\", \"product_version\":\"" + version + "\", \"user-agent\":\"" + "ubiq-java/" + version + "\", \"api_version\":\"" + "V3" + "\"," +
+          "\"last_call_timestamp\":\"" + last_call_timestamp + "\"," +
+          metadata + 
+          "\"first_call_timestamp\":\"" + first_call_timestamp + "\"}";
     }
 
 }
