@@ -351,7 +351,18 @@ try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
 }
 
 ```
+## Encrypt For Search
+The same plaintext data will result in different cipher text when encrypted using different data keys.  The Encrypt For Search function will encrypt the same plain text for a given dataset using all previously used data keys.  This will provide collection of cipher text values that can be used when searching for existing records where the data was encrypted and the specific version of the data key is not known in advance.
 
+```java
+String dataset_name = "SSN";
+String plainText = "123-45-6789";
+final byte[] tweak = null;
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials);
+String[] ct_arr = ubiqEncryptDecrypt.encryptForSearch(dataset_name, plainText, tweak);
+```
 
 Additional information on how to use these FFS models in your own applications is available by contacting
 Ubiq. You may also view some use-cases implemented in the unit test [UbiqFPEEncryptTest.java] and the sample application [UbiqSampleFPE.java] source code
