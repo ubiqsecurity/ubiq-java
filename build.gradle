@@ -32,6 +32,18 @@ dependencies {
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.14'
 }
 
+
+task setVersion() {
+    def appProperties = new File("src/main/java/com/ubiqsecurity/Version.java")
+    appProperties.withWriter { writer ->
+        writer.write("// Do Not Edit\n// Built during the gradle build process using the VERSION information in gradle.properties\n")
+        writer.write("package com.ubiqsecurity;\n")
+        writer.write("public final class Version { \n")
+        writer.write("   public static String VERSION = \"${VERSION_NAME}\";\n")
+        writer.write("}\n")
+    }
+}
+
 sourceSets.all {
   configurations.getByName(runtimeClasspathConfigurationName) {
     attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
