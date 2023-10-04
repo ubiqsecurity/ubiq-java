@@ -664,4 +664,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     public void addReportingUserDefinedMetadata(String jsonString) {
       billing_events.addUserDefinedMetadata(jsonString);
     }
-}
+
+    public String getCopyOfUsage() {
+     return billing_events.getSerializedData();
+    }
+  }

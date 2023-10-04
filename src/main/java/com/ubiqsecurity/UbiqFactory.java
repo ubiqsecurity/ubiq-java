@@ -1,6 +1,7 @@
 package com.ubiqsecurity;
 
 import java.io.IOException;
+import java.time.temporal.ChronoUnit;
 
 public abstract class UbiqFactory {
     private static final String DEFAULT_UBIQ_HOST = "api.ubiqsecurity.com";
@@ -22,21 +23,31 @@ public abstract class UbiqFactory {
       try {
         cfg = readConfigurationFromFile(null);
       } catch (IllegalArgumentException e) {
-        cfg = createConfiguration(null,null,null,null);
+        cfg = createConfiguration(null,null,null,null,null);
       } catch (IOException e) {
-        cfg = createConfiguration(null,null,null,null);
+        cfg = createConfiguration(null,null,null,null,null);
       }
       return cfg;
     }
 
-    public static UbiqConfiguration createConfiguration(      
+    public static UbiqConfiguration createConfiguration(
       Integer eventReportingWakeInterval,
       Integer eventReportingMinimumCount,
       Integer eventReportingFlushInterval,
       Boolean eventReportingTrapExceptions) {
+        return createConfiguration(eventReportingWakeInterval, eventReportingMinimumCount,
+          eventReportingFlushInterval, eventReportingTrapExceptions, ChronoUnit.NANOS);
+      }
+
+    public static UbiqConfiguration createConfiguration(
+      Integer eventReportingWakeInterval,
+      Integer eventReportingMinimumCount,
+      Integer eventReportingFlushInterval,
+      Boolean eventReportingTrapExceptions,
+      ChronoUnit eventReportingTimestampGranularity) {
         
       return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount, 
-          eventReportingFlushInterval, eventReportingTrapExceptions);
+          eventReportingFlushInterval, eventReportingTrapExceptions, eventReportingTimestampGranularity);
     }
 
 
