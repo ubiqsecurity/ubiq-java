@@ -29,7 +29,7 @@ public class UbiqConfigurationTest
 
       assertNotNull(cfg);
       assertEquals(cfg.getEventReportingWakeInterval().compareTo(1),0);
-      assertEquals(cfg.getEventReportingMinimumCount().compareTo(5),0);
+      assertEquals(cfg.getEventReportingMinimumCount().compareTo(50),0);
       assertEquals(cfg.getEventReportingFlushInterval().compareTo(10),0);
       assertEquals(cfg.getEventReportingTrapExceptions(), false);
     }

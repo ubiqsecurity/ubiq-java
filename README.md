@@ -352,7 +352,7 @@ try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
 
 ```
 ## Encrypt For Search
-The same plaintext data will result in different cipher text when encrypted using different data keys.  The Encrypt For Search function will encrypt the same plain text for a given dataset using all previously used data keys.  This will provide collection of cipher text values that can be used when searching for existing records where the data was encrypted and the specific version of the data key is not known in advance.
+The same plaintext data will result in different cipher text when encrypted using different data keys.  The Encrypt For Search function will encrypt the same plain text for a given dataset using all previously used data keys.  This will provide a collection of cipher text values that can be used when searching for existing records where the data was encrypted and the specific version of the data key is not known in advance.
 
 ```java
 String dataset_name = "SSN";
