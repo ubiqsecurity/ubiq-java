@@ -95,7 +95,6 @@ class UbiqWebServices {
 
     private UbiqCredentials ubiqCredentials;
     private String baseUrl;
-    private static final String version;
 
     private static String print(byte[] bytes) {
       StringBuilder sb = new StringBuilder();
@@ -116,14 +115,6 @@ class UbiqWebServices {
             this.baseUrl = this.ubiqCredentials.getHost();
         }
     }
-
-    // Only needs to be run once when package is class is loaded.
-    static
-    {
-        Package pkg = UbiqWebServices.class.getPackage();
-        version = (pkg.getImplementationVersion() == null) ? "unit-test" : pkg.getImplementationVersion();
-    }
-
 
     public static String encode(String url)
       {
@@ -453,7 +444,7 @@ class UbiqWebServices {
       }
 
       headerFields.put("Accept", ContentType.APPLICATION_JSON.toString());
-      headerFields.put("User-Agent", "ubiq-java/" + version);
+      headerFields.put("User-Agent", "ubiq-java/" + Version.VERSION);
 
 
       // Some JDK don't allow override of certain automatically-added request headers, so ditch them.
