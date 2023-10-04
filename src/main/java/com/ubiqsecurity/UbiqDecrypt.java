@@ -204,4 +204,8 @@ public class UbiqDecrypt implements AutoCloseable {
       billing_events.addUserDefinedMetadata(jsonString);
     }
 
+    public String getCopyOfUsage() {
+      return billing_events.getSerializedData();
+    }
+ 
 }

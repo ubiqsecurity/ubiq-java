@@ -14,6 +14,7 @@ import java.util.*;
 import org.junit.rules.ExpectedException;
 import java.io.File;
 import java.io.FileWriter;
+import java.time.temporal.ChronoUnit;
 
 public class UbiqConfigurationTest
 {
@@ -56,7 +57,7 @@ public class UbiqConfigurationTest
 
     @Test()
     public void explicitCfg()  {
-      UbiqConfiguration cfg = UbiqFactory.createConfiguration(1,2,3,true);
+      UbiqConfiguration cfg = UbiqFactory.createConfiguration(1,2,3,true, ChronoUnit.NANOS);
 
       assertNotNull(cfg);
       assertEquals(cfg.getEventReportingWakeInterval().compareTo(1),0);
