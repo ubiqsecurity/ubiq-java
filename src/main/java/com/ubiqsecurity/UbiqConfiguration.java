@@ -32,7 +32,7 @@ public class UbiqConfiguration {
      */
 
     private Integer eventReportingWakeInterval = 1;
-    private Integer eventReportingMinimumCount = 5;
+    private Integer eventReportingMinimumCount = 50;
     private Integer eventReportingFlushInterval = 10;
     private Boolean eventReportingTrapExceptions = false;
     private ChronoUnit eventReportingTimestampGranularity = ChronoUnit.NANOS;

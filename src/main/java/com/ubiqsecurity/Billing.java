@@ -297,9 +297,6 @@ class BillingEvent {
   Instant last_call_timestamp; // GMT time of most recent call
   Instant first_call_timestamp;
 
-  // Used to store the libray version
-  private static final String version;
-
     /**
      * Constructs a new billing event record.
      *
@@ -335,13 +332,6 @@ class BillingEvent {
         // call are made
     }
 
-    // Only needs to be run once when package is class is loaded.
-    static
-    {
-        Package pkg = BillingEvent.class.getPackage();
-        version = (pkg.getImplementationVersion() == null) ? "unit-test" : pkg.getImplementationVersion();
-    }
-    
     public static String getKey(
       String  api_key,
       String  dataset_name,
@@ -383,7 +373,7 @@ class BillingEvent {
           "\"dataset_type\":\"" + dataset_type.to_s() + "\"," +
           "\"api_key\":\"" + api_key + "\", \"count\":" + count + "," +
           "\"key_number\":" + key_number + ",  \"action\":\"" + billing_action.to_s() + "\"," +
-          "\"product\":\"" + "ubiq-java" + "\", \"product_version\":\"" + version + "\", \"user-agent\":\"" + "ubiq-java/" + version + "\", \"api_version\":\"" + "V3" + "\"," +
+          "\"product\":\"" + "ubiq-java" + "\", \"product_version\":\"" + Version.VERSION + "\", \"user-agent\":\"" + "ubiq-java/" + Version.VERSION + "\", \"api_version\":\"" + "V3" + "\"," +
           "\"last_call_timestamp\":\"" + last_call_timestamp.truncatedTo(timestampGranularity).toString() + "\"," +
           metadata + 
           "\"first_call_timestamp\":\"" + first_call_timestamp.truncatedTo(timestampGranularity).toString() + "\"}";
