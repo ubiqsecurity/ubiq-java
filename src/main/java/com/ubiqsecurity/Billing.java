@@ -16,6 +16,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Has Billing Events (usage) summed by unique key (dataset, API Key, dataset group, encrypt / decrypt)
@@ -167,7 +168,22 @@ class BillingEvents {
       } finally {
         this.lock.unlock();
       }
-        return BillingEvents.serialize_events(events, userDefinedMetadata);
+      return BillingEvents.serialize_events(events, userDefinedMetadata, ubiqConfiguration.getEventReportingTimestampGranularity());
+    }
+
+    /**
+     * Get the list of billing events.  Because this is exposed externally, it does
+     * NOT reset the billing events.  This is a blocking call and should only be used in specific
+     * scenarios.
+     */
+    public String getSerializedData() {
+      HashMap<String, BillingEvent> events = new HashMap<String, BillingEvent>();
+      try {
+        this.lock.lock();
+        return BillingEvents.serialize_events(this.billing_events, userDefinedMetadata, ubiqConfiguration.getEventReportingTimestampGranularity());
+      } finally {
+        this.lock.unlock();
+      }
     }
 
 
@@ -225,13 +241,13 @@ class BillingEvents {
       }
     }
 
-    static String serialize_events(HashMap<String, BillingEvent> events, String metadata)
+    static String serialize_events(HashMap<String, BillingEvent> events, String metadata, ChronoUnit timestampGranularity)
     {
       String str = "";
       String s = "";
 
       for (HashMap.Entry<String, BillingEvent> pair : events.entrySet()) {
-        str += s + pair.getValue().serialize(metadata);
+        str += s + pair.getValue().serialize(metadata, timestampGranularity);
         s = ",";
       }
 
@@ -353,11 +369,11 @@ class BillingEvent {
     }
 
      String serialize() {
-      return serialize(null);
+      return serialize(null, ChronoUnit.NANOS);
     }
 
 
-     String serialize(String userMetadata) {
+     String serialize(String userMetadata, ChronoUnit timestampGranularity) {
         // TODO - Consider String.format("") or creating actual JsonObject 
         String metadata = "";
         if (userMetadata != null) {
@@ -368,9 +384,9 @@ class BillingEvent {
           "\"api_key\":\"" + api_key + "\", \"count\":" + count + "," +
           "\"key_number\":" + key_number + ",  \"action\":\"" + billing_action.to_s() + "\"," +
           "\"product\":\"" + "ubiq-java" + "\", \"product_version\":\"" + version + "\", \"user-agent\":\"" + "ubiq-java/" + version + "\", \"api_version\":\"" + "V3" + "\"," +
-          "\"last_call_timestamp\":\"" + last_call_timestamp + "\"," +
+          "\"last_call_timestamp\":\"" + last_call_timestamp.truncatedTo(timestampGranularity).toString() + "\"," +
           metadata + 
-          "\"first_call_timestamp\":\"" + first_call_timestamp + "\"}";
+          "\"first_call_timestamp\":\"" + first_call_timestamp.truncatedTo(timestampGranularity).toString() + "\"}";
     }
 
 }

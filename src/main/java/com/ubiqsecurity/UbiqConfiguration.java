@@ -6,6 +6,7 @@ import com.google.gson.stream.*;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.File;
+import java.time.temporal.ChronoUnit;
 
 public class UbiqConfiguration {
     // Configuration Element names
@@ -14,6 +15,7 @@ public class UbiqConfiguration {
     private final String MINIMUM_COUNT = "minimum_count";
     private final String FLUSH_INTERVAL = "flush_interval";
     private final String TRAP_EXCEPTIONS = "trap_exceptions";
+    private final String TIMESTAMP_GRANULARITY = "timestamp_granularity";
 
     /**
      * eventReportingWakeInterval is how many seconds elapse between when the event processor wakes up and sees what is 
@@ -33,12 +35,14 @@ public class UbiqConfiguration {
     private Integer eventReportingMinimumCount = 5;
     private Integer eventReportingFlushInterval = 10;
     private Boolean eventReportingTrapExceptions = false;
+    private ChronoUnit eventReportingTimestampGranularity = ChronoUnit.NANOS;
 
     UbiqConfiguration(
       Integer eventReportingWakeInterval,
       Integer eventReportingMinimumCount,
       Integer eventReportingFlushInterval,
-      Boolean eventReportingTrapExceptions) {
+      Boolean eventReportingTrapExceptions,
+      ChronoUnit eventReportingTimestampGranularity ) {
 
         if (eventReportingWakeInterval != null) {
           this.eventReportingWakeInterval = eventReportingWakeInterval;
@@ -54,6 +58,37 @@ public class UbiqConfiguration {
         if (eventReportingTrapExceptions != null) {
           this.eventReportingTrapExceptions = eventReportingTrapExceptions;
         }
+        if (eventReportingTimestampGranularity != null) {
+          this.eventReportingTimestampGranularity = eventReportingTimestampGranularity;
+        }
+    }
+
+    ChronoUnit findEventReportingGranularity(String granularity) {
+      ChronoUnit ret = ChronoUnit.NANOS;
+      switch (granularity.toUpperCase()) {
+        case "DAYS":
+          ret = ChronoUnit.DAYS;
+          break;
+        case "HALF_DAYS":
+          ret = ChronoUnit.HALF_DAYS;
+          break;
+        case "HOURS":
+          ret = ChronoUnit.HOURS;
+          break;
+        case "MINUTES":
+          ret = ChronoUnit.MINUTES;
+          break;
+        case "SECONDS":
+          ret = ChronoUnit.SECONDS;
+          break;
+        case "MILLIS":
+          ret = ChronoUnit.MILLIS;
+          break;
+        default:
+          ret = ChronoUnit.NANOS;
+          break;
+      }
+      return ret;
     }
 
     UbiqConfiguration(String pathname) throws IOException {
@@ -104,6 +139,10 @@ public class UbiqConfiguration {
               if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
                 eventReportingTrapExceptions = tmpElement.getAsBoolean();
               }
+              tmpElement = eventObject.get(TIMESTAMP_GRANULARITY);
+              if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
+                eventReportingTimestampGranularity = findEventReportingGranularity(tmpElement.getAsString());
+              }
             }
           }
       }
@@ -122,5 +161,9 @@ public class UbiqConfiguration {
 
     public Boolean getEventReportingTrapExceptions() {
       return eventReportingTrapExceptions;
+    }
+
+    public ChronoUnit getEventReportingTimestampGranularity() {
+      return eventReportingTimestampGranularity;
     }
 }
