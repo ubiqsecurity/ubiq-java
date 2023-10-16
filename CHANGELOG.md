@@ -1,9 +1,10 @@
 # Changelog
 
-## 2.1.2 - 2023-10-03
+## 2.1.2 - 2023-10-16
 * Added support for different granular levels of reporting usage based on time
 * Changed default configuration parameters to reduce rate of DB writes for billing records
 * Changed version numbering mechanism to support unit-tests and Apigee
+* Upgrade bouncy castle version to 1.76 jdk18on
 
 ## 2.1.1 - 2023-09-26
 * Added support for user defined metadata in the billing records
