@@ -79,6 +79,8 @@ public class UbiqEncryptTest
         assertEquals(plainData[i], plainText[i]);
       }
 
+      ubiqEncrypt.close();
+      ubiqDecrypt.close();
 
     }
 
@@ -141,6 +143,9 @@ public class UbiqEncryptTest
       exception = assertThrows(IllegalArgumentException.class, () -> ubiqDecrypt.addReportingUserDefinedMetadata("null"));
       ubiqDecrypt.addReportingUserDefinedMetadata("{\"long\" : \"" + String.format("%-5s", "a") + "\"}"); // To prove short format works
       exception = assertThrows(IllegalArgumentException.class, () -> ubiqDecrypt.addReportingUserDefinedMetadata("{\"long\" : \"" + String.format("%-1025s", "a") + "\"}"));
+
+      ubiqEncrypt.close();
+      ubiqDecrypt.close();
 
     }
 
