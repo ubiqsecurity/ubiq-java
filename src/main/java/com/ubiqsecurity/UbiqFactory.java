@@ -18,6 +18,16 @@ public abstract class UbiqFactory {
         return new UbiqCredentials(pathname, profile, DEFAULT_UBIQ_HOST);
     }
 
+    public static UbiqCredentials defaultCredentials() {
+      UbiqCredentials creds;
+      try {
+        creds = readCredentialsFromFile(null,null);
+      } catch (IllegalArgumentException| IOException e) {
+        creds = createCredentials(null,null,null,null);
+      }
+      return creds;
+    }
+
     public static UbiqConfiguration defaultConfiguration() {
       UbiqConfiguration cfg;
       try {

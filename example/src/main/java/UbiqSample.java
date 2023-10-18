@@ -47,13 +47,23 @@ public class UbiqSample {
                 throw new IllegalArgumentException(String.format("Input file does not exist: %s", options.inputFile));
             }
 
-            UbiqCredentials ubiqCredentials;
-            if (options.credentials == null) {
-                // no file specified, so fall back to ENV vars and default host, if any
-                ubiqCredentials = UbiqFactory.createCredentials(null, null, null, null);
-            } else {
-                // read credentials from caller-specified section of specified config file
-                ubiqCredentials = UbiqFactory.readCredentialsFromFile(options.credentials, options.profile);
+            UbiqCredentials ubiqCredentials = null;
+            try {
+              if (options.credentials == null) {
+                  // no file specified, so fall back to ENV vars and default host, if any
+                  ubiqCredentials = UbiqFactory.defaultCredentials();
+              } else {
+                  // read credentials from caller-specified section of specified config file
+                  ubiqCredentials = UbiqFactory.readCredentialsFromFile(options.credentials, options.profile);
+              }
+            } catch (Exception ex) {
+              System.out.println(String.format("Unable to set credentials\nException: %s", ex.getMessage()));
+              System.exit(1);
+            }
+
+            if (ubiqCredentials == null || ubiqCredentials.getAccessKeyId() == null)  {
+              System.out.println(String.format("Unable to set credentials"));
+              System.exit(1);
             }
 
             // check input file size - we already know it exists
