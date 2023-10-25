@@ -35,9 +35,23 @@ where X.Y.Z represents the appropriate version number.
 
 
 #### Others
-You'll need to manually install the following JARs:
+The following is a list of the JAR files required to compile, test, or deploy the ubiqsecurity library
 
--  The Ubiq Security JAR from appropriate version in <https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity/>
+- [ubiqsecurity-2.1.2.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity/2.1.2/ubiqsecurity-2.1.2.jar)
+- [ubiqsecurity-fpe-2.1.1.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity-fpe/2.1.1/ubiqsecurity-fpe-2.1.1.jar)
+- [bcprov-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.76/bcprov-jdk18on-1.76.jar)
+- [bcprov-ext-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcprov-ext-jdk18on/1.76/bcprov-ext-jdk18on-1.76.jar)
+- [bcutil-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.76/bcutil-jdk18on-1.76.jar)
+- [bcpkix-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.76/bcpkix-jdk18on-1.76.jar)
+- [gson-2.10.jar](https://repo1.maven.org/maven2/com/google/code/gson/gson/2.10/gson-2.10.jar)
+- [guava-18.0.jar](https://repo1.maven.org/maven2/com/google/guava/guava/18.0/guava-18.0.jar)
+- [httpclient-4.5.14.jar](https://repo1.maven.org/maven2/org/apache/httpcomponents/httpclient/4.5.14/httpclient-4.5.14.jar)
+- [httpcore-4.4.16.jar](https://repo1.maven.org/maven2/org/apache/httpcomponents/httpcore/4.4.16/httpcore-4.4.16.jar)
+- [commons-codec-1.11.jar](https://repo1.maven.org/maven2/commons-codec/commons-codec/1.11/commons-codec-1.11.jar)
+- [commons-logging-1.2.jar](https://repo1.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar)
+- [jcommander-1.78.jar](https://repo1.maven.org/maven2/com/beust/jcommander/1.78/jcommander-1.78.jar)
+- [json-simple-1.1.1.jar](https://repo1.maven.org/maven2/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar)
+- [junit-4.13.1.jar](https://repo1.maven.org/maven2/junit/junit/4.13.1/junit-4.13.1.jar)
 
 #### Building from source:
 
