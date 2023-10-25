@@ -5,6 +5,7 @@
 * Changed default configuration parameters to reduce rate of DB writes for billing records
 * Changed version numbering mechanism to support unit-tests and Apigee
 * Upgrade bouncy castle version to 1.76 jdk18on
+* Updated README.md with list of dependencies
 
 ## 2.1.1 - 2023-09-26
 * Added support for user defined metadata in the billing records
