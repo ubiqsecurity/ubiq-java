@@ -40,7 +40,6 @@ The following is a list of the JAR files required to compile, test, or deploy th
 - [ubiqsecurity-2.1.2.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity/2.1.2/ubiqsecurity-2.1.2.jar)
 - [ubiqsecurity-fpe-2.1.1.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity-fpe/2.1.1/ubiqsecurity-fpe-2.1.1.jar)
 - [bcprov-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.76/bcprov-jdk18on-1.76.jar)
-- [bcprov-ext-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcprov-ext-jdk18on/1.76/bcprov-ext-jdk18on-1.76.jar)
 - [bcutil-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.76/bcutil-jdk18on-1.76.jar)
 - [bcpkix-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.76/bcpkix-jdk18on-1.76.jar)
 - [gson-2.10.jar](https://repo1.maven.org/maven2/com/google/code/gson/gson/2.10/gson-2.10.jar)
