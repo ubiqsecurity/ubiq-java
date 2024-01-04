@@ -149,4 +149,89 @@ public class UbiqEncryptTest
 
     }
 
+    static byte[] encrypt(UbiqEncrypt ubiqEncrypt, byte[] pt) throws InvalidCipherTextException {
+      List<Byte> cipherBytes = new ArrayList<Byte>();
+
+      byte [] x  = ubiqEncrypt.begin();
+      for (byte y : x) {
+        cipherBytes.add(y);
+      }
+
+      x = ubiqEncrypt.update(pt, 0, pt.length);
+      for (byte y : x) {
+        cipherBytes.add(y);
+      }
+
+      x = ubiqEncrypt.end();
+      for (byte y : x) {
+        cipherBytes.add(y);
+      }
+
+      return Bytes.toArray(cipherBytes);
+    }
+
+    static byte[] decrypt(UbiqDecrypt ubiqDecrypt, byte[] ct) throws InvalidCipherTextException {
+      List<Byte> ptBytes = new ArrayList<Byte>();
+
+      byte [] x  = ubiqDecrypt.begin();
+      for (byte y : x) {
+        ptBytes.add(y);
+      }
+
+      x = ubiqDecrypt.update(ct, 0, ct.length);
+      for (byte y : x) {
+        ptBytes.add(y);
+      }
+
+      x = ubiqDecrypt.end();
+      for (byte y : x) {
+        ptBytes.add(y);
+      }
+
+      return Bytes.toArray(ptBytes);
+    }
+
+
+    @Test
+    public void unstructuredUsageGrouping(){
+      try {
+      byte[] pt = "ABC".getBytes();
+
+      UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+      // Make sure usage doesn't get flushed too soon so get copy of usage will include
+      // results to two calls.
+      UbiqConfiguration ubiqConfiguration = UbiqFactory.createConfiguration(90,90,90,false);
+      UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1, ubiqConfiguration);
+      UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials, ubiqConfiguration);
+
+      // Two encrypts should be same length and have a record that says "count":2
+      byte[] cipherData = encrypt(ubiqEncrypt, pt);
+      String usage = ubiqEncrypt.getCopyOfUsage();
+
+      cipherData = encrypt(ubiqEncrypt, pt);
+      String usage2 = ubiqEncrypt.getCopyOfUsage();
+
+      assertEquals(usage.length(), usage2.length());
+      assertEquals(usage2.contains("\"count\":2"), true);
+
+      // Two decrypts should be same length and have a record that says "count":2
+      byte[] ptData = decrypt(ubiqDecrypt, cipherData);
+      usage = ubiqDecrypt.getCopyOfUsage();
+
+      ptData = decrypt(ubiqDecrypt, cipherData);
+      usage2 = ubiqDecrypt.getCopyOfUsage();
+
+      assertEquals(usage.length(), usage2.length());
+      assertEquals(usage2.contains("\"count\":2"), true);
+
+      ubiqEncrypt.close();
+      ubiqDecrypt.close();
+      } catch (Exception ex) {
+        System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+        ex.printStackTrace();
+        fail(ex.toString());
+      }
+
+    }
+
   }
