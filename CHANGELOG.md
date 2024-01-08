@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.3 - 2023-12-13
+* Updated dependency to include bcprov-jdk18on instead of bcprov-ext-jdk18on
+* Update README.md with updated list of dependencies
+
 ## 2.1.2 - 2023-10-16
 * Added support for different granular levels of reporting usage based on time
 * Changed default configuration parameters to reduce rate of DB writes for billing records
