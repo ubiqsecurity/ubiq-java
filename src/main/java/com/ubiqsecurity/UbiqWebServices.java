@@ -333,24 +333,6 @@ class UbiqWebServices {
         }
     }
 
-    void updateEncryptionKeyUsage(int actual, int requested, String keyFingerprint, String encryptionSession) {
-        String urlString = String.format("%s/%s/encryption/key/%s/%s", this.baseUrl, this.restApiRoot, keyFingerprint,
-                encryptionSession);
-
-        String jsonRequest = String.format("{\"requested\": %d, \"actual\": %d}", requested, actual);
-
-        try {
-           HttpRequestBase request = buildSignedHttpRequest("PATCH", urlString, "", jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
-
-            // submit HTTP request + expect HTTP status 'NoContent' (204)
-            String jsonResponse = submitHttpRequest(request, 204);
-
-            // expect empty response
-        } catch (Exception ex) {
-            System.out.println(String.format("updateEncryptionKeyUsage exception: %s", ex.getMessage()));
-        }
-    }
-
     DecryptionKeyResponse getDecryptionKey(byte[] encryptedDataKey) {
         String urlString = String.format("%s/%s/decryption/key", this.baseUrl, this.restApiRoot);
 
@@ -380,25 +362,6 @@ class UbiqWebServices {
             return null;
         }
     }
-
-    void updateDecryptionKeyUsage(int uses, String keyFingerprint, String encryptionSession) {
-        String urlString = String.format("%s/%s/decryption/key/%s/%s", this.baseUrl, this.restApiRoot, keyFingerprint,
-                encryptionSession);
-
-        String jsonRequest = String.format("{\"uses\": %d}", uses);
-
-        try {
-            HttpRequestBase request = buildSignedHttpRequest("PATCH", urlString, "", jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
-
-            // submit HTTP request + expect HTTP response w/ status 'NoContent' (204)
-            String jsonResponse = submitHttpRequest(request, 204);
-
-            // expect empty response
-        } catch (Exception ex) {
-            System.out.println(String.format("updateDecryptionKeyUsage exception: %s", ex.getMessage()));
-        }
-    }
-
 
     private HttpRequestBase buildSignedHttpRequest
       (String httpMethod, String urlString, String params, String jsonRequest,
