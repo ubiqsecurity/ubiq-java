@@ -38,12 +38,12 @@ public class BillingTest
     @Test
     public void simpleMeta() {
       BillingEvent b = new BillingEvent("apikey","dataset","dataset_group", BillingEvents.BillingAction.ENCRYPT, BillingEvents.DatasetType.STRUCTURED, 0, 5);
-      String s = b.serialize("{ \"att_encryption_wrapper\" : true }", ChronoUnit.NANOS);
+      String s = b.serialize("{ \"encryption_wrapper\" : true }", ChronoUnit.NANOS);
 
       JsonObject element = (new JsonParser()).parse(s).getAsJsonObject();
       JsonObject obj = element.getAsJsonObject("user_defined");
       assertNotNull(obj);
-      assertTrue(obj.getAsJsonPrimitive("att_encryption_wrapper").getAsBoolean());
+      assertTrue(obj.getAsJsonPrimitive("encryption_wrapper").getAsBoolean());
       System.out.println(s);
     }
 
@@ -66,7 +66,7 @@ public class BillingTest
       UbiqConfiguration cfg = UbiqFactory.defaultConfiguration();
       BillingEvents b = new BillingEvents(cfg);
 
-      b.addUserDefinedMetadata("{ \"att_encryption_wrapper\" : true }");
+      b.addUserDefinedMetadata("{ \"encryption_wrapper\" : true }");
 
       b.addBillingEvent("apikey","dataset","dataset_group", BillingEvents.BillingAction.ENCRYPT, BillingEvents.DatasetType.STRUCTURED, 0, 5);
       b.addBillingEvent("apikey","dataset","dataset_group", BillingEvents.BillingAction.ENCRYPT, BillingEvents.DatasetType.STRUCTURED, 0, 10);
@@ -130,7 +130,4 @@ public class BillingTest
       testGranularity(ChronoUnit.NANOS, ChronoUnit.NANOS);
 
     }
-
-
-
 }

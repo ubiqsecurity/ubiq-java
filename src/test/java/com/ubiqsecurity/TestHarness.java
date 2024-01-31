@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.io.File;
 
 import com.beust.jcommander.JCommander;
 import com.ubiqsecurity.UbiqCredentials;
@@ -82,43 +83,59 @@ public class TestHarness {
 
         UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials);
 
-        JsonArray test_data = JSONHelper.parseDataArrayFile(cmdArgs.inputFileName);
+        List<String> names = new ArrayList<String>();
+        File file = new File(cmdArgs.inputFileName);
+        if (file.isDirectory()) {
+          for (File f : file.listFiles()) {
+            names.add(f.getPath());
+          }
+        }
+        else {
+          names.add(cmdArgs.inputFileName);
+        }
 
         List<DataRecord> errors = new ArrayList<DataRecord>();
-
-        Gson gson = new Gson();
         Map<String, Long> dataset_counts = new HashMap<String, Long>();
         Map<String, Long> timing_encrypt = new HashMap<String, Long>();
         Map<String, Long> timing_decrypt = new HashMap<String, Long>();
+        Long recordCounts = 0L;
+        for (String name : names) {
+          File f = new File(name);
+          if (f.exists() && f.isFile()) {
+            JsonArray test_data = JSONHelper.parseDataArrayFile(name);
 
-        for (JsonElement obj : test_data) {
-          DataRecord data = gson.fromJson(obj, DataRecord.class);
+            Gson gson = new Gson();
+            recordCounts += test_data.size();
+            System.out.println("Loading file: " + name + " with " + test_data.size() + " records.");
+            for (JsonElement obj : test_data) {
+              DataRecord data = gson.fromJson(obj, DataRecord.class);
 
-          if (!dataset_counts.containsKey(data.dataset)) {
-            // Initialize the hashes for the datasets
-            dataset_counts.put(data.dataset, (long) 0);
-            timing_encrypt.put(data.dataset, (long) 0);
-            timing_decrypt.put(data.dataset, (long) 0);
-            String ct = ubiqEncryptDecrypt.encryptFPE(data.dataset, data.plaintext, tweak);
-            String pt = ubiqEncryptDecrypt.decryptFPE(data.dataset, data.ciphertext, tweak);
+              if (!dataset_counts.containsKey(data.dataset)) {
+                // Initialize the hashes for the datasets
+                dataset_counts.put(data.dataset, (long) 0);
+                timing_encrypt.put(data.dataset, (long) 0);
+                timing_decrypt.put(data.dataset, (long) 0);
+                String ct = ubiqEncryptDecrypt.encryptFPE(data.dataset, data.plaintext, tweak);
+                String pt = ubiqEncryptDecrypt.decryptFPE(data.dataset, data.ciphertext, tweak);
+                }
+
+              Instant s = Instant.now();
+              String ct = ubiqEncryptDecrypt.encryptFPE(data.dataset, data.plaintext, tweak);
+              Instant e = Instant.now();
+              String pt = ubiqEncryptDecrypt.decryptFPE(data.dataset, data.ciphertext, tweak);
+              Instant d = Instant.now();
+
+              timing_encrypt.put(data.dataset, timing_encrypt.get(data.dataset) + Duration.between(s, e).toNanos());
+              timing_decrypt.put(data.dataset, timing_decrypt.get(data.dataset) + Duration.between(e, d).toNanos());
+              dataset_counts.put(data.dataset, dataset_counts.get(data.dataset) + 1);
+
+              if (!ct.equals(data.ciphertext) || !pt.equals(data.plaintext)) {
+                System.out.println("Encrypt / Decrypt error");
+                errors.add(data);
+              }
             }
-
-          Instant s = Instant.now();
-          String ct = ubiqEncryptDecrypt.encryptFPE(data.dataset, data.plaintext, tweak);
-          Instant e = Instant.now();
-          String pt = ubiqEncryptDecrypt.decryptFPE(data.dataset, data.ciphertext, tweak);
-          Instant d = Instant.now();
-
-          timing_encrypt.put(data.dataset, timing_encrypt.get(data.dataset) + Duration.between(s, e).toNanos());
-          timing_decrypt.put(data.dataset, timing_decrypt.get(data.dataset) + Duration.between(e, d).toNanos());
-          dataset_counts.put(data.dataset, dataset_counts.get(data.dataset) + 1);
-
-          if (!ct.equals(data.ciphertext) || !pt.equals(data.plaintext)) {
-            System.out.println("Encrypt / Decrypt error");
-            errors.add(data);
           }
         }
-
 
         ubiqEncryptDecrypt.close();
 
@@ -129,23 +146,23 @@ public class TestHarness {
           System.out.println("All data validated");
           long encryptTotal = 0;
           long decryptTotal = 0;
-          System.out.println("Encrypt records count: " + test_data.size() + ".  Times in (microseconds)");
+          System.out.println("Encrypt records count: " + recordCounts + ".  Times in (microseconds)");
 
           for (Map.Entry<String, Long> e : timing_encrypt.entrySet()) {
             System.out.println("\tDataset: " + e.getKey() + ", record count: " + dataset_counts.get(e.getKey()) + ", Average: " + e.getValue() / 1000 / dataset_counts.get(e.getKey()) + ", Total: " + e.getValue() / 1000);
             encryptTotal += e.getValue();
           }
-          System.out.println("\t  Total: Average: " + encryptTotal / 1000 / test_data.size() + ", Total: " + encryptTotal / 1000);
+          System.out.println("\t  Total: Average: " + encryptTotal / 1000 / recordCounts + ", Total: " + encryptTotal / 1000);
 
-          System.out.println("\nDecrypt records count: " + test_data.size() + ".  Times in (microseconds)");
+          System.out.println("\nDecrypt records count: " + recordCounts + ".  Times in (microseconds)");
           for (Map.Entry<String, Long> e : timing_decrypt.entrySet()) {
             System.out.println("\tDataset: " + e.getKey() +  ", record count: " + dataset_counts.get(e.getKey()) + ", Average: " + e.getValue() / 1000 /  dataset_counts.get(e.getKey()) + ", Total: " + e.getValue() / 1000);
             decryptTotal += e.getValue();
           }
-          System.out.println("\t  Total: Average: " + decryptTotal / 1000 / test_data.size() + ", Total: " + decryptTotal / 1000);
+          System.out.println("\t  Total: Average: " + decryptTotal / 1000 / recordCounts + ", Total: " + decryptTotal / 1000);
 
           if (cmdArgs.max_avg_encrypt != null) {
-            if (encryptTotal / 1000 / test_data.size() >= cmdArgs.max_avg_encrypt) {
+            if (encryptTotal / 1000 / recordCounts >= cmdArgs.max_avg_encrypt) {
               System.out.println("FAILED: Exceeded maximum allowed average encrypt threshold of " + cmdArgs.max_avg_encrypt + " microseconds");
               failed = true;
             } else {
@@ -156,7 +173,7 @@ public class TestHarness {
           }
 
           if (cmdArgs.max_avg_decrypt != null) {
-            if (encryptTotal / 1000 / test_data.size() >= cmdArgs.max_avg_decrypt) {
+            if (encryptTotal / 1000 / recordCounts >= cmdArgs.max_avg_decrypt) {
               System.out.println("FAILED: Exceeded maximum allowed average decrypt threshold of " + cmdArgs.max_avg_decrypt + " microseconds");
               failed = true;
             } else {
@@ -178,7 +195,7 @@ public class TestHarness {
         }
 
           if (cmdArgs.max_total_decrypt != null) {
-            if (encryptTotal / 1000 / test_data.size() >= cmdArgs.max_total_decrypt) {
+            if (encryptTotal / 1000 / recordCounts >= cmdArgs.max_total_decrypt) {
               System.out.println("FAILED: Exceeded maximum allowed total decrypt threshold of " + cmdArgs.max_total_decrypt + " microseconds");
               failed = true;
             } else {
