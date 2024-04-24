@@ -211,11 +211,7 @@ class UbiqWebServices {
 
     }
 
-
-
-
-
-    FFSRecordResponse getFFSDefinition(String ffs_name) {
+    FFS_Record getFFSDefinition(String ffs_name) {
         //String urlString = String.format("%s/%s/ffs/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId());
         String jsonRequest="";
         String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));
@@ -235,10 +231,12 @@ class UbiqWebServices {
 
             // deserialize the JSON response to POJO
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            FFSRecordResponse ffsRecordResponse =
-                    gson.fromJson(jsonResponse, FFSRecordResponse.class);
+            FFS_Record ffsRecord =
+                    gson.fromJson(jsonResponse, FFS_Record.class);
+            ffsRecord.completeDeserialization();
+            if (verbose) System.out.println("\n    getFFSDefinition(ffsRecord): " + jsonResponse + "\n");
 
-            return ffsRecordResponse;
+            return ffsRecord;
         } catch (Exception ex) {
             System.out.println(String.format("getFFSDefinition exception: %s", ex.getMessage()));
             return null;

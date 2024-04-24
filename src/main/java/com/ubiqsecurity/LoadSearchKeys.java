@@ -94,8 +94,8 @@ class LoadSearchKeys  {
           if (verbose) System.out.println(String.format("%s byte[] key %d\n", csu, key.length));
 
           FFX_Ctx ctx = new FFX_Ctx();
-          if (keyId.ffs.getTweak_source().equals("constant")) {
-            if (verbose) System.out.println(String.format("%s  tweak source %s\n", csu,keyId.ffs.getTweak_source()));
+          if (keyId.ffs.getTweakSource().equals("constant")) {
+            if (verbose) System.out.println(String.format("%s  tweak source %s\n", csu,keyId.ffs.getTweakSource()));
             String s = keyId.ffs.getTweak();
             if (verbose) System.out.println(String.format("%s  tweak  %s\n", csu, s));
 
@@ -107,9 +107,9 @@ class LoadSearchKeys  {
           if (verbose) System.out.println(String.format("%s FFX_Ctx ctx %s\n", csu, "after"));
 
           ctx.setFF1(new FF1(key, tweak, 
-                keyId.ffs.getMin_tweak_length(), 
-                keyId.ffs.getMax_tweak_length(), 
-                keyId.ffs.getInput_character_set().length(), keyId.ffs.getInput_character_set()), 
+                keyId.ffs.getMinTweakLength(), 
+                keyId.ffs.getMaxTweakLength(), 
+                keyId.ffs.getInputCharacterSet().length(), keyId.ffs.getInputCharacterSet()), 
                 i);
 
           ffxCache.FFXCache.put(keyId, ctx);
@@ -121,14 +121,14 @@ class LoadSearchKeys  {
               if (verbose) System.out.println(String.format("%s  FFXCache does not contain current_key_number %d\n", csu, current_key_number));
 
               FFX_Ctx ctx2 = new FFX_Ctx();
-              if (currentKey.ffs.getTweak_source().equals("constant")) {
+              if (currentKey.ffs.getTweakSource().equals("constant")) {
                 tweak= Base64.getDecoder().decode(currentKey.ffs.getTweak());
               }
     
               ctx2.setFF1(new FF1(key, tweak, 
-                    currentKey.ffs.getMin_tweak_length(), 
-                    currentKey.ffs.getMax_tweak_length(), 
-                    currentKey.ffs.getInput_character_set().length(), currentKey.ffs.getInput_character_set()), 
+                    currentKey.ffs.getMinTweakLength(), 
+                    currentKey.ffs.getMaxTweakLength(), 
+                    currentKey.ffs.getInputCharacterSet().length(), currentKey.ffs.getInputCharacterSet()), 
                     i);
 
               ffxCache.FFXCache.put(currentKey, ctx2);
@@ -150,7 +150,7 @@ class LoadSearchKeys  {
       UbiqWebServices ubiqWebServices,
       JsonObject fpe_search_keys,
       FFS ffs,
-      FFXCache ffxCache) {
+      FFXCache ffxCache)  throws Exception {
       String csu = "loadKeys";
 
       // Call the web services to get the search keys
@@ -170,9 +170,13 @@ class LoadSearchKeys  {
 
       // If Dataset (FFS) is not already in the FFS Cache, add it.
       Gson gson = new Gson();
-      FFS_Record ffsRecord = FFS_Record.parse(dataset); //gson.fromJson(dataset, FFS_Record.class);
 
-      // if (!verbose) throw new IllegalStateException("ffsRecord.input_characers: " + ffsRecord.getInput_character_set() );
+      FFS_Record ffsRecord = gson.fromJson(dataset, FFS_Record.class);
+      ffsRecord.completeDeserialization();
+
+      // FFS_Record ffsRecord = FFS_Record.parse(dataset); //gson.fromJson(dataset, FFS_Record.class);
+
+      // if (!verbose) throw new IllegalStateException("ffsRecord.input_characers: " + ffsRecord.getInputCharacterSet() );
 
 
       if (verbose) System.out.println(String.format("%s ffsRecord %s  \n", csu, gson.toJson(ffsRecord)));
@@ -212,8 +216,8 @@ class LoadSearchKeys  {
           if (verbose) System.out.println(String.format("%s byte[] key %d\n", csu, key.length));
 
           FFX_Ctx ctx = new FFX_Ctx();
-          if (keyId.ffs.getTweak_source().equals("constant")) {
-            if (verbose) System.out.println(String.format("%s  tweak source %s\n", csu,keyId.ffs.getTweak_source()));
+          if (keyId.ffs.getTweakSource().equals("constant")) {
+            if (verbose) System.out.println(String.format("%s  tweak source %s\n", csu,keyId.ffs.getTweakSource()));
             String s = keyId.ffs.getTweak();
             if (verbose) System.out.println(String.format("%s  tweak  %s\n", csu, s));
 
@@ -225,9 +229,9 @@ class LoadSearchKeys  {
           if (verbose) System.out.println(String.format("%s FFX_Ctx ctx %s\n", csu, "after"));
 
           ctx.setFF1(new FF1(key, tweak, 
-                keyId.ffs.getMin_tweak_length(), 
-                keyId.ffs.getMax_tweak_length(), 
-                keyId.ffs.getInput_character_set().length(), keyId.ffs.getInput_character_set()), 
+                keyId.ffs.getMinTweakLength(), 
+                keyId.ffs.getMaxTweakLength(), 
+                keyId.ffs.getInputCharacterSet().length(), keyId.ffs.getInputCharacterSet()), 
                 i);
 
           ffxCache.FFXCache.put(keyId, ctx);
@@ -239,14 +243,14 @@ class LoadSearchKeys  {
               if (verbose) System.out.println(String.format("%s  FFXCache does not contain current_key_number %d\n", csu, current_key_number));
 
               FFX_Ctx ctx2 = new FFX_Ctx();
-              if (currentKey.ffs.getTweak_source().equals("constant")) {
+              if (currentKey.ffs.getTweakSource().equals("constant")) {
                 tweak= Base64.getDecoder().decode(currentKey.ffs.getTweak());
               }
     
               ctx2.setFF1(new FF1(key, tweak, 
-                    currentKey.ffs.getMin_tweak_length(), 
-                    currentKey.ffs.getMax_tweak_length(), 
-                    currentKey.ffs.getInput_character_set().length(), currentKey.ffs.getInput_character_set()), 
+                    currentKey.ffs.getMinTweakLength(), 
+                    currentKey.ffs.getMaxTweakLength(), 
+                    currentKey.ffs.getInputCharacterSet().length(), currentKey.ffs.getInputCharacterSet()), 
                     i);
 
               ffxCache.FFXCache.put(currentKey, ctx2);
@@ -267,16 +271,20 @@ class LoadSearchKeys  {
       UbiqCredentials ubiqCredentials,
       UbiqWebServices   ubiqWebServices,
       JsonObject dataset,
-      FFS ffs) {
+      FFS ffs)  throws Exception {
         String csu = "loadDataset";
+        // System.out.println("LoadSearchKeys::" + csu);
 
         String dataset_name = dataset.get("name").getAsString();
 
-        Gson gson = new Gson();
-        FFS_Record ffsRecord = FFS_Record.parse(dataset); //gson.fromJson(dataset, FFS_Record.class);
+  
+        // FFS_Record ffsRecord = FFS_Record.parse(dataset); //gson.fromJson(dataset, FFS_Record.class);
 
         if (!ffs.FFSCache.asMap().containsKey(dataset_name)) {
           if (verbose) System.out.println(String.format("%s FFSCache miss %s  \n", csu, dataset_name));
+          Gson gson = new Gson();
+          FFS_Record ffsRecord = gson.fromJson(dataset, FFS_Record.class);
+          ffsRecord.completeDeserialization();
           ffs.FFSCache.put(dataset_name, ffsRecord);
         } else {
           if (verbose) System.out.println(String.format("%s FFSCache HIT %s  \n", csu, dataset_name));
@@ -288,27 +296,27 @@ class LoadSearchKeys  {
       FFX_Ctx ctx = new FFX_Ctx();
       byte[] tweak = null;
 
-      if (ffsRecord.getTweak_source().equals("constant")) {
+      if (ffsRecord.getTweakSource().equals("constant")) {
         tweak= Base64.getDecoder().decode(ffsRecord.getTweak());
       }
 
-      switch(ffsRecord.getAlgorithm()) {
+      switch(ffsRecord.getEncryptionAlgorithm()) {
         case "FF1":
-            if (verbose) System.out.println("    twkmin= " + ffsRecord.getMin_tweak_length() + "    twkmax= " + ffsRecord.getMax_tweak_length() +   "    tweak.length= " + ffsRecord.getTweak().length() +   "    key.length= " + key.length );
+            if (verbose) System.out.println("    twkmin= " + ffsRecord.getMinTweakLength() + "    twkmax= " + ffsRecord.getMaxTweakLength() +   "    tweak.length= " + ffsRecord.getTweak().length() +   "    key.length= " + key.length );
             ctx.setFF1(new FF1(key, tweak,
-            ffsRecord.getMin_tweak_length(),
-            ffsRecord.getMax_tweak_length(),
-            ffsRecord.getInput_character_set().length(), ffsRecord.getInput_character_set()),
+            ffsRecord.getMinTweakLength(),
+            ffsRecord.getMaxTweakLength(),
+            ffsRecord.getInputCharacterSet().length(), ffsRecord.getInputCharacterSet()),
             key_number);
         break;
         case "FF3_1":
             ctx.setFF3_1(new FF3_1(key, 
               tweak,
-              ffsRecord.getInput_character_set().length(), ffsRecord.getInput_character_set()),
+              ffsRecord.getInputCharacterSet().length(), ffsRecord.getInputCharacterSet()),
               key_number);
         break;
         default:
-            throw new RuntimeException("Unknown FPE Algorithm: " + ffsRecord.getAlgorithm());
+            throw new RuntimeException("Unknown FPE Algorithm: " + ffsRecord.getEncryptionAlgorithm());
       }
       return ctx;
     }

@@ -9,11 +9,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.*;
+import java.util.ArrayList;
+import java.util.List;
 
 class FFS  {
     private boolean verbose= false;
     public LoadingCache<String, FFS_Record> FFSCache; // FFS Name / Contents of the FFS from the server
 
+    protected enum PASSTHROUGH_RULES_TYPE {
+      NONE,
+      PASSTHROUGH,
+      PREFIX,
+      SUFFIX
+    }
 
     /**
      * FFS constructor
@@ -55,99 +63,103 @@ class FFS  {
      * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
      *
      */
-    private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String ffs_name) {
+    private  FFS_Record getFFSFromCloudAPI(UbiqWebServices ubiqWebServices, String ffs_name) throws Exception{
 
         if (verbose) System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getFFSFromCloudAPI for ffs_name: " + ffs_name);
 
-        FFSRecordResponse ffsRecordResponse;
-        ffsRecordResponse= ubiqWebServices.getFFSDefinition(ffs_name);
+        FFS_Record ffsRecord;
+        ffsRecord= ubiqWebServices.getFFSDefinition(ffs_name);
+        // ffsRecordResponse.completeDeserialization();
 
         String jsonStr= "{}";
         Gson gson = new Gson();
-        FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
 
-        // If the server fails, we would have already sent a getFFSDefinition exception
-        if (ffsRecordResponse!= null) {
-            if (ffsRecordResponse.EncryptionAlgorithm == null) {
-                if (verbose) System.out.println("Missing encryption_algorithm in FFS definition.");
-            } else {
-                ffs.setAlgorithm(ffsRecordResponse.EncryptionAlgorithm);
-            }
+        if (verbose) System.out.println(gson.toJson(ffsRecord));
 
-            if (ffsRecordResponse.FfsName == null) {
-                if (verbose) System.out.println("Missing name in FFS definition.");
-            } else {
-                ffs.setName(ffsRecordResponse.FfsName);
-            }
+        // FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
 
-            if (ffsRecordResponse.Regex == null) {
-                if (verbose) System.out.println("Missing Regex in FFS definition.");
-            } else {
-                ffs.setRegex(ffsRecordResponse.Regex);
-            }
+        // // If the server fails, we would have already sent a getFFSDefinition exception
+        // if (ffsRecordResponse!= null) {
+        //     if (ffsRecordResponse.EncryptionAlgorithm == null) {
+        //         if (verbose) System.out.println("Missing encryption_algorithm in FFS definition.");
+        //     } else {
+        //         ffs.setAlgorithm(ffsRecordResponse.EncryptionAlgorithm);
+        //     }
 
-            if (ffsRecordResponse.TweakSource == null) {
-                if (verbose) System.out.println("Missing tweak_source in FFS definition.");
-            } else {
-                ffs.setTweak_source(ffsRecordResponse.TweakSource);
-            }
+        //     if (ffsRecordResponse.FfsName == null) {
+        //         if (verbose) System.out.println("Missing name in FFS definition.");
+        //     } else {
+        //         ffs.setName(ffsRecordResponse.FfsName);
+        //     }
 
-            if (ffsRecordResponse.MinInputLength == -1) {
-                if (verbose) System.out.println("Missing min_input_length in FFS definition.");
-            } else {
-                ffs.setMin_input_length(ffsRecordResponse.MinInputLength);
-            }
+        //     if (ffsRecordResponse.Regex == null) {
+        //         if (verbose) System.out.println("Missing Regex in FFS definition.");
+        //     } else {
+        //         ffs.setRegex(ffsRecordResponse.Regex);
+        //     }
 
-            if (ffsRecordResponse.MaxInputLength == -1) {
-                if (verbose) System.out.println("Missing max_input_length in FFS definition.");
-            } else {
-                ffs.setMax_input_length(ffsRecordResponse.MaxInputLength);
-            }
+        //     if (ffsRecordResponse.TweakSource == null) {
+        //         if (verbose) System.out.println("Missing tweak_source in FFS definition.");
+        //     } else {
+        //         ffs.setTweak_source(ffsRecordResponse.TweakSource);
+        //     }
 
-            if (ffsRecordResponse.InputCharacterSet == null) {
-                if (verbose) System.out.println("Missing input_character_set in FFS definition.");
-            } else {
-                ffs.setInput_character_set(ffsRecordResponse.InputCharacterSet);
-            }
+        //     if (ffsRecordResponse.MinInputLength == -1) {
+        //         if (verbose) System.out.println("Missing min_input_length in FFS definition.");
+        //     } else {
+        //         ffs.setMin_input_length(ffsRecordResponse.MinInputLength);
+        //     }
 
-            if (ffsRecordResponse.OutputCharacterSet == null) {
-                if (verbose) System.out.println("Missing output_character_set in FFS definition.");
-            } else {
-                ffs.setOutput_character_set(ffsRecordResponse.OutputCharacterSet);
-            }
+        //     if (ffsRecordResponse.MaxInputLength == -1) {
+        //         if (verbose) System.out.println("Missing max_input_length in FFS definition.");
+        //     } else {
+        //         ffs.setMax_input_length(ffsRecordResponse.MaxInputLength);
+        //     }
 
-            if (ffsRecordResponse.PassthroughCharacterSet == null) {
-                if (verbose) System.out.println("Missing passthrough in FFS definition.");
-            } else {
-                ffs.setPassthrough_character_set(ffsRecordResponse.PassthroughCharacterSet);
-            }
+        //     if (ffsRecordResponse.InputCharacterSet == null) {
+        //         if (verbose) System.out.println("Missing input_character_set in FFS definition.");
+        //     } else {
+        //         ffs.setInput_character_set(ffsRecordResponse.InputCharacterSet);
+        //     }
 
-            if (ffsRecordResponse.MsbEncodingBits == -1) {
-                if (verbose) System.out.println("Missing msb_encoding_bits in FFS definition.");
-            } else {
-                ffs.setMsb_encoding_bits(ffsRecordResponse.MsbEncodingBits);
-            }
+        //     if (ffsRecordResponse.OutputCharacterSet == null) {
+        //         if (verbose) System.out.println("Missing output_character_set in FFS definition.");
+        //     } else {
+        //         ffs.setOutput_character_set(ffsRecordResponse.OutputCharacterSet);
+        //     }
 
-            if (ffsRecordResponse.MinTweakLength == -1) {
-                if (verbose) System.out.println("Missing tweak_min_len in FFS definition.");
-            } else {
-                ffs.setMin_tweak_length(ffsRecordResponse.MinTweakLength);
-            }
+        //     if (ffsRecordResponse.PassthroughCharacterSet == null) {
+        //         if (verbose) System.out.println("Missing passthrough in FFS definition.");
+        //     } else {
+        //         ffs.setPassthrough_character_set(ffsRecordResponse.PassthroughCharacterSet);
+        //     }
 
-            if (ffsRecordResponse.MaxTweakLength == -1) {
-                if (verbose) System.out.println("Missing tweak_max_len in FFS definition.");
-            } else {
-                ffs.setMax_tweak_length(ffsRecordResponse.MaxTweakLength);
-            }
+        //     if (ffsRecordResponse.MsbEncodingBits == -1) {
+        //         if (verbose) System.out.println("Missing msb_encoding_bits in FFS definition.");
+        //     } else {
+        //         ffs.setMsb_encoding_bits(ffsRecordResponse.MsbEncodingBits);
+        //     }
 
-            if (ffsRecordResponse.Tweak == null) {
-                if (verbose) System.out.println("Missing Tweak in FFS definition.");
-            } else {
-                ffs.setTweak(ffsRecordResponse.Tweak);
-            }
-        }
+        //     if (ffsRecordResponse.MinTweakLength == -1) {
+        //         if (verbose) System.out.println("Missing tweak_min_len in FFS definition.");
+        //     } else {
+        //         ffs.setMin_tweak_length(ffsRecordResponse.MinTweakLength);
+        //     }
 
-        return ffs;
+        //     if (ffsRecordResponse.MaxTweakLength == -1) {
+        //         if (verbose) System.out.println("Missing tweak_max_len in FFS definition.");
+        //     } else {
+        //         ffs.setMax_tweak_length(ffsRecordResponse.MaxTweakLength);
+        //     }
+
+        //     if (ffsRecordResponse.Tweak == null) {
+        //         if (verbose) System.out.println("Missing Tweak in FFS definition.");
+        //     } else {
+        //         ffs.setTweak(ffsRecordResponse.Tweak);
+        //     }
+        // }
+
+        return ffsRecord;
     }
 
 
@@ -159,12 +171,191 @@ class FFS  {
 /**
  * Server response elements of the JSON record for the FFS data
  */
-class FFSRecordResponse {
-    @SerializedName("encryption_algorithm")
-    String EncryptionAlgorithm;
+class FFS_Record {
+
+  // Some values need to be post-processed to make this object
+  // usable
+  public void completeDeserialization() throws Exception  {
+
+    // Make sure the passthrough rules is not null
+    if (this.Passthrough_Rules == null) {
+      setPassthrough_Rules(new ArrayList<PassthroughRules>());
+    }
+    passthrough_rules_priority = new ArrayList<FFS.PASSTHROUGH_RULES_TYPE>(3);
+    passthrough_rules_priority.add(FFS.PASSTHROUGH_RULES_TYPE.NONE);
+    passthrough_rules_priority.add(FFS.PASSTHROUGH_RULES_TYPE.NONE);
+    passthrough_rules_priority.add(FFS.PASSTHROUGH_RULES_TYPE.NONE);
+    for (PassthroughRules rule : getPassthrough_Rules()) {
+      System.out.println("Type: " + rule.Type + "     priority: " + rule.Priority);
+      if (rule.Type.equals("passthrough")) {
+        passthrough_rules_priority.set(rule.Priority - 1, FFS.PASSTHROUGH_RULES_TYPE.PASSTHROUGH);
+        setPassthroughCharacterSet(rule.Value.toString());
+      } else if (rule.Type.equals("suffix")) {
+        passthrough_rules_priority.set(rule.Priority - 1, FFS.PASSTHROUGH_RULES_TYPE.SUFFIX);
+        setSufffixPassthroughLength((new Double(rule.Value.toString())).intValue());
+      } else if (rule.Type.equals("prefix")) {
+        passthrough_rules_priority.set(rule.Priority - 1, FFS.PASSTHROUGH_RULES_TYPE.PREFIX);
+        setPrefixPassthroughLength((new Double(rule.Value.toString())).intValue());
+      } else {
+        new RuntimeException("Invalid passthrough rule type '" + rule.Type + "'");
+      }
+    }
+  }
+
+
+  @SerializedName("encryption_algorithm")
+  String EncryptionAlgorithm;
+
+  public String getEncryptionAlgorithm() {
+    return this.EncryptionAlgorithm;
+  }
+
+  public void setEncryptionAlgorithm(String EncryptionAlgorithm) {
+    this.EncryptionAlgorithm = EncryptionAlgorithm;
+  }
+
+  public String getName() {
+    return this.Name;
+  }
+
+  public void setName(String Name) {
+    this.Name = Name;
+  }
+
+  public String getRegex() {
+    return this.Regex;
+  }
+
+  public void setRegex(String Regex) {
+    this.Regex = Regex;
+  }
+
+  public String getTweakSource() {
+    return this.TweakSource;
+  }
+
+  public void setTweakSource(String TweakSource) {
+    this.TweakSource = TweakSource;
+  }
+
+  public long getMinInputLength() {
+    return this.MinInputLength;
+  }
+
+  public void setMinInputLength(long MinInputLength) {
+    this.MinInputLength = MinInputLength;
+  }
+
+  public long getMaxInputLength() {
+    return this.MaxInputLength;
+  }
+
+  public void setMaxInputLength(long MaxInputLength) {
+    this.MaxInputLength = MaxInputLength;
+  }
+
+  public boolean isFpeDefinable() {
+    return this.FpeDefinable;
+  }
+
+  public boolean getFpeDefinable() {
+    return this.FpeDefinable;
+  }
+
+  public void setFpeDefinable(boolean FpeDefinable) {
+    this.FpeDefinable = FpeDefinable;
+  }
+
+  public String getInputCharacterSet() {
+    return this.InputCharacterSet;
+  }
+
+  public void setInputCharacterSet(String InputCharacterSet) {
+    this.InputCharacterSet = InputCharacterSet;
+  }
+
+  public String getOutputCharacterSet() {
+    return this.OutputCharacterSet;
+  }
+
+  public void setOutputCharacterSet(String OutputCharacterSet) {
+    this.OutputCharacterSet = OutputCharacterSet;
+  }
+
+  public String getPassthroughCharacterSet() {
+    return this.PassthroughCharacterSet;
+  }
+
+  public void setPassthroughCharacterSet(String PassthroughCharacterSet) {
+    this.PassthroughCharacterSet = PassthroughCharacterSet;
+  }
+
+  public long getMsbEncodingBits() {
+    return this.MsbEncodingBits;
+  }
+
+  public void setMsbEncodingBits(long MsbEncodingBits) {
+    this.MsbEncodingBits = MsbEncodingBits;
+  }
+
+  public long getMinTweakLength() {
+    return this.MinTweakLength;
+  }
+
+  public void setMinTweakLength(long MinTweakLength) {
+    this.MinTweakLength = MinTweakLength;
+  }
+
+  public long getMaxTweakLength() {
+    return this.MaxTweakLength;
+  }
+
+  public void setMaxTweakLength(long MaxTweakLength) {
+    this.MaxTweakLength = MaxTweakLength;
+  }
+
+  public String getTweak() {
+    return this.Tweak;
+  }
+
+  public void setTweak(String Tweak) {
+    this.Tweak = Tweak;
+  }
+
+  public List<PassthroughRules> getPassthrough_Rules() {
+    return this.Passthrough_Rules;
+  }
+
+  public void setPassthrough_Rules(List<PassthroughRules> Passthrough_Rules) {
+    this.Passthrough_Rules = Passthrough_Rules;
+  }
+
+  public Integer getPrefixPassthroughLength() {
+    return this.PrefixPassthroughLength;
+  }
+
+  public void setPrefixPassthroughLength(Integer PrefixPassthroughLength) {
+    this.PrefixPassthroughLength = PrefixPassthroughLength;
+  }
+
+  public Integer getSufffixPassthroughLength() {
+    return this.SufffixPassthroughLength;
+  }
+
+  public void setSufffixPassthroughLength(Integer SufffixPassthroughLength) {
+    this.SufffixPassthroughLength = SufffixPassthroughLength;
+  }
+
+  public List<FFS.PASSTHROUGH_RULES_TYPE> getPassthrough_rules_priority() {
+    return this.passthrough_rules_priority;
+  }
+
+  public void setPassthrough_rules_priority(List<FFS.PASSTHROUGH_RULES_TYPE> passthrough_rules_priority) {
+    this.passthrough_rules_priority = passthrough_rules_priority;
+  }
 
     @SerializedName("name")
-    String FfsName;
+    String Name;
 
     @SerializedName("regex")
     String Regex;
@@ -187,11 +378,11 @@ class FFSRecordResponse {
     @SerializedName("output_character_set")
     String OutputCharacterSet;
 
-    @SerializedName("encryption_session")
-    String EncryptionSession;
+    // @SerializedName("encryption_session")
+    // String EncryptionSession;
 
-    @SerializedName("key_fingerprint")
-    String KeyFingerprint;
+    // @SerializedName("key_fingerprint")
+    // String KeyFingerprint;
 
     @SerializedName("passthrough")
     String PassthroughCharacterSet;
@@ -208,176 +399,23 @@ class FFSRecordResponse {
     @SerializedName("tweak")
     String Tweak;
 
+    @SerializedName("passthrough_rules")
+    List<PassthroughRules> Passthrough_Rules;
+
+    transient Integer PrefixPassthroughLength;
+    transient Integer SufffixPassthroughLength;
+    transient List<FFS.PASSTHROUGH_RULES_TYPE> passthrough_rules_priority;
+
+
+
 
 }
 
-
-/**
- * Representation of the JSON record for the FFS data
- */
-class FFS_Record {
-    private String encryption_algorithm;   //e.g. FF1 or FF3_1
-    private String name;   //e.g."SSN",
-    private String regex;   //e.g. "(\d{3})-(\d{2})-(\d{4})",   // "(\d{3})-(\d{2})-\d{4}",  last 4 in the clear
-    private String tweak_source;   //e.g. "generated",
-    private Long min_input_length;   //e.g. 9
-    private Long max_input_length;   //e.g. 9
-    private boolean fpe_definable;
-    private String input_character_set;   //  "alphabet (inut/output radix)
-    private String output_character_set;  // not for fpe (most likely)
-    private String passthrough;
-    private Long max_key_rotations;
-    private Long msb_encoding_bits;
-    private Long  tweak_min_len;
-    private Long  tweak_max_len;
-    private String tweak;
-
-  private static String getString(JsonObject data, String key) {
-    String ret = null;
-    JsonElement value = data.get(key);
-    if (value != null && value.isJsonPrimitive() && value.getAsString() != null) {
-      ret = value.getAsString();
-    }
-    return ret;
-  }
-
-  private static Long getNumber(JsonObject data, String key) {
-    Long ret = null;
-    JsonElement value = data.get(key);
-    if (value != null && value.isJsonPrimitive() && value.getAsNumber() != null) {
-      ret = value.getAsNumber().longValue();
-    }
-    return ret;
-  }
-
-
-  public static FFS_Record parse(JsonObject data) {
-    FFS_Record rec = new FFS_Record();
-    rec.setAlgorithm(getString(data,"encryption_algorithm"));
-    rec.setName(getString(data,"name"));
-    
-    rec.setRegex(getString(data,"regex"));
-    rec.setTweak_source(getString(data,"tweak_source"));
-    rec.setInput_character_set(getString(data,"input_character_set"));
-    rec.setOutput_character_set(getString(data,"output_character_set"));
-    rec.setPassthrough_character_set(getString(data,"passthrough"));
-    rec.setTweak(getString(data,"tweak"));
-
-    rec.setMin_input_length(getNumber(data,"min_input_length"));
-    rec.setMax_input_length(getNumber(data,"max_input_length"));
-    rec.setMax_key_rotations(getNumber(data,"max_key_rotations"));
-    rec.setMsb_encoding_bits(getNumber(data,"msb_encoding_bits"));
-    rec.setMin_tweak_length(getNumber(data,"tweak_min_len"));
-    rec.setMax_tweak_length(getNumber(data,"tweak_max_len"));
-
-    return rec;
-  }
-
-	public String getAlgorithm() {
-		return encryption_algorithm;
-	}
-	public void setAlgorithm(String encryption_algorithm) {
-		this.encryption_algorithm = encryption_algorithm;
-	}
-
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getRegex() {
-		return regex;
-	}
-	public void setRegex(String regex) {
-		this.regex = regex;
-	}
-
-	public String getTweak_source() {
-		return tweak_source;
-	}
-	public void setTweak_source(String tweak_source) {
-		this.tweak_source = tweak_source;
-	}
-
-	public Long getMin_input_length() {
-		return min_input_length;
-	}
-	public void setMin_input_length(Long min_input_length) {
-		this.min_input_length = min_input_length;
-	}
-
-	public Long getMax_input_length() {
-		return max_input_length;
-	}
-	public void setMax_input_length(Long max_input_length) {
-		this.max_input_length = max_input_length;
-	}
-
-	public boolean getFpe_definable() {
-		return fpe_definable;
-	}
-	public void setFpe_definable(boolean fpe_definable) {
-		this.fpe_definable = fpe_definable;
-	}
-
-	public String getInput_character_set() {
-		return input_character_set;
-	}
-	public void setInput_character_set(String input_character_set) {
-		this.input_character_set = input_character_set;
-	}
-
-	public String getOutput_character_set() {
-		return output_character_set;
-	}
-	public void setOutput_character_set(String output_character_set) {
-		this.output_character_set = output_character_set;
-	}
-
-	public String getPassthrough_character_set() {
-		return passthrough;
-	}
-	public void setPassthrough_character_set(String passthrough_character_set) {
-		this.passthrough = passthrough_character_set;
-	}
-
-	public Long getMsb_encoding_bits() {
-		return msb_encoding_bits;
-	}
-	public void setMsb_encoding_bits(Long msb_encoding_bits) {
-		this.msb_encoding_bits = msb_encoding_bits;
-	}
-
-	public Long getMin_tweak_length() {
-		return tweak_min_len;
-	}
-	public void setMin_tweak_length(Long tweak_min_len) {
-		this.tweak_min_len = tweak_min_len;
-	}
-
-	public Long getMax_tweak_length() {
-		return tweak_max_len;
-	}
-	public void setMax_tweak_length(Long tweak_max_len) {
-		this.tweak_max_len = tweak_max_len;
-	}
-
-	public String getTweak() {
-		return tweak;
-	}
-	public void setTweak(String Tweak) {
-		this.tweak = Tweak;
-	}
-
-	public Long getMax_key_rotations() {
-		return max_key_rotations;
-	}
-	public void setMax_key_rotations(Long max_key_rotations) {
-		this.max_key_rotations = max_key_rotations;
-	}
-
-
-
+class PassthroughRules {
+  @SerializedName("type")
+  String Type;
+  @SerializedName("priority")
+  Integer Priority;
+  @SerializedName("value")
+  Object Value;
 }
