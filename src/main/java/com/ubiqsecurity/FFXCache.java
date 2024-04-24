@@ -92,27 +92,27 @@ class FFXCache  {
         } else {
             byte[] key = ubiqWebServices.getUnwrappedKey(ffsKeyRecordResponse.EncryptedPrivateKey, ffsKeyRecordResponse.WrappedDataKey);
 
-            if (keyId.ffs.getTweak_source().equals("constant")) {
+            if (keyId.ffs.getTweakSource().equals("constant")) {
               tweak= Base64.getDecoder().decode(keyId.ffs.getTweak());
             }
 
-            switch(keyId.ffs.getAlgorithm()) {
+            switch(keyId.ffs.getEncryptionAlgorithm()) {
               case "FF1":
-                  if (verbose) System.out.println("    twkmin= " + keyId.ffs.getMin_tweak_length() + "    twkmax= " + keyId.ffs.getMax_tweak_length() +   "    tweak.length= " + keyId.ffs.getTweak().length() +   "    key.length= " + key.length );
+                  if (verbose) System.out.println("    twkmin= " + keyId.ffs.getMinTweakLength() + "    twkmax= " + keyId.ffs.getMaxTweakLength() +   "    tweak.length= " + keyId.ffs.getTweak().length() +   "    key.length= " + key.length );
                   ctx.setFF1(new FF1(key, tweak, 
-                  keyId.ffs.getMin_tweak_length(), 
-                  keyId.ffs.getMax_tweak_length(), 
-                  keyId.ffs.getInput_character_set().length(), keyId.ffs.getInput_character_set()), 
+                  keyId.ffs.getMinTweakLength(), 
+                  keyId.ffs.getMaxTweakLength(), 
+                  keyId.ffs.getInputCharacterSet().length(), keyId.ffs.getInputCharacterSet()), 
                   ffsKeyRecordResponse.KeyNumber);
               break;
               case "FF3_1":
                   ctx.setFF3_1(new FF3_1(key, 
                     tweak,
-                    keyId.ffs.getInput_character_set().length(), keyId.ffs.getInput_character_set()),
+                    keyId.ffs.getInputCharacterSet().length(), keyId.ffs.getInputCharacterSet()),
                     ffsKeyRecordResponse.KeyNumber);
               break;
               default:
-                  throw new RuntimeException("Unknown FPE Algorithm: " + keyId.ffs.getAlgorithm());
+                  throw new RuntimeException("Unknown FPE Algorithm: " + keyId.ffs.getEncryptionAlgorithm());
           }
         }
         return ctx;

@@ -154,15 +154,15 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
         char charBuf = str.charAt(0);
 
-        int ct_value = ffs.getOutput_character_set().indexOf(charBuf);
+        int ct_value = ffs.getOutputCharacterSet().indexOf(charBuf);
         if (verbose) System.out.println("ct_value: " + ct_value);
 
         //int key_number = ffs.getCurrent_key();
-        long msb_encoding_bits = ffs.getMsb_encoding_bits();
+        long msb_encoding_bits = ffs.getMsbEncodingBits();
 
         ct_value =  ct_value + (key_number << msb_encoding_bits);
 
-        char ch= ffs.getOutput_character_set().charAt(ct_value);
+        char ch= ffs.getOutputCharacterSet().charAt(ct_value);
         buf= Parsing.replaceChar(str, ch, 0);
 
         return buf;
@@ -187,12 +187,12 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         }
 
         char charBuf = parsed_data.trimmed.charAt(position);
-        int encoded_value = ffs.getOutput_character_set().indexOf(charBuf);
+        int encoded_value = ffs.getOutputCharacterSet().indexOf(charBuf);
 
-        long msb_encoding_bits = ffs.getMsb_encoding_bits();
+        long msb_encoding_bits = ffs.getMsbEncodingBits();
         key_num =  encoded_value >> msb_encoding_bits;
 
-        char ch= ffs.getOutput_character_set().charAt(encoded_value - (key_num << msb_encoding_bits));
+        char ch= ffs.getOutputCharacterSet().charAt(encoded_value - (key_num << msb_encoding_bits));
         parsed_data.trimmed = Parsing.replaceChar(parsed_data.trimmed, ch, position);
 
         return key_num;
@@ -223,11 +223,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         ParsedData ret = null;
 
         if (conversion_direction > 0) { // input to output
-            src_char_set= ffs.getInput_character_set();
-            dest_zeroth_char = ffs.getOutput_character_set().charAt(0);
+            src_char_set= ffs.getInputCharacterSet();
+            dest_zeroth_char = ffs.getOutputCharacterSet().charAt(0);
         } else {
-            src_char_set= ffs.getOutput_character_set();
-            dest_zeroth_char = ffs.getInput_character_set().charAt(0);
+            src_char_set= ffs.getOutputCharacterSet();
+            dest_zeroth_char = ffs.getInputCharacterSet().charAt(0);
         }
 
 
@@ -237,7 +237,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
         try (Parsing parsing = new Parsing(trimmed_output, empty_formatted_output)) {
 
-            int status = parsing.ubiq_platform_efpe_parsing_parse_input(source_string, src_char_set, ffs.getPassthrough_character_set());
+            int status = parsing.ubiq_platform_efpe_parsing_parse_input(source_string, src_char_set, ffs.getPassthroughCharacterSet());
 
             ret = new ParsedData(parsing.get_empty_formatted_output(), parsing.get_trimmed_characters());
             // this.trimmed= parsing.get_trimmed_characters();
@@ -411,13 +411,13 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         ParsedData parsedData = ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
 
         // Make sure the trimmed string is valid for the FFS
-        if ((parsedData.trimmed.length() < FFScaching.getMin_input_length()) ||
-            (parsedData.trimmed.length() > FFScaching.getMax_input_length())) {
+        if ((parsedData.trimmed.length() < FFScaching.getMinInputLength()) ||
+            (parsedData.trimmed.length() > FFScaching.getMaxInputLength())) {
             throw new RuntimeException("Input length does not match FFS parameters.");
         }
 
         // Encrypt the data
-        switch(FFScaching.getAlgorithm()) {
+        switch(FFScaching.getEncryptionAlgorithm()) {
             case "FF1":
                 cipher = cfx.getFF1().encrypt(parsedData.trimmed, tweak);
             break;
@@ -425,11 +425,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 cipher = cfx.getFF3_1().encrypt(parsedData.trimmed, tweak);
             break;
             default:
-                throw new RuntimeException("Unknown FPE Algorithm: " + FFScaching.getAlgorithm());
+                throw new RuntimeException("Unknown FPE Algorithm: " + FFScaching.getEncryptionAlgorithm());
         }
 
         // Convert to output character set
-        convertedToRadix = str_convert_radix(cipher, FFScaching.getInput_character_set(), FFScaching.getOutput_character_set());
+        convertedToRadix = str_convert_radix(cipher, FFScaching.getInputCharacterSet(), FFScaching.getOutputCharacterSet());
         if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
         if (verbose) System.out.println("    formatted destination= " + parsedData.formatted_dest);
 
@@ -438,7 +438,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         if (verbose) System.out.println("   KeyNumber= " + key_number);
         String encoded_value = encode_keynum(FFScaching, key_number, convertedToRadix);
 
-        formatted_dest = merge_to_formatted_output(FFScaching, parsedData.formatted_dest, encoded_value, FFScaching.getOutput_character_set());
+        formatted_dest = merge_to_formatted_output(FFScaching, parsedData.formatted_dest, encoded_value, FFScaching.getOutputCharacterSet());
         if (verbose) System.out.println("    encrypted and formatted= " + formatted_dest);
 
         // create the billing record
@@ -511,8 +511,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                 if (verbose) System.out.println("    parsed_data.formatted_dest= " + parsed_data.formatted_dest);
 
                 // Make sure the trimmed string is valid for the FFS
-                if ((parsed_data.trimmed.length() < FFScaching.getMin_input_length()) ||
-                    (parsed_data.trimmed.length() > FFScaching.getMax_input_length())) {
+                if ((parsed_data.trimmed.length() < FFScaching.getMinInputLength()) ||
+                    (parsed_data.trimmed.length() > FFScaching.getMaxInputLength())) {
                     throw new RuntimeException("Input length does not match FFS parameters.");
                 }
 
@@ -524,11 +524,11 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
                 if (verbose) System.out.println("    cachingKey= " + FFScaching.getName() + " " + cfx.getKeyNumber());
 
-                restoredFromRadix = str_convert_radix(parsed_data.trimmed, FFScaching.getOutput_character_set(), FFScaching.getInput_character_set());
+                restoredFromRadix = str_convert_radix(parsed_data.trimmed, FFScaching.getOutputCharacterSet(), FFScaching.getInputCharacterSet());
                 if (verbose) System.out.println("    converted to input character set= " + restoredFromRadix);
 
                 // Encrypt the data
-                switch(FFScaching.getAlgorithm()) {
+                switch(FFScaching.getEncryptionAlgorithm()) {
                   case "FF1":
                     PlainText = cfx.getFF1().decrypt(restoredFromRadix, tweak);
                   break;
@@ -536,10 +536,10 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                     PlainText = cfx.getFF3_1().decrypt(restoredFromRadix, tweak);
                   break;
                   default:
-                      throw new RuntimeException("Unknown FPE Algorithm: " + FFScaching.getAlgorithm());
+                      throw new RuntimeException("Unknown FPE Algorithm: " + FFScaching.getEncryptionAlgorithm());
                 }
 
-                formatted_dest = merge_to_formatted_output(FFScaching, parsed_data.formatted_dest, PlainText, FFScaching.getInput_character_set());
+                formatted_dest = merge_to_formatted_output(FFScaching, parsed_data.formatted_dest, PlainText, FFScaching.getInputCharacterSet());
                 if (verbose) System.out.println("    decrypted and formatted= " + formatted_dest);
 
                 // create the billing record
@@ -559,14 +559,19 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       JsonParser parser = new JsonParser();
       JsonObject dataset_data = parser.parse(dataset_def).getAsJsonObject();
 
-      String dataset_name = LoadSearchKeys.loadKeys(
-        this.ubiqCredentials,
-        this.ubiqWebServices,
-        dataset_data,
-        this.ffs,
-        this.ffxCache);
+      try {
+        String dataset_name = LoadSearchKeys.loadKeys(
+          this.ubiqCredentials,
+          this.ubiqWebServices,
+          dataset_data,
+          this.ffs,
+          this.ffxCache);
 
         return dataset_name;
+      } catch (Exception e) {
+        System.out.println("loadDatsetDef Exception: " + e.getMessage());
+        return "";
+      }
     }
 
     // Dataset - same payload as api/v0/ffs
@@ -574,13 +579,18 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       JsonParser parser = new JsonParser();
       JsonObject dataset_data = parser.parse(dataset_def).getAsJsonObject();
 
-      String dataset_name = LoadSearchKeys.loadDataset(
-        this.ubiqCredentials,
-        this.ubiqWebServices,
-        dataset_data,
-        this.ffs);
+      try {
+        String dataset_name = LoadSearchKeys.loadDataset(
+          this.ubiqCredentials,
+          this.ubiqWebServices,
+          dataset_data,
+          this.ffs);
 
         return dataset_name;
+      } catch (Exception e) {
+        System.out.println("loadDatsetDef Exception: " + e.getMessage());
+        return "";
+      }
     }
 
 
