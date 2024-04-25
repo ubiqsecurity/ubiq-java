@@ -192,13 +192,17 @@ class FFS_Record {
         setPassthroughCharacterSet(rule.Value.toString());
       } else if (rule.Type.equals("suffix")) {
         passthrough_rules_priority.set(rule.Priority - 1, FFS.PASSTHROUGH_RULES_TYPE.SUFFIX);
-        setSufffixPassthroughLength((new Double(rule.Value.toString())).intValue());
+        setSuffixPassthroughLength((new Double(rule.Value.toString())).intValue());
       } else if (rule.Type.equals("prefix")) {
         passthrough_rules_priority.set(rule.Priority - 1, FFS.PASSTHROUGH_RULES_TYPE.PREFIX);
         setPrefixPassthroughLength((new Double(rule.Value.toString())).intValue());
       } else {
         new RuntimeException("Invalid passthrough rule type '" + rule.Type + "'");
       }
+    }
+    // Just make sure it isn't NULL to avoid NULL checks and object exceptions
+    if (getPassthroughCharacterSet() == null) {
+      setPassthroughCharacterSet("");
     }
   }
 
@@ -338,12 +342,12 @@ class FFS_Record {
     this.PrefixPassthroughLength = PrefixPassthroughLength;
   }
 
-  public Integer getSufffixPassthroughLength() {
-    return this.SufffixPassthroughLength;
+  public Integer getSuffixPassthroughLength() {
+    return this.SuffixPassthroughLength;
   }
 
-  public void setSufffixPassthroughLength(Integer SufffixPassthroughLength) {
-    this.SufffixPassthroughLength = SufffixPassthroughLength;
+  public void setSuffixPassthroughLength(Integer SuffixPassthroughLength) {
+    this.SuffixPassthroughLength = SuffixPassthroughLength;
   }
 
   public List<FFS.PASSTHROUGH_RULES_TYPE> getPassthrough_rules_priority() {
@@ -403,12 +407,8 @@ class FFS_Record {
     List<PassthroughRules> Passthrough_Rules;
 
     transient Integer PrefixPassthroughLength;
-    transient Integer SufffixPassthroughLength;
+    transient Integer SuffixPassthroughLength;
     transient List<FFS.PASSTHROUGH_RULES_TYPE> passthrough_rules_priority;
-
-
-
-
 }
 
 class PassthroughRules {

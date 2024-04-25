@@ -40,7 +40,7 @@ public class ParsingTest
             
             assertEquals(status, 0);  
             assertEquals(parsing.get_trimmed_characters(), "123456789"); 
-            assertEquals(parsing.get_empty_formatted_output(), "AAA-AA-AAAA");  
+            assertEquals(parsing.get_formatted_output(), "AAA-AA-AAAA");  
                 
          }
     }
