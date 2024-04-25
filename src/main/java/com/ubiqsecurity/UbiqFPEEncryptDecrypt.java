@@ -36,10 +36,12 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     class ParsedData {
       String formatted_dest;
       String trimmed;
+      Integer formatted_first_empty_idx;
 
-      ParsedData(String formatted_dest, String trimmed) {
+      ParsedData(String formatted_dest, String trimmed, Integer formatted_first_empty_idx) {
         this.formatted_dest = formatted_dest;
         this.trimmed = trimmed;
+        this.formatted_first_empty_idx = formatted_first_empty_idx;
       }
     }
 
@@ -218,7 +220,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     {
         String src_char_set= "";
         char dest_zeroth_char= '0';
-        char source_zeroth_char= '0';
+        // char source_zeroth_char= '0';
 
         ParsedData ret = null;
 
@@ -230,16 +232,47 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             dest_zeroth_char = ffs.getInputCharacterSet().charAt(0);
         }
 
+        // source_zeroth_char = src_char_set.charAt(0);
+        StringBuilder trimmed = new StringBuilder(source_string.length());
+        StringBuilder empty = new StringBuilder(source_string);
 
-        source_zeroth_char = src_char_set.charAt(0);
-        String trimmed_output = Parsing.createString(source_string.length(), String.valueOf(source_zeroth_char));
-        String empty_formatted_output = Parsing.createString(source_string.length(), String.valueOf(dest_zeroth_char));
 
-        try (Parsing parsing = new Parsing(trimmed_output, empty_formatted_output)) {
+        for (int idx = 0; idx < source_string.length(); idx++) {
+          char c = source_string.charAt(idx);
+          // If the source character is NOT passthrough, add to trimmed and set the formatted to zeroth char.
+          if (ffs.getPassthroughCharacterSet().indexOf(c) == -1) {
+            trimmed.append(c);
+            empty.setCharAt(idx, dest_zeroth_char);
 
-            int status = parsing.ubiq_platform_efpe_parsing_parse_input(source_string, src_char_set, ffs.getPassthroughCharacterSet());
+          } else {
+            // move the character to Formatted
+            empty.setCharAt(idx, c);
+          }
+        }
 
-            ret = new ParsedData(parsing.get_empty_formatted_output(), parsing.get_trimmed_characters());
+
+        // source_zeroth_char = src_char_set.charAt(0);
+        // String trimmed_output = trimmed.toStringParsing.createString(source_string.length(), String.valueOf(source_zeroth_char));
+        // String empty_formatted_output = Parsing.createString(source_string.length(), String.valueOf(dest_zeroth_char));
+
+        try (Parsing parsing = new Parsing(trimmed.toString(), empty.toString())) {
+
+          for (FFS.PASSTHROUGH_RULES_TYPE priority : ffs.getPassthrough_rules_priority()) {
+            if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.PASSTHROUGH)) {
+              int status = parsing.ubiq_platform_efpe_parsing_parse_input(source_string, src_char_set, ffs.getPassthroughCharacterSet());
+              System.out.println("Passthrough Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + parsing.getFormattedFirstEmptyIdx());
+            } else if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.PREFIX)) {
+              parsing.process_prefix(ffs.getPrefixPassthroughLength(),  ffs.getPassthroughCharacterSet());
+              System.out.println("PREFIX Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + ffs.getPrefixPassthroughLength() + "\t" + parsing.getFormattedFirstEmptyIdx());
+            }else if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.SUFFIX)) {
+              parsing.process_suffix(ffs.getSuffixPassthroughLength(),  ffs.getPassthroughCharacterSet());
+              System.out.println("SUFFIX Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + ffs.getSuffixPassthroughLength() + "\t" + parsing.getFormattedFirstEmptyIdx());
+            }
+          }
+
+            // int status = parsing.ubiq_platform_efpe_parsing_parse_input(source_string, src_char_set, ffs.getPassthroughCharacterSet());
+
+            ret = new ParsedData(parsing.get_formatted_output(), parsing.get_trimmed_characters(), parsing.getFormattedFirstEmptyIdx());
             // this.trimmed= parsing.get_trimmed_characters();
             // this.formatted_dest= parsing.get_empty_formatted_output();
          }
@@ -248,37 +281,51 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
 
 
 
-    /**
+    /*
     * Merges the given string into the  "formatted_dest" pattern using the
     * set of provided characters.
     *
     * @param ffs  The FFS record model
     * @param formatted_dest The formatted destination string 
+    + @param first_empty_idx The first empty location in formatted string
     * @param convertedToRadix  The string to be placed in the formatted_dest
-    * @param characterSet  The set of characters to use in the final formatted_dest
+    * @param passthrough_character_set  The set of characters to use in the final formatted_dest
     *
     * @return the correctly formatted output string
     */
-    public String merge_to_formatted_output(FFS_Record ffs, final String formatted_dest, final String convertedToRadix, final String characterSet) {
-      String ret = formatted_dest;
-      int d = ret.length() - 1;
-        int s = convertedToRadix.length() - 1;
+    public String merge_to_formatted_output(FFS_Record ffs, final String formatted_dest, final Integer first_empty_idx, final String convertedToRadix, final String passthrough_character_set) {
+      StringBuilder ret = new StringBuilder(formatted_dest);
+      // int d = ret.length() - 1;
+      // int s = convertedToRadix.length() - 1;
+
+      int d = first_empty_idx;
+      for (int i = 0; i < convertedToRadix.length(); i++) {
+        while (d < ret.length() && -1 != passthrough_character_set.indexOf(ret.charAt(d))) {
+          d++;
+        }
+        if (d >= ret.length()) {
+          System.out.println("Throw Exception");
+          break;
+        }
+        ret.setCharAt(d, convertedToRadix.charAt(i));
+        d++;
+      }
 
         // Merge PT to formatted output
-        while (s >= 0 && d >= 0) {
-            // Find the first available destination character
-            while (d >=0 && ret.charAt(d) != characterSet.charAt(0)) {
-                d--;
-            }
+        // while (s >= 0 && d >= 0) {
+        //     // Find the first available destination character
+        //     while (d >=0 && ret.charAt(d) != characterSet.charAt(0)) {
+        //         d--;
+        //     }
 
-            // Copy the encrypted text into the formatted output string
-            if (d >= 0) {
-                ret = Parsing.replaceChar(ret, convertedToRadix.charAt(s), d);
-            }
-            s = s - 1;
-            d = d - 1;
-        }
-      return ret;
+        //     // Copy the encrypted text into the formatted output string
+        //     if (d >= 0) {
+        //         ret = Parsing.replaceChar(ret, convertedToRadix.charAt(s), d);
+        //     }
+        //     s = s - 1;
+        //     d = d - 1;
+        // }
+      return ret.toString();
     }
 
 
@@ -438,7 +485,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         if (verbose) System.out.println("   KeyNumber= " + key_number);
         String encoded_value = encode_keynum(FFScaching, key_number, convertedToRadix);
 
-        formatted_dest = merge_to_formatted_output(FFScaching, parsedData.formatted_dest, encoded_value, FFScaching.getOutputCharacterSet());
+        formatted_dest = merge_to_formatted_output(FFScaching, parsedData.formatted_dest, parsedData.formatted_first_empty_idx, encoded_value, FFScaching.getPassthroughCharacterSet());
         if (verbose) System.out.println("    encrypted and formatted= " + formatted_dest);
 
         // create the billing record
@@ -539,7 +586,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
                       throw new RuntimeException("Unknown FPE Algorithm: " + FFScaching.getEncryptionAlgorithm());
                 }
 
-                formatted_dest = merge_to_formatted_output(FFScaching, parsed_data.formatted_dest, PlainText, FFScaching.getInputCharacterSet());
+                formatted_dest = merge_to_formatted_output(FFScaching, parsed_data.formatted_dest, parsed_data.formatted_first_empty_idx, PlainText, FFScaching.getPassthroughCharacterSet());
                 if (verbose) System.out.println("    decrypted and formatted= " + formatted_dest);
 
                 // create the billing record
