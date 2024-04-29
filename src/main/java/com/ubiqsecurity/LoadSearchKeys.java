@@ -268,12 +268,8 @@ class LoadSearchKeys  {
       JsonObject dataset,
       FFS ffs)  throws Exception {
         String csu = "loadDataset";
-        // System.out.println("LoadSearchKeys::" + csu);
 
         String dataset_name = dataset.get("name").getAsString();
-
-  
-        // FFS_Record ffsRecord = FFS_Record.parse(dataset); //gson.fromJson(dataset, FFS_Record.class);
 
         if (!ffs.FFSCache.asMap().containsKey(dataset_name)) {
           if (verbose) System.out.println(String.format("%s FFSCache miss %s  \n", csu, dataset_name));
