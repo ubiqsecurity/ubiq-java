@@ -35,7 +35,7 @@ class LoadSearchKeys  {
       UbiqWebServices ubiqWebServices,
       FFS ffs,
       FFXCache ffxCache,
-      String ffs_name) {
+      String ffs_name) throws Exception {
       String csu = "loadKeys";
 
       // Call the web services to get the search keys
@@ -55,7 +55,8 @@ class LoadSearchKeys  {
       // If Dataset (FFS) is not already in the FFS Cache, add it.
 
      Gson gson = new Gson();
-        FFS_Record ffsRecord = gson.fromJson(dataset, FFS_Record.class);
+     FFS_Record ffsRecord = gson.fromJson(dataset, FFS_Record.class);
+     ffsRecord.completeDeserialization();
 
       if (verbose) System.out.println(String.format("%s ffsRecord %s  \n", csu, gson.toJson(ffsRecord)));
 
