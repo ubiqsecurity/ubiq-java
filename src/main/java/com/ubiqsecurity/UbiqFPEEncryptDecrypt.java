@@ -270,13 +270,13 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
           for (FFS.PASSTHROUGH_RULES_TYPE priority : ffs.getPassthrough_rules_priority()) {
             if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.PASSTHROUGH)) {
               int status = parsing.ubiq_platform_efpe_parsing_parse_input();
-              if (verbose) System.out.println("Passthrough Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + parsing.getFormattedFirstEmptyIdx());
+              if (verbose) System.out.println("Passthrough Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output());
             } else if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.PREFIX)) {
               parsing.process_prefix(ffs.getPrefixPassthroughLength());
-              if (verbose) System.out.println("PREFIX Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + ffs.getPrefixPassthroughLength() + "\t" + parsing.getFormattedFirstEmptyIdx());
+              if (verbose) System.out.println("PREFIX Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + ffs.getPrefixPassthroughLength());
             }else if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.SUFFIX)) {
               parsing.process_suffix(ffs.getSuffixPassthroughLength());
-              if (verbose) System.out.println("SUFFIX Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + ffs.getSuffixPassthroughLength() + "\t" + parsing.getFormattedFirstEmptyIdx());
+              if (verbose) System.out.println("SUFFIX Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + ffs.getSuffixPassthroughLength());
             }
           }
 
