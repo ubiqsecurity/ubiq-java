@@ -175,13 +175,7 @@ class LoadSearchKeys  {
       FFS_Record ffsRecord = gson.fromJson(dataset, FFS_Record.class);
       ffsRecord.completeDeserialization();
 
-      // FFS_Record ffsRecord = FFS_Record.parse(dataset); //gson.fromJson(dataset, FFS_Record.class);
-
-      // if (!verbose) throw new IllegalStateException("ffsRecord.input_characers: " + ffsRecord.getInputCharacterSet() );
-
-
       if (verbose) System.out.println(String.format("%s ffsRecord %s  \n", csu, gson.toJson(ffsRecord)));
-
 
       if (verbose) System.out.println(String.format("%s tweak %s  \n", csu, ffsRecord.getTweak()));
       if (!ffs.FFSCache.asMap().containsKey(dataset_name)) {
