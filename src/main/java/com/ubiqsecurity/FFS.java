@@ -69,101 +69,13 @@ class FFS  {
 
         FFS_Record ffsRecord;
         ffsRecord= ubiqWebServices.getFFSDefinition(ffs_name);
-        // ffsRecordResponse.completeDeserialization();
 
-        String jsonStr= "{}";
         Gson gson = new Gson();
 
         if (verbose) System.out.println(gson.toJson(ffsRecord));
 
-        // FFS_Record ffs = gson.fromJson(jsonStr, FFS_Record.class);
-
-        // // If the server fails, we would have already sent a getFFSDefinition exception
-        // if (ffsRecordResponse!= null) {
-        //     if (ffsRecordResponse.EncryptionAlgorithm == null) {
-        //         if (verbose) System.out.println("Missing encryption_algorithm in FFS definition.");
-        //     } else {
-        //         ffs.setAlgorithm(ffsRecordResponse.EncryptionAlgorithm);
-        //     }
-
-        //     if (ffsRecordResponse.FfsName == null) {
-        //         if (verbose) System.out.println("Missing name in FFS definition.");
-        //     } else {
-        //         ffs.setName(ffsRecordResponse.FfsName);
-        //     }
-
-        //     if (ffsRecordResponse.Regex == null) {
-        //         if (verbose) System.out.println("Missing Regex in FFS definition.");
-        //     } else {
-        //         ffs.setRegex(ffsRecordResponse.Regex);
-        //     }
-
-        //     if (ffsRecordResponse.TweakSource == null) {
-        //         if (verbose) System.out.println("Missing tweak_source in FFS definition.");
-        //     } else {
-        //         ffs.setTweak_source(ffsRecordResponse.TweakSource);
-        //     }
-
-        //     if (ffsRecordResponse.MinInputLength == -1) {
-        //         if (verbose) System.out.println("Missing min_input_length in FFS definition.");
-        //     } else {
-        //         ffs.setMin_input_length(ffsRecordResponse.MinInputLength);
-        //     }
-
-        //     if (ffsRecordResponse.MaxInputLength == -1) {
-        //         if (verbose) System.out.println("Missing max_input_length in FFS definition.");
-        //     } else {
-        //         ffs.setMax_input_length(ffsRecordResponse.MaxInputLength);
-        //     }
-
-        //     if (ffsRecordResponse.InputCharacterSet == null) {
-        //         if (verbose) System.out.println("Missing input_character_set in FFS definition.");
-        //     } else {
-        //         ffs.setInput_character_set(ffsRecordResponse.InputCharacterSet);
-        //     }
-
-        //     if (ffsRecordResponse.OutputCharacterSet == null) {
-        //         if (verbose) System.out.println("Missing output_character_set in FFS definition.");
-        //     } else {
-        //         ffs.setOutput_character_set(ffsRecordResponse.OutputCharacterSet);
-        //     }
-
-        //     if (ffsRecordResponse.PassthroughCharacterSet == null) {
-        //         if (verbose) System.out.println("Missing passthrough in FFS definition.");
-        //     } else {
-        //         ffs.setPassthrough_character_set(ffsRecordResponse.PassthroughCharacterSet);
-        //     }
-
-        //     if (ffsRecordResponse.MsbEncodingBits == -1) {
-        //         if (verbose) System.out.println("Missing msb_encoding_bits in FFS definition.");
-        //     } else {
-        //         ffs.setMsb_encoding_bits(ffsRecordResponse.MsbEncodingBits);
-        //     }
-
-        //     if (ffsRecordResponse.MinTweakLength == -1) {
-        //         if (verbose) System.out.println("Missing tweak_min_len in FFS definition.");
-        //     } else {
-        //         ffs.setMin_tweak_length(ffsRecordResponse.MinTweakLength);
-        //     }
-
-        //     if (ffsRecordResponse.MaxTweakLength == -1) {
-        //         if (verbose) System.out.println("Missing tweak_max_len in FFS definition.");
-        //     } else {
-        //         ffs.setMax_tweak_length(ffsRecordResponse.MaxTweakLength);
-        //     }
-
-        //     if (ffsRecordResponse.Tweak == null) {
-        //         if (verbose) System.out.println("Missing Tweak in FFS definition.");
-        //     } else {
-        //         ffs.setTweak(ffsRecordResponse.Tweak);
-        //     }
-        // }
-
         return ffsRecord;
     }
-
-
-
 }
 
 
@@ -381,12 +293,6 @@ class FFS_Record {
 
     @SerializedName("output_character_set")
     String OutputCharacterSet;
-
-    // @SerializedName("encryption_session")
-    // String EncryptionSession;
-
-    // @SerializedName("key_fingerprint")
-    // String KeyFingerprint;
 
     @SerializedName("passthrough")
     String PassthroughCharacterSet;

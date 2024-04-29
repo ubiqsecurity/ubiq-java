@@ -13,12 +13,11 @@ import java.util.regex.Matcher;
 class Parsing implements AutoCloseable  {
     private boolean verbose= false;
     private StringBuilder input_string;
-    private StringBuilder trimmed_characters;  // Preallocated and filled with char[0] from input characterset.  Should be same length as input string
-    private StringBuilder formatted_output; // Preallocated and filled with char[0] from OUTPUT characterset, Should be same length as input string
-    // private Integer first_empty_idx; // Location of first cell in formatted output that is considered available.
+    private StringBuilder trimmed_characters;  // Characters that will be encrypted
+    private StringBuilder formatted_output; // Formatted output including passthrough characters for the encrypted section of text
     private boolean passthrough_processed = false;
-    private StringBuilder prefix_string;
-    private StringBuilder suffix_string;
+    private StringBuilder prefix_string; // May be input characters or may also include passthrough characters depending on passthrough priority
+    private StringBuilder suffix_string; // May be input characters or may also include passthrough characters depending on passthrough priority
 
     private char dest_zeroth_char;
     private String source_character_set;
@@ -50,7 +49,6 @@ class Parsing implements AutoCloseable  {
       this.passthrough_processed = false;
       this.prefix_string = new StringBuilder();
       this.suffix_string = new StringBuilder();
-      // this.first_empty_idx = 0;
 
       // Make sure the input characters are valid
       for (int idx = 0; idx < input_string.length(); idx++) {

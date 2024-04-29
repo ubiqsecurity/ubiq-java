@@ -226,7 +226,6 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
         boolean verbose = false;
         String src_char_set= "";
         char dest_zeroth_char= '0';
-        // char source_zeroth_char= '0';
 
         ParsedData ret = null;
 
@@ -238,34 +237,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             dest_zeroth_char = ffs.getInputCharacterSet().charAt(0);
         }
 
-        // source_zeroth_char = src_char_set.charAt(0);
-        // StringBuilder trimmed = new StringBuilder(source_string.length());
-        // StringBuilder empty = new StringBuilder(source_string);
-
-
-        // for (int idx = 0; idx < source_string.length(); idx++) {
-        //   char c = source_string.charAt(idx);
-        //   if (ffs.getPassthroughCharacterSet().indexOf(c) != -1) {
-        //     // Valid passthrough character, move the character to Formatted
-        //     empty.setCharAt(idx, c);
-        //   } else if (src_char_set.indexOf(c) != -1) {
-        //     // If input characterset, add to trimmed and set the formatted to zeroth char.
-        //     trimmed.append(c);
-        //     empty.setCharAt(idx, dest_zeroth_char);
-        //   } else {
-        //     // System.out.println("Invalid character");
-        //     throw new IllegalArgumentException("Input string has invalid character:  '" + c + "'");
-        //   }
-        // }
-
-
-        // source_zeroth_char = src_char_set.charAt(0);
-        // String trimmed_output = trimmed.toStringParsing.createString(source_string.length(), String.valueOf(source_zeroth_char));
-        // String empty_formatted_output = Parsing.createString(source_string.length(), String.valueOf(dest_zeroth_char));
-
         try (Parsing parsing = new Parsing(source_string, src_char_set, 
-        ffs.getPassthroughCharacterSet(), dest_zeroth_char)) {
-        // trimmed.toString(), empty.toString())) {
+          ffs.getPassthroughCharacterSet(), dest_zeroth_char)) {
 
           for (FFS.PASSTHROUGH_RULES_TYPE priority : ffs.getPassthrough_rules_priority()) {
             if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.PASSTHROUGH)) {
@@ -280,11 +253,7 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
             }
           }
 
-            // int status = parsing.ubiq_platform_efpe_parsing_parse_input(source_string, src_char_set, ffs.getPassthroughCharacterSet());
-
-            ret = new ParsedData(parsing.get_formatted_output(), parsing.get_trimmed_characters(), parsing.get_prefix_string(), parsing.get_suffix_string());
-            // this.trimmed= parsing.get_trimmed_characters();
-            // this.formatted_dest= parsing.get_empty_formatted_output();
+          ret = new ParsedData(parsing.get_formatted_output(), parsing.get_trimmed_characters(), parsing.get_prefix_string(), parsing.get_suffix_string());
          }
          return ret;
     }
@@ -305,9 +274,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     */
     public String merge_to_formatted_output(FFS_Record ffs, ParsedData parsed_data, final String convertedToRadix, final String passthrough_character_set) {
       StringBuilder ret = new StringBuilder(parsed_data.formatted_dest);
-      // int d = ret.length() - 1;
-      // int s = convertedToRadix.length() - 1;
 
+      // Format the encrypted section and then add the prefix and suffix strings, which could be empty or also include formatted output
       int d = 0;
       for (int i = 0; i < convertedToRadix.length(); i++) {
         while (d < ret.length() && -1 != passthrough_character_set.indexOf(ret.charAt(d))) {
@@ -323,25 +291,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       ret.insert(0, parsed_data.prefix);
       ret.append(parsed_data.suffix);
 
-        // Merge PT to formatted output
-        // while (s >= 0 && d >= 0) {
-        //     // Find the first available destination character
-        //     while (d >=0 && ret.charAt(d) != characterSet.charAt(0)) {
-        //         d--;
-        //     }
-
-        //     // Copy the encrypted text into the formatted output string
-        //     if (d >= 0) {
-        //         ret = Parsing.replaceChar(ret, convertedToRadix.charAt(s), d);
-        //     }
-        //     s = s - 1;
-        //     d = d - 1;
-        // }
       return ret.toString();
     }
-
-
-
 
     /**
     * Converts a given string using input/output radix conversion
