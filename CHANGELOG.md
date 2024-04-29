@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.4 - 2024-04-24
+* Support partial encryption rules
+
 ## 2.1.3 - 2023-12-13
 * Updated dependency to include bcprov-jdk18on instead of bcprov-ext-jdk18on
 * Update README.md with updated list of dependencies
