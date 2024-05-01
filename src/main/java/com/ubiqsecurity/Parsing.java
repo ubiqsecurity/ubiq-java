@@ -50,14 +50,14 @@ class Parsing implements AutoCloseable  {
       this.prefix_string = new StringBuilder();
       this.suffix_string = new StringBuilder();
 
-      // Make sure the input characters are valid
-      for (int idx = 0; idx < input_string.length(); idx++) {
-        char c = source_string.charAt(idx);
-        if (passthrough_character_set.indexOf(c) == -1 &&
-          source_character_set.indexOf(c) == -1) {
-            throw new IllegalArgumentException("Input string has invalid character:  '" + c + "'");
-          }
-      }
+      // Validating characters against input character set and passthrough has to wait until
+      // later since prefix / suffix characters can be characters that don't get encrypted and are technically valid
+      // for (int idx = 0; idx < input_string.length(); idx++) {
+      //   char c = source_string.charAt(idx);
+      //   if (passthrough_character_set.indexOf(c) == -1) {
+      //       throw new IllegalArgumentException("Input string has invalid character:  '" + c + "'");
+      //     }
+      // }
     }
 
     /**
@@ -72,6 +72,15 @@ class Parsing implements AutoCloseable  {
         ubiq_platform_efpe_parsing_parse_input();
       }
       if (verbose) System.out.println("after trimmed: " +  this.trimmed_characters.toString());
+
+      // Validate against source character set at this time.
+      for (int idx = 0; idx < trimmed_characters.length(); idx++) {
+        char c = trimmed_characters.charAt(idx);
+        if (source_character_set.indexOf(c) == -1) {
+            throw new IllegalArgumentException("Input string has invalid character:  '" + c + "'");
+          }
+      }
+
       return this.trimmed_characters.toString();
     }
 
@@ -186,7 +195,9 @@ class Parsing implements AutoCloseable  {
           if (passthrough_character_set.indexOf(c) != -1) {
             // Valid passthrough character, copy the character to Formatted output
             formatted_output.append(c);//setCharAt(idx, c);
-          } else if (source_character_set.indexOf(c) != -1) {
+          } else { //if (source_character_set.indexOf(c) != -1) {
+            // Can't validate against source character set at this moment because characters could be part of 
+            // prefix / suffix and removed before encryption
             // If input characterset character, add to trimmed and set the formatted to zeroth char.
             trimmed_characters.append(c);
             formatted_output.append(dest_zeroth_char);
