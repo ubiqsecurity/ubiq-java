@@ -52,12 +52,6 @@ class Parsing implements AutoCloseable  {
 
       // Validating characters against input character set and passthrough has to wait until
       // later since prefix / suffix characters can be characters that don't get encrypted and are technically valid
-      // for (int idx = 0; idx < input_string.length(); idx++) {
-      //   char c = source_string.charAt(idx);
-      //   if (passthrough_character_set.indexOf(c) == -1) {
-      //       throw new IllegalArgumentException("Input string has invalid character:  '" + c + "'");
-      //     }
-      // }
     }
 
     /**

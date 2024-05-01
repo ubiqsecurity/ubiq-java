@@ -100,7 +100,7 @@ class FFS_Record {
     setPrefixPassthroughLength(0);
     setSuffixPassthroughLength(0);
     for (PassthroughRules rule : getPassthrough_Rules()) {
-      System.out.println("Type: " + rule.Type + "     priority: " + rule.Priority);
+      if (verbose) System.out.println("Type: " + rule.Type + "     priority: " + rule.Priority);
       if (rule.Type.equals("passthrough")) {
         passthrough_rules_priority.set(rule.Priority - 1, FFS.PASSTHROUGH_RULES_TYPE.PASSTHROUGH);
         setPassthroughCharacterSet(rule.Value.toString());
