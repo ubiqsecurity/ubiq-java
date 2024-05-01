@@ -88,7 +88,7 @@ class FFS_Record {
   // Some values need to be post-processed to make this object
   // usable
   public void completeDeserialization() throws Exception  {
-
+    final boolean verbose = false;
     // Make sure the passthrough rules is not null
     if (this.Passthrough_Rules == null) {
       setPassthrough_Rules(new ArrayList<PassthroughRules>());
