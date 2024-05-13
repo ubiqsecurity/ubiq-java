@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.4 - 2024-04-24
+## 2.2.0 - 2024-04-24
 * Support partial encryption rules
 
 ## 2.1.3 - 2023-12-13
