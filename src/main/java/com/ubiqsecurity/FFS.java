@@ -11,6 +11,9 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
+
 
 class FFS  {
     private boolean verbose= false;
@@ -93,25 +96,24 @@ class FFS_Record {
     if (this.Passthrough_Rules == null) {
       setPassthrough_Rules(new ArrayList<PassthroughRules>());
     }
-    passthrough_rules_priority = new ArrayList<FFS.PASSTHROUGH_RULES_TYPE>(3);
-    passthrough_rules_priority.add(FFS.PASSTHROUGH_RULES_TYPE.NONE);
-    passthrough_rules_priority.add(FFS.PASSTHROUGH_RULES_TYPE.NONE);
-    passthrough_rules_priority.add(FFS.PASSTHROUGH_RULES_TYPE.NONE);
+    passthrough_rules_priority = new ArrayList<FFS.PASSTHROUGH_RULES_TYPE>();
     setPrefixPassthroughLength(0);
     setSuffixPassthroughLength(0);
+    // Rules are returned sorted by priority
     for (PassthroughRules rule : getPassthrough_Rules()) {
       if (verbose) System.out.println("Type: " + rule.Type + "     priority: " + rule.Priority);
       if (rule.Type.equals("passthrough")) {
-        passthrough_rules_priority.set(rule.Priority - 1, FFS.PASSTHROUGH_RULES_TYPE.PASSTHROUGH);
+        passthrough_rules_priority.add(FFS.PASSTHROUGH_RULES_TYPE.PASSTHROUGH);
         setPassthroughCharacterSet(rule.Value.toString());
       } else if (rule.Type.equals("suffix")) {
-        passthrough_rules_priority.set(rule.Priority - 1, FFS.PASSTHROUGH_RULES_TYPE.SUFFIX);
+        passthrough_rules_priority.add(FFS.PASSTHROUGH_RULES_TYPE.SUFFIX);
         setSuffixPassthroughLength((new Double(rule.Value.toString())).intValue());
       } else if (rule.Type.equals("prefix")) {
-        passthrough_rules_priority.set(rule.Priority - 1, FFS.PASSTHROUGH_RULES_TYPE.PREFIX);
+        passthrough_rules_priority.add(FFS.PASSTHROUGH_RULES_TYPE.PREFIX);
         setPrefixPassthroughLength((new Double(rule.Value.toString())).intValue());
       } else {
-        new RuntimeException("Invalid passthrough rule type '" + rule.Type + "'");
+        // Ignore other rule types
+       // new RuntimeException("Invalid passthrough rule type '" + rule.Type + "'");
       }
     }
     // Just make sure it isn't NULL to avoid NULL checks and object exceptions
@@ -241,6 +243,7 @@ class FFS_Record {
   }
 
   public List<PassthroughRules> getPassthrough_Rules() {
+    Collections.sort(this.Passthrough_Rules, Comparator.comparingInt(PassthroughRules::getPriority));
     return this.Passthrough_Rules;
   }
 
@@ -326,4 +329,8 @@ class PassthroughRules {
   Integer Priority;
   @SerializedName("value")
   Object Value;
+
+  public Integer getPriority() {
+    return Priority;
+  }
 }
