@@ -320,6 +320,77 @@ class FFS_Record {
     transient Integer PrefixPassthroughLength;
     transient Integer SuffixPassthroughLength;
     transient List<FFS.PASSTHROUGH_RULES_TYPE> passthrough_rules_priority;
+
+    private static String getString(JsonObject data, String key) {
+      String ret = null;
+      JsonElement value = data.get(key);
+      if (value != null && value.isJsonPrimitive() && value.getAsString() != null) {
+        ret = value.getAsString();
+      }
+      return ret;
+    }
+
+    private static Long getNumber(JsonObject data, String key) {
+      Long ret = null;
+      JsonElement value = data.get(key);
+      if (value != null && value.isJsonPrimitive() && value.getAsNumber() != null) {
+        ret = value.getAsNumber().longValue();
+      }
+      return ret;
+    }
+
+    public static FFS_Record parse(String data) throws Exception{
+      return FFS_Record.parse(((new JsonParser()).parse(data).getAsJsonObject()));
+    }
+
+    /*
+    *   CAUTION: MUST USE Parse function below -
+    *   APIGEE does not allow gson.fromJson(<data>,FFS_Record.class)
+    *   due to reflection - Will throw
+    *     Exception: access denied ("java.lang.RuntimePermission" "accessDeclaredMembers")java.security.AccessControlException: access denied ("java.lang.RuntimePermission" "accessDeclaredMembers")
+    */
+
+    public static FFS_Record parse(JsonObject data) throws Exception{
+      FFS_Record rec = new FFS_Record();
+      rec.setEncryptionAlgorithm(getString(data,"encryption_algorithm"));
+      rec.setName(getString(data,"name"));
+
+      rec.setRegex(getString(data,"regex"));
+      rec.setTweakSource(getString(data,"tweak_source"));
+      rec.setInputCharacterSet(getString(data,"input_character_set"));
+      rec.setOutputCharacterSet(getString(data,"output_character_set"));
+      rec.setPassthroughCharacterSet(getString(data,"passthrough"));
+      rec.setTweak(getString(data,"tweak"));
+
+      rec.setMinInputLength(getNumber(data,"min_input_length"));
+      rec.setMaxInputLength(getNumber(data,"max_input_length"));
+      rec.setMsbEncodingBits(getNumber(data,"msb_encoding_bits"));
+      rec.setMinTweakLength(getNumber(data,"tweak_min_len"));
+      rec.setMaxTweakLength(getNumber(data,"tweak_max_len"));
+
+      JsonElement passthrough_rules = data.get("passthrough_rules");
+      ArrayList<PassthroughRules> rules = new  ArrayList<PassthroughRules>();
+
+      if (passthrough_rules != null && !passthrough_rules.isJsonNull() && passthrough_rules.isJsonArray()) {
+        JsonArray arr = passthrough_rules.getAsJsonArray();
+        for (JsonElement rule : arr) {
+          PassthroughRules element = new PassthroughRules();
+          JsonObject obj = rule.getAsJsonObject();
+          element.Type = getString(obj,"type");
+          element.Priority = getNumber(obj,"priority").intValue();
+          JsonElement value = obj.get("value");
+          if (value.getAsJsonPrimitive().isString()) {
+            element.Value = getString(obj,"value");
+          } else {
+            element.Value = getNumber(obj,"value").intValue();
+          }
+          rules.add(element);
+        }
+      }
+      rec.setPassthrough_Rules(rules);
+      rec.completeDeserialization();
+      return rec;
+    }
 }
 
 class PassthroughRules {

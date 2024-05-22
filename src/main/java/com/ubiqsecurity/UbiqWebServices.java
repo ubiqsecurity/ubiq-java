@@ -230,10 +230,7 @@ class UbiqWebServices {
             if (verbose) System.out.println("\n    getFFSDefinition: " + jsonResponse + "\n");
 
             // deserialize the JSON response to POJO
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            FFS_Record ffsRecord =
-                    gson.fromJson(jsonResponse, FFS_Record.class);
-            ffsRecord.completeDeserialization();
+            FFS_Record ffsRecord = FFS_Record.parse(jsonResponse);
             if (verbose) System.out.println("\n    getFFSDefinition(ffsRecord): " + jsonResponse + "\n");
 
             return ffsRecord;
