@@ -54,12 +54,9 @@ class LoadSearchKeys  {
 
       // If Dataset (FFS) is not already in the FFS Cache, add it.
 
-     Gson gson = new Gson();
-     FFS_Record ffsRecord = gson.fromJson(dataset, FFS_Record.class);
-     ffsRecord.completeDeserialization();
+     FFS_Record ffsRecord = FFS_Record.parse(dataset);
 
-      if (verbose) System.out.println(String.format("%s ffsRecord %s  \n", csu, gson.toJson(ffsRecord)));
-
+      if (verbose) System.out.println(String.format("%s ffsRecord %s  \n", csu, (new Gson()).toJson(ffsRecord)));
 
       if (verbose) System.out.println(String.format("%s tweak %s  \n", csu, ffsRecord.getTweak()));
       if (!ffs.FFSCache.asMap().containsKey(ffs_name)) {
@@ -170,12 +167,10 @@ class LoadSearchKeys  {
       String dataset_name = dataset.get("name").getAsString();
 
       // If Dataset (FFS) is not already in the FFS Cache, add it.
-      Gson gson = new Gson();
 
-      FFS_Record ffsRecord = gson.fromJson(dataset, FFS_Record.class);
-      ffsRecord.completeDeserialization();
+      FFS_Record ffsRecord = FFS_Record.parse(dataset);
 
-      if (verbose) System.out.println(String.format("%s ffsRecord %s  \n", csu, gson.toJson(ffsRecord)));
+      if (verbose) System.out.println(String.format("%s ffsRecord %s  \n", csu, (new Gson()).toJson(ffsRecord)));
 
       if (verbose) System.out.println(String.format("%s tweak %s  \n", csu, ffsRecord.getTweak()));
       if (!ffs.FFSCache.asMap().containsKey(dataset_name)) {
@@ -273,9 +268,8 @@ class LoadSearchKeys  {
 
         if (!ffs.FFSCache.asMap().containsKey(dataset_name)) {
           if (verbose) System.out.println(String.format("%s FFSCache miss %s  \n", csu, dataset_name));
-          Gson gson = new Gson();
-          FFS_Record ffsRecord = gson.fromJson(dataset, FFS_Record.class);
-          ffsRecord.completeDeserialization();
+
+          FFS_Record ffsRecord = FFS_Record.parse(dataset);
           ffs.FFSCache.put(dataset_name, ffsRecord);
         } else {
           if (verbose) System.out.println(String.format("%s FFSCache HIT %s  \n", csu, dataset_name));
