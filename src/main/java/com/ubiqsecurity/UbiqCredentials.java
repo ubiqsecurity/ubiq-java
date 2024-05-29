@@ -7,6 +7,8 @@ public class UbiqCredentials {
     private final String UBIQ_ACCESS_KEY_ID = "UBIQ_ACCESS_KEY_ID";
     private final String UBIQ_SECRET_SIGNING_KEY = "UBIQ_SECRET_SIGNING_KEY";
     private final String UBIQ_SECRET_CRYPTO_ACCESS_KEY = "UBIQ_SECRET_CRYPTO_ACCESS_KEY";
+    private final String UBIQ_SERVER = "UBIQ_SERVER";
+    private static final String DEFAULT_UBIQ_HOST = "api.ubiqsecurity.com";
 
     // Property values
     private String accessKeyId;
@@ -30,10 +32,16 @@ public class UbiqCredentials {
         }
         this.secretCryptoAccessKey = secretCryptoAccessKey;
 
+        if (host == null) {
+          host = System.getenv(UBIQ_SERVER);
+        }
+        if (host == null) {
+          host = DEFAULT_UBIQ_HOST;
+        }
         this.host = host;
     }
 
-    UbiqCredentials(String pathname, String profile, String host) throws IOException {
+    UbiqCredentials(String pathname, String profile) throws IOException {
         final String DEFAULT_SECTION = "default";
         final String ACCESS_KEY_ID = "access_key_id";
         final String SECRET_SIGNING_KEY = "secret_signing_key";
@@ -66,7 +74,7 @@ public class UbiqCredentials {
             this.host = configParser.fetchValue(DEFAULT_SECTION, SERVER_KEY);
         }
         if (this.host == null) {
-            this.host = host;
+            this.host = DEFAULT_UBIQ_HOST;
         }
     }
 

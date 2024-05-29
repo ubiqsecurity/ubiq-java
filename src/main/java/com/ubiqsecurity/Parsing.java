@@ -12,41 +12,99 @@ import java.util.regex.Matcher;
  */
 class Parsing implements AutoCloseable  {
     private boolean verbose= false;
-    private String trimmed_characters;  // Preallocated and filled with char[0] from input characterset.  Should be same length as input string
-    private String empty_formatted_output; // Preallocated and filled with char[0] from OUTPUT characterset, Should be same length as input string
+    private StringBuilder input_string;
+    private StringBuilder trimmed_characters;  // Characters that will be encrypted
+    private StringBuilder formatted_output; // Formatted output including passthrough characters for the encrypted section of text
+    private boolean passthrough_processed = false;
+    private StringBuilder prefix_string; // May be input characters or may also include passthrough characters depending on passthrough priority
+    private StringBuilder suffix_string; // May be input characters or may also include passthrough characters depending on passthrough priority
 
- 
+    private char dest_zeroth_char;
+    private String source_character_set;
+    private String passthrough_character_set;
+
+
     /**
      * Constructor assumes default redaction Symbol
      *
-     * @param trimmed_characters filled with char[0] from input characterset
-     * @param empty_formatted_output filled with char[0] from OUTPUT characterset
+     * @param source_string the original string to parse
+     * @param source_character_set the character set from the source strings
+     * @param passthrough_character_set the passthrough characters
+     * @param dest_zeroth_char the zeroth character in the destination characterset
      */ 
-    public Parsing(String trimmed_characters, String empty_formatted_output) {
-        this.trimmed_characters = trimmed_characters;
-        this.empty_formatted_output = empty_formatted_output;
+
+
+    public Parsing(
+      String source_string, 
+      String source_character_set, 
+      String passthrough_character_set,
+      char dest_zeroth_char) 
+    {
+      this.source_character_set = source_character_set;
+      this.passthrough_character_set = passthrough_character_set;
+      this.dest_zeroth_char = dest_zeroth_char;
+      this.input_string = new StringBuilder(source_string);
+      this.trimmed_characters = new StringBuilder(source_string.length());
+      this.formatted_output = new StringBuilder(source_string.length());//source_string);
+      this.passthrough_processed = false;
+      this.prefix_string = new StringBuilder();
+      this.suffix_string = new StringBuilder();
+
+      // Validating characters against input character set and passthrough has to wait until
+      // later since prefix / suffix characters can be characters that don't get encrypted and are technically valid
     }
-    
-    
+
     /**
      * Returns the current trimmed_characters value 
      *
      * @return    the trimmed_characters 
      */        
-    public String get_trimmed_characters() {
-        return this.trimmed_characters;
+    public String get_trimmed_characters() 
+    {
+      if (verbose) System.out.println("before trimmed (" + passthrough_processed + "): " +  this.trimmed_characters.toString());
+      if (!passthrough_processed) {
+        ubiq_platform_efpe_parsing_parse_input();
+      }
+      if (verbose) System.out.println("after trimmed: " +  this.trimmed_characters.toString());
+
+      // Validate against source character set at this time.
+      for (int idx = 0; idx < trimmed_characters.length(); idx++) {
+        char c = trimmed_characters.charAt(idx);
+        if (source_character_set.indexOf(c) == -1) {
+            throw new IllegalArgumentException("Input string has invalid character:  '" + c + "'");
+          }
+      }
+
+      return this.trimmed_characters.toString();
     }
 
 
     /**
-     * Returns the current empty_formatted_output value 
+     * Returns the current formatted_output value 
      *
-     * @return    the empty_formatted_output 
+     * @return    the formatted_output 
      */        
-    public String get_empty_formatted_output() {
-        return this.empty_formatted_output;
+    public String get_formatted_output() 
+    {
+      if (verbose) System.out.println("before formatted_output (" + passthrough_processed + "): " +  this.formatted_output.toString());
+      if (!passthrough_processed) {
+        ubiq_platform_efpe_parsing_parse_input();
+      }
+      if (verbose) System.out.println("after formatted_output: " +  this.formatted_output.toString());
+      return this.formatted_output.toString();
     }
 
+    public String get_prefix_string() 
+    {
+      if (verbose) System.out.println("prefix_string: " +  this.prefix_string.toString());
+      return this.prefix_string.toString();
+    }
+
+    public String get_suffix_string() 
+    {
+      if (verbose) System.out.println("suffix_string: " +  this.suffix_string.toString());
+      return this.suffix_string.toString();
+    }
 
     /**
      * Performs any wrapup when object is destroyed 
@@ -66,7 +124,8 @@ class Parsing implements AutoCloseable  {
      *
      * @return    the new String containing the inserted ch 
      */    
-    public static String appendChar(String str, char ch) {
+    public static String appendChar(String str, char ch) 
+    {
         StringBuilder sb = new StringBuilder(str);
         sb.append(ch);
         return sb.toString();
@@ -86,7 +145,8 @@ class Parsing implements AutoCloseable  {
      *
      * @return    the new String containing the inserted ch 
      */    
-    public static String replaceChar(String str, char ch, int position) {
+    public static String replaceChar(String str, char ch, int position) 
+    {
         StringBuilder sb = new StringBuilder(str);
         sb.setCharAt(position, ch);
         return sb.toString();
@@ -101,7 +161,8 @@ class Parsing implements AutoCloseable  {
      *
      * @return    the new String  
      */    
-    public static String createString(int stringLength, String strCharacter){
+    public static String createString(int stringLength, String strCharacter)
+    {
         StringBuilder sbString = new StringBuilder(stringLength);
         
         for(int i=0; i < stringLength; i++){
@@ -115,56 +176,91 @@ class Parsing implements AutoCloseable  {
 
     /**
      * Performs parsing of a string based on an input character set and
-     * applies the passthrough characters
-     *
-     * @param input_string the String to parse
-     * @param input_character_set the set of characters for the input radix
-     * @param passthrough_character_set the characters that should be allowed to passthrough
+     * applies the passthrough characters.  This takes into account prefix or 
+     * suffix lengths that may have already been applied
      *
      * @return    -1 if error encountered  
      */    
-    public int ubiq_platform_efpe_parsing_parse_input(
-        final String input_string, 
-        final String input_character_set, 
-        final String passthrough_character_set 
-      )
-      {
-        int i = 0;
+    public int ubiq_platform_efpe_parsing_parse_input()
+    {
         int err = 0;
-        char ch = '0';
-        int trimmedSize = 0;
-
-        while ((i < input_string.length()) && (err ==0)) {
-            ch = input_string.charAt(i);
-    
-            // If the input string matches a passthrough character, copy to empty formatted output string
-            if ( (passthrough_character_set!= null) && (passthrough_character_set.indexOf(ch) != -1) ) {
-                this.empty_formatted_output = replaceChar(this.empty_formatted_output, ch, i);
-            }
-            // If the string is in the input character set, copy to trimmed characters
-            else if (input_character_set.indexOf(ch) != -1) {
-                this.trimmed_characters = replaceChar(this.trimmed_characters, ch, trimmedSize);
-                trimmedSize++;
-            }
-            else {
-                if (verbose) System.out.println("        input_string:  " + input_string);
-                if (verbose) System.out.println("        input_character_set:  " + input_character_set);
-                if (verbose) System.out.println("        passthrough_character_set:  " + passthrough_character_set);
-                err = -1;
-                
-                throw new IllegalArgumentException("Input string has invalid character:  '" + ch + "'");
-            }
-            i++;
+        for (int idx = 0; idx < input_string.length(); idx++) {
+          char c = input_string.charAt(idx);
+          if (passthrough_character_set.indexOf(c) != -1) {
+            // Valid passthrough character, copy the character to Formatted output
+            formatted_output.append(c);//setCharAt(idx, c);
+          } else { //if (source_character_set.indexOf(c) != -1) {
+            // Can't validate against source character set at this moment because characters could be part of 
+            // prefix / suffix and removed before encryption
+            // If input characterset character, add to trimmed and set the formatted to zeroth char.
+            trimmed_characters.append(c);
+            formatted_output.append(dest_zeroth_char);
+          } 
         }
-
-        // Trimmed may be shorter than input so make sure to resize
-        this.trimmed_characters = this.trimmed_characters.substring(0, trimmedSize);
+        passthrough_processed = true;
 
         return err;
       }
  
-    
-    
+    public int process_prefix(final Integer prefix_length) 
+    {
+        if (!passthrough_processed) {
+          prefix_string = new StringBuilder(input_string.substring(0, prefix_length));
+          input_string.delete(0, prefix_length);
+          if (verbose) System.out.println("prefix_string: " + prefix_string);
+          if (verbose) System.out.println("input_string: " + input_string);
+        } else {
+          // This is after passthrough has been processed
+          // Check formatted character to see if it is a passthrough or not.
+          // If passthrough, move the character and loop
+          // If not passthrough, move the trimmed.  In both cases, re,ove the formatted character.  It will be added later
+
+          int i = 0;
+          while (i < prefix_length) {
+            if (passthrough_character_set.indexOf(formatted_output.charAt(0)) != -1) {
+              prefix_string.append(formatted_output.charAt(0));
+            } else {
+              prefix_string.append(trimmed_characters.charAt(0));
+              trimmed_characters.deleteCharAt(0);
+              i++;
+            }
+            formatted_output.deleteCharAt(0);
+          }
+        }
+        if (verbose) System.out.println("prefix_string: " + prefix_string);
+        if (verbose) System.out.println("trimmed_characters: " + trimmed_characters);
+        if (verbose) System.out.println("formatted_output: " + formatted_output);
+
+      return 0;
+    }
+
+    public int process_suffix(final Integer suffix_length) 
+    {
+      if (!passthrough_processed) {
+        suffix_string = new StringBuilder(input_string.substring(input_string.length() - suffix_length));
+        input_string.delete(input_string.length() - suffix_length, input_string.length());
+      } else {
+        // This is after passthrough has been processed
+        // Check formatted character to see if it is a passthrough or not.
+        // If passthrough, move the character and loop
+        // If not passthrough, move the trimmed.  In both cases, re,ove the formatted character.  It will be added later
+
+        int i = 0;
+        while (i < suffix_length) {
+          char ch = formatted_output.charAt(formatted_output.length() - 1);
+          if (passthrough_character_set.indexOf(ch) != -1) {
+            suffix_string.insert(0, ch);
+          } else {
+            suffix_string.insert(0, trimmed_characters.charAt(trimmed_characters.length() - 1));
+            trimmed_characters.deleteCharAt(trimmed_characters.length() - 1);
+            i++;
+          }
+          formatted_output.deleteCharAt(formatted_output.length() - 1);
+        }
+      }
+      
+      return 0;
+    }
 }    
 
 
