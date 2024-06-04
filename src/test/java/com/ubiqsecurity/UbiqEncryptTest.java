@@ -211,6 +211,8 @@ public class UbiqEncryptTest
       cipherData = encrypt(ubiqEncrypt, pt);
       String usage2 = ubiqEncrypt.getCopyOfUsage();
 
+      System.out.println("usage: " + usage + "\tusage2: " + usage);
+
       assertEquals(usage.length(), usage2.length());
       assertEquals(usage2.contains("\"count\":2"), true);
 
