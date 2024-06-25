@@ -201,7 +201,7 @@ public class UbiqEncryptTest
       // Make sure usage doesn't get flushed too soon so get copy of usage will include
       // results to two calls.
       UbiqConfiguration ubiqConfiguration = UbiqFactory.createConfiguration(90,90,90,false);
-      UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1, ubiqConfiguration);
+      UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 5, ubiqConfiguration);
       UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials, ubiqConfiguration);
 
       // Two encrypts should be same length and have a record that says "count":2
@@ -211,7 +211,7 @@ public class UbiqEncryptTest
       cipherData = encrypt(ubiqEncrypt, pt);
       String usage2 = ubiqEncrypt.getCopyOfUsage();
 
-      System.out.println("usage: " + usage + "\tusage2: " + usage);
+      System.out.println("Encrypt usage: " + usage + "\tusage2: " + usage2);
 
       assertEquals(usage.length(), usage2.length());
       assertEquals(usage2.contains("\"count\":2"), true);
@@ -222,6 +222,8 @@ public class UbiqEncryptTest
 
       ptData = decrypt(ubiqDecrypt, cipherData);
       usage2 = ubiqDecrypt.getCopyOfUsage();
+
+      System.out.println("Decrypt usage: " + usage + "\tusage2: " + usage2);
 
       assertEquals(usage.length(), usage2.length());
       assertEquals(usage2.contains("\"count\":2"), true);
