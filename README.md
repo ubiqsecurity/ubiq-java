@@ -35,7 +35,7 @@ where X.Y.Z represents the appropriate version number.
 #### Others
 The following is a list of the JAR files required to compile, test, or deploy the ubiqsecurity library
 
-- [ubiqsecurity-2.1.2.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity/2.1.2/ubiqsecurity-2.1.2.jar)
+- [ubiqsecurity-2.2.0.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity/2.2.0/ubiqsecurity-2.2.0.jar)
 - [ubiqsecurity-fpe-2.1.1.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity-fpe/2.1.1/ubiqsecurity-fpe-2.1.1.jar)
 - [bcprov-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.76/bcprov-jdk18on-1.76.jar)
 - [bcutil-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.76/bcutil-jdk18on-1.76.jar)
