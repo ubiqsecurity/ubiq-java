@@ -1,8 +1,7 @@
 # Ubiq Security Sample Application using Java Library
 
-Provided are two sample applications. One called "UbiqSample.java" demonstrates how to encrypt and decrypt typical data that you might
-encounter in your own applications. The other sample application called "UbiqSampleFPE.java" demonstrates how to encrypt and decrypt
-using format preserving encryption (FPE).
+Provided are two sample applications. One called "UbiqSample.java" demonstrates how to perform unstructured encryption and decryption on typical data that you might
+encounter in your own applications. The other sample application called "UbiqSampleFPE.java" demonstrates how to perform structured encryption and decryption.
 
 
 ## Documentation for UbiqSample.java
@@ -40,7 +39,7 @@ SECRET_CRYPTO_ACCESS_KEY = ...
 ```
 ## View Program Options
 
-From within the example directory, use the ```java ``` command to execute the sample application
+From within the example directory, use the ```java ``` command to execute the sample application for unstructured encryption
 
 <pre>
 # Linux / Mac
@@ -85,7 +84,7 @@ Usage: Ubiq Security Example [options]
 </pre>
 
 
-#### Demonstrate using the simple (-s / --simple) API interface to encrypt this README.md file and write the encrypted data to readme.enc
+#### Demonstrate using the simple (-s / --simple) API interface to perform unstructured encryption on README.md file and write the encrypted data to readme.enc
 
 <pre>
 # Linux / Mac
@@ -96,7 +95,7 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i README
 java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i README.md -o readme.enc -e -s -c credentials
 </pre>
 
-#### Demonstrate using the simple (-s / --simple) API interface to decrypt the readme.enc file and write the decrypted output to README.out
+#### Demonstrate using the simple (-s / --simple) API interface to perform unstructured decryption on readme.enc file and write the decrypted output to README.out
 
 <pre>
 # Linux / Mac
@@ -107,7 +106,7 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i readme
 java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i readme.enc -o README.out -d -s -c credentials
 </pre>
 
-#### Demonstrate using the piecewise (-p / --piecewise) API interface to encrypt this README.md file and write the encrypted data to readme.enc
+#### Demonstrate using the piecewise (-p / --piecewise) API interface to perform unstructured encryption on README.md file and write the encrypted data to readme.enc
 
 <pre>
 # Linux / Mac
@@ -118,7 +117,7 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -i README
 java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i README.md -o readme.enc -e -p -c credentials
 </pre>
 
-#### Demonstrate using the piecewise (-p / --piecewise) API interface to decrypt the readme.enc file and write the decrypted output to README.out
+#### Demonstrate using the piecewise (-p / --piecewise) API interface to perform unstructured decryption the readme.enc file and write the decrypted output to README.out
 
 <pre>
 # Linux / Mac
@@ -133,8 +132,6 @@ java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i readme
 
 
 ## Documentation for UbiqSampleFPE.java
-Format preserving encryption (FPE/eFPE) is an optionally available feature. Please contact support@ubiqsecurity.com to add this capability to your account.
-
 
 See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
 
@@ -159,7 +156,7 @@ cd example
 
 ## Credentials file
 
-Edit the credentials file with your account credentials created using the Ubiq dashboard. Do make sure that you have the FPE option enabled in the Ubiq dashboard.
+Edit the credentials file with your account credentials created using the Ubiq dashboard.
 
 ```sh
 [default]
@@ -169,7 +166,7 @@ SECRET_CRYPTO_ACCESS_KEY = ...
 ```
 ## View Program Options
 
-From within the example directory, use the ```java ``` command to execute the sample application
+From within the example directory, use the ```java ``` command to execute the structured encryption sample application
 
 <pre>
 # Linux / Mac
@@ -193,7 +190,7 @@ Usage: Ubiq Security Example [options]
       Set the field text value to encrypt and will return the encrypted cipher
       text.
   * --ffsname, -n
-      Set the ffs name, for example SSN.
+      Set the dataset name, for example SSN.
     --help, -h
       Print app parameter summary
     --profile, -P
@@ -207,7 +204,7 @@ Usage: Ubiq Security Example [options]
 
 
 
-#### Demonstrate encrypting a social security number and returning a cipher text
+#### Demonstrate structured encryption of a social security number and returning a cipher text
 
 <pre>
 # Linux / Mac
@@ -218,7 +215,7 @@ java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '1
 java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 
-#### Demonstrate decrypting a social security number and returning the plain text
+#### Demonstrate structured decryption of a social security number and returning the plain text
 
 <pre>
 # Linux / Mac
