@@ -113,9 +113,9 @@ UbiqCredentials credentials = UbiqFactory.createCredentials("<yourAccessKey>", "
 
 Unsuccessful requests raise exceptions. The exception object will contain the error details.
 
-### Encrypt a simple block of data
+### Unstructured encryption of a simple block of data
 
-Pass credentials and plaintext bytes into the encryption function.  The encrypted data
+Pass credentials and plaintext bytes into the unstructured encryption function.  The encrypted data
 bytes will be returned.
 
 ```java
@@ -127,9 +127,9 @@ byte[] plainBytes = ...;
 byte[] encryptedBytes = UbiqEncrypt.encrypt(credentials, plainBytes);
 ```
 
-### Decrypt a simple block of data
+### Unstructured decryption of a simple block of data
 
-Pass credentials and encrypted data into the decryption function.  The plaintext data
+Pass credentials and encrypted data into the unstructured decryption function.  The plaintext data
 bytes will be returned.
 
 ```java
@@ -141,9 +141,9 @@ byte[] encryptedBytes = ...;
 byte[] plainBytes = UbiqDecrypt.decrypt(credentials, encryptedBytes);
 ```
 
-### Encrypt a large data element where data is loaded in chunks
+### Unstructured encryption of a large data element where data is loaded in chunks
 
-- Create an encryption object using the credentials.
+- Create an unstructured encryption object using the credentials.
 - Call the encryption instance ```begin()``` method.
 - Call the encryption instance ```update()``` method repeatedly until all the data is processed.
 - Call the encryption instance ```end()``` method.
@@ -179,9 +179,9 @@ static void piecewiseEncryption(String inFile, String outFile, UbiqCredentials u
 }
 ```
 
-### Decrypt a large data element where data is loaded in chunks
+### Unstructured decryption of a large data element where data is loaded in chunks
 
-- Create a decryption object using the credentials.
+- Create a unstructured decryption object using the credentials.
 - Call the decryption instance ```begin()``` method.
 - Call the decryption instance ```update()``` method repeatedly until all data is processed.
 - Call the decryption instance ```end()``` method
@@ -217,19 +217,17 @@ static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials u
 }
 ```
 
-## Ubiq Format Preserving Encryption
-
-This library incorporates Ubiq Format Preserving Encryption (eFPE).
+## Structured Encryption
 
 ## Requirements
 
--   Please follow the same requirements as described above for the non-eFPE functionality.
--   eFPE requires an additional library called [ubiq-fpe-java] available for download in the Ubiq GitHub/GitLab repository.
+-   Please follow the same requirements as described above for the unstructured encryption.
+-   Structured encryption requires an additional library called [ubiq-fpe-java] available for download in the Ubiq GitHub/GitLab repository.
 
 ## Usage
 
-You will need to obtain account credentials in the same way as described above for conventional encryption/decryption. When
-you do this in your [Ubiq Dashboard][dashboard] [credentials][credentials], you'll need to enable the eFPE option.
+You will need to obtain account credentials in the same way as described above for unstructured encryption/decryption. When
+you do this in your [Ubiq Dashboard][dashboard] [credentials][credentials], you'll need to use a structured dataset.
 The credentials can be set using environment variables, loaded from an explicitly
 specified file, or read from the default location (~/.ubiq/credentials).
 
@@ -245,13 +243,12 @@ import com.ubiqsecurity.UbiqFactory;
 
 ### Reading and setting credentials
 
-The eFPE functions work with the credentials file and/or environmental variables in the same way as described
-earlier in this document. You'll only need to make sure that the API keys you pull from the Ubiq dashboard are enabled for
-eFPE capability.
+The structured encryption functions work with the credentials file and/or environmental variables in the same way as described
+earlier in this document. You'll only need to make sure that the API keys you pull from the Ubiq dashboard are associated with a structured dataset
 
 
 ### Encrypt a social security text field - simple interface
-Pass credentials, the name of a Field Format Specification, FFS, and data into the encryption function.
+Pass credentials, the name of a structured dataset and data into the encryption function.
 The encrypted data will be returned.
 
 ```java
@@ -259,18 +256,18 @@ import ubiqsecurity.UbiqCredentials;
 import ubiqsecurity.UbiqFPEEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
-String FfsName = "SSN";
+String datasetName = "SSN";
 String plainText = "123-45-6789";
 
 UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
 
-String cipher = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, FfsName, plainText, null);
+String cipher = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, datasetName, plainText, null);
 System.out.println("ENCRYPTED cipher= " + cipher + "\n");
 
 ```
 
 ### Decrypt a social security text field - simple interface
-Pass credentials, the name of a Field Format Specification, FFS, and data into the decryption function.
+Pass credentials, the name of a structured dataset and data into the decryption function.
 The plain text data will be returned.
 
 ```java
@@ -278,18 +275,18 @@ import ubiqsecurity.UbiqCredentials;
 import ubiqsecurity.UbiqFPEEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
-String FfsName = "SSN";
+String datasetName = "SSN";
 String cipherText = "7\"c-`P-fGj?";
 
 UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
 
-String plainText = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, FfsName, cipherText, null);
+String plainText = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, datasetName, cipherText, null);
 System.out.println("DECRYPTED plain text= " + plainText + "\n");
 
 ```
 ### Encrypt a social security text field - bulk interface
 Create an Encryption / Decryption object with the credentials and then allow repeatedly call encrypt
-data using a Field Format Specification, FFS, and the data.  The encrypted data will be returned after each call
+data using a structured dataset and the data.  The encrypted data will be returned after each call
 
 
 Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE
@@ -302,20 +299,20 @@ import ubiqsecurity.UbiqCredentials;
 import ubiqsecurity.UbiqFPEEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
-String FfsName = "SSN";
+String datasetName = "SSN";
 String plainText = "123-45-6789";
 
 UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
 // Create single object but use many times
 try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
   // Can call encryptFPE / decryptFPE many times without creating new UbiqFPEEncryptDecrypt object.
-  String cipherText = ubiqEncryptDecrypt.encryptFPE(FfsName, plainText, null);
+  String cipherText = ubiqEncryptDecrypt.encryptFPE(datasetName, plainText, null);
 }
 ```
 
 ### Decrypt a social security text field - bulk interface
 Create an Encryption / Decryption object with the credentials and then repeatedly decrypt
-data using a Field Format Specification, FFS, and the data.  The decrypted data will be returned after each call.
+data using a structured dataset and the data.  The decrypted data will be returned after each call.
 
 
 Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE
@@ -328,14 +325,14 @@ import ubiqsecurity.UbiqCredentials;
 import ubiqsecurity.UbiqFPEEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
-String FfsName = "SSN";
+String datasetName = "SSN";
 String cipherText = "7\"c-`P-fGj?";
 
 UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
 // Create single object but use many times
 try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
   // Can call encryptFPE / decryptFPE many times without creating new UbiqFPEEncryptDecrypt object.
-  String plainText = ubiqEncryptDecrypt.encryptFPE(FfsName, cipherText, null);
+  String plainText = ubiqEncryptDecrypt.encryptFPE(datasetName, cipherText, null);
 }
 ```
 ## Custom Metadata for Usage Reporting
@@ -349,7 +346,7 @@ Examples are shown below.
 try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
    ubiqEncryptDecrypt.addReportingUserDefinedMetadata("{\"some_meaningful_flag\" : true }")
    ....
-   // FPE Encrypt and Decrypt operations
+   // Structured Encrypt and Decrypt operations
 }
 ```
 
@@ -375,7 +372,7 @@ UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredent
 String[] ct_arr = ubiqEncryptDecrypt.encryptForSearch(dataset_name, plainText, tweak);
 ```
 
-Additional information on how to use these FFS models in your own applications is available by contacting
+Additional information on how to use these datasets in your own applications is available by contacting
 Ubiq. You may also view some use-cases implemented in the unit test [UbiqFPEEncryptTest.java] and the sample application [UbiqSampleFPE.java] source code
 
 
