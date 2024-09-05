@@ -72,7 +72,7 @@ Use following command to use [gradlew] to build the JAR file
 The library needs to be configured with your account credentials which is
 available in your [Ubiq Dashboard][dashboard] [credentials][credentials].
 The credentials can be set using environment variables, loaded from an explicitly
-specified file, or read from the default location (~/.ubiq/credentials).
+specified file, or read from the default location (~/.ubiq/credentials).  A configuration can also be supplied to control specific behavior of the library.  The configuration file can be loaded from an explicit file or read from the default location [~/.ubiq/configuration].  See [below](#configuration-file) for a sample configuration file and content description.
 
 
 
@@ -375,7 +375,52 @@ String[] ct_arr = ubiqEncryptDecrypt.encryptForSearch(dataset_name, plainText, t
 Additional information on how to use these datasets in your own applications is available by contacting
 Ubiq. You may also view some use-cases implemented in the unit test [UbiqFPEEncryptTest.java] and the sample application [UbiqSampleFPE.java] source code
 
+### Configuration File
 
+A sample configuration file is shown below.  The configuration is in JSON format.  
+
+#### Event Reporting
+The <b>event_reporting</b> section contains values to control how often the usage is reported.  
+
+- <b>wake_interval</b> indicates the number of seconds to sleep before waking to determine if there has been enough activity to report usage
+- <b>minimum_count</b> indicates the minimum number of usage records that must be queued up before sending the usage
+- <b>flush_interval</b> indicates the sleep interval before all usage will be flushed to server.
+- <b>trap_exceptions</b> indicates whether exceptions encountered while reporting usage will be trapped and ignored or if it will become an error that gets reported to the application
+- <b>timestamp_granularity</b> indicates the how granular the timestamp will be when reporting events.  Valid values are
+  - "NANOS"  
+    // DEFAULT: values are reported down to the nanosecond resolution when possible
+  - "MILLIS"  
+  // values are reported to the millisecond
+  - "SECONDS"  
+  // values are reported to the second
+  - "MINUTES"  
+  // values are reported to minute
+  - "HOURS"  
+  // values are reported to hour
+  - "HALF_DAYS"  
+  // values are reported to half day
+  - "DAYS"  
+  // values are reported to the day
+
+#### Key Caching
+The <b>key_caching</b> section contains values to control how and when keys are cached.
+
+- <b>ttl_seconds</b> indicates how many seconds a cache element should remain before it must be re-retrieved. (default: 1800)
+
+```json
+{
+  "event_reporting": {
+    "wake_interval": 1,
+    "minimum_count": 2,
+    "flush_interval": 2,
+    "trap_exceptions": false,
+    "timestamp_granularity" : "NANOS"
+  },
+  "key_caching" : {
+     "ttl_seconds" : 1800
+  }
+}
+```
 
 [dashboard]:https://dashboard.ubiqsecurity.com/
 [credentials]:https://dev.ubiqsecurity.com/docs/how-to-create-api-keys
