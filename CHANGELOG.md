@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.1 - 2024-09-05
+* Added support for key caching TTL
+
 ## 2.2.0 - 2024-04-24
 * Support partial encryption rules
 

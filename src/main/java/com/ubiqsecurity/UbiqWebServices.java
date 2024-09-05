@@ -457,7 +457,7 @@ class UbiqWebServices {
                 throw new RuntimeException("Unrecognized Encrypted Private Key format");
             }
 
-            JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME);
+            JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider(new BouncyCastleProvider());
 
             // Decrypt the private key using our secret key
             InputDecryptorProvider decryptProvider  = builder.build(secretCryptoAccessKey.toCharArray());
@@ -465,7 +465,7 @@ class UbiqWebServices {
             PKCS8EncryptedPrivateKeyInfo keyInfo = (PKCS8EncryptedPrivateKeyInfo) object;
             PrivateKeyInfo privateKeyInfo = keyInfo.decryptPrivateKeyInfo(decryptProvider);
 
-            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME);
+            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider(new BouncyCastleProvider());
             PrivateKey privateKey = keyConverter.getPrivateKey(privateKeyInfo);
 
 
