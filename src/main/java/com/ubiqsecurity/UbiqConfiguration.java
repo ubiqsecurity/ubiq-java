@@ -17,6 +17,11 @@ public class UbiqConfiguration {
     private final String TRAP_EXCEPTIONS = "trap_exceptions";
     private final String TIMESTAMP_GRANULARITY = "timestamp_granularity";
 
+    private final String KEY_CACHING = "key_caching";
+    private final String TTL_SECONDS = "ttl_seconds";
+    private final String ENCRYPT = "encrypt";
+    private final String UNSTRUCTURED = "unstructured";
+
     /**
      * eventReportingWakeInterval is how many seconds elapse between when the event processor wakes up and sees what is 
      * available to send to the server.
@@ -36,13 +41,20 @@ public class UbiqConfiguration {
     private Integer eventReportingFlushInterval = 10;
     private Boolean eventReportingTrapExceptions = false;
     private ChronoUnit eventReportingTimestampGranularity = ChronoUnit.NANOS;
+    private boolean cacheEncryptKeys = false;
+    private boolean cacheUnstructuredKeys = false;
+    private Integer cacheTtlSeconds = 1800; // 30 minutes
+
 
     UbiqConfiguration(
       Integer eventReportingWakeInterval,
       Integer eventReportingMinimumCount,
       Integer eventReportingFlushInterval,
       Boolean eventReportingTrapExceptions,
-      ChronoUnit eventReportingTimestampGranularity ) {
+      ChronoUnit eventReportingTimestampGranularity,
+      Boolean cacheEncryptKeys,
+      Boolean cacheUnstructuredKeys,
+      Integer cacheTtlSeconds ) {
 
         if (eventReportingWakeInterval != null) {
           this.eventReportingWakeInterval = eventReportingWakeInterval;
@@ -60,6 +72,15 @@ public class UbiqConfiguration {
         }
         if (eventReportingTimestampGranularity != null) {
           this.eventReportingTimestampGranularity = eventReportingTimestampGranularity;
+        }
+        if (cacheEncryptKeys != null) {
+          this.cacheEncryptKeys = cacheEncryptKeys;
+        }
+        if (cacheUnstructuredKeys != null) {
+          this.cacheUnstructuredKeys = cacheUnstructuredKeys;
+        }
+        if (cacheTtlSeconds != null) {
+          this.cacheTtlSeconds = cacheTtlSeconds;
         }
     }
 
@@ -91,9 +112,9 @@ public class UbiqConfiguration {
       return ret;
     }
 
+    // TODO - Going to rewrite this to deserialize to pojo after getting the ttl_seconds change out the door
     UbiqConfiguration(String pathname) throws IOException {
       JsonObject cfgObject;
-      JsonObject eventObject;
       JsonObject tmpObject;
       JsonElement tmpElement;
       JsonParser parser = new JsonParser();
@@ -116,36 +137,57 @@ public class UbiqConfiguration {
         } catch (JsonSyntaxException e) {
           throw new IllegalArgumentException(String.format("file parsing error: %s", pathname));
         }
+
+        if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonObject()) {
+          cfgObject = tmpElement.getAsJsonObject();
+          tmpElement = cfgObject.get(EVENT_REPORTING);
+
           if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonObject()) {
-            cfgObject = tmpElement.getAsJsonObject();
-            tmpElement = cfgObject.get(EVENT_REPORTING);
+            JsonObject eventObject;
+            eventObject = tmpElement.getAsJsonObject();
 
-            if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonObject()) {
-              eventObject = tmpElement.getAsJsonObject();
-
-              tmpElement = eventObject.get(WAKE_INTERVAL);
-              if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
-                eventReportingWakeInterval = tmpElement.getAsInt();
-              }
-              tmpElement = eventObject.get(MINIMUM_COUNT);
-              if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
-                eventReportingMinimumCount = tmpElement.getAsInt();
-              }
-              tmpElement = eventObject.get(FLUSH_INTERVAL);
-              if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
-                eventReportingFlushInterval = tmpElement.getAsInt();
-              }
-              tmpElement = eventObject.get(TRAP_EXCEPTIONS);
-              if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
-                eventReportingTrapExceptions = tmpElement.getAsBoolean();
-              }
-              tmpElement = eventObject.get(TIMESTAMP_GRANULARITY);
-              if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
-                eventReportingTimestampGranularity = findEventReportingGranularity(tmpElement.getAsString());
-              }
+            tmpElement = eventObject.get(WAKE_INTERVAL);
+            if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
+              eventReportingWakeInterval = tmpElement.getAsInt();
             }
-          }
-      }
+            tmpElement = eventObject.get(MINIMUM_COUNT);
+            if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
+              eventReportingMinimumCount = tmpElement.getAsInt();
+            }
+            tmpElement = eventObject.get(FLUSH_INTERVAL);
+            if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
+              eventReportingFlushInterval = tmpElement.getAsInt();
+            }
+            tmpElement = eventObject.get(TRAP_EXCEPTIONS);
+            if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
+              eventReportingTrapExceptions = tmpElement.getAsBoolean();
+            }
+            tmpElement = eventObject.get(TIMESTAMP_GRANULARITY);
+            if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
+              eventReportingTimestampGranularity = findEventReportingGranularity(tmpElement.getAsString());
+            }
+          } // EVENT_REPORTING object
+
+          tmpElement = cfgObject.get(KEY_CACHING);
+          if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonObject()) {
+            JsonObject cachingObject;
+            cachingObject = tmpElement.getAsJsonObject();
+
+            tmpElement = cachingObject.get(TTL_SECONDS);
+            if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
+              cacheTtlSeconds = tmpElement.getAsInt();
+            }
+            tmpElement = cachingObject.get(ENCRYPT);
+            if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
+              cacheEncryptKeys = tmpElement.getAsBoolean();
+            }
+            tmpElement = cachingObject.get(UNSTRUCTURED);
+            if (tmpElement != null && !tmpElement.isJsonNull() && tmpElement.isJsonPrimitive()) {
+              cacheUnstructuredKeys = tmpElement.getAsBoolean();
+            }
+          } // KEY_CACHING object
+        } // Configuration object
+    }
       
     public Integer getEventReportingWakeInterval() {
         return eventReportingWakeInterval;
@@ -166,4 +208,16 @@ public class UbiqConfiguration {
     public ChronoUnit getEventReportingTimestampGranularity() {
       return eventReportingTimestampGranularity;
     }
+
+    public Boolean getKeyCacheEncryptKeys() {
+      return cacheEncryptKeys;
+    }
+
+    public Boolean getKeyCacheUnstructuredKeys() {
+      return cacheUnstructuredKeys;
+    }
+
+    public Integer getKeyCacheTtlSeconds() {
+      return cacheTtlSeconds;
+  }
 }

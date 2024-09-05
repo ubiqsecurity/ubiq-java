@@ -72,8 +72,8 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
       this.ubiqCredentials = ubiqCredentials;
       this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
       this.billing_events = new BillingEvents(this.ubiqConfiguration);
-      this.ffxCache = new FFXCache(this.ubiqWebServices);
-      this.ffs = new FFS(this.ubiqWebServices);
+      this.ffxCache = new FFXCache(this.ubiqWebServices,this.ubiqConfiguration);
+      this.ffs = new FFS(this.ubiqWebServices,this.ubiqConfiguration);
       executor = new BillingEventsProcessor(this.ubiqWebServices, this.billing_events, this.ubiqConfiguration);
       executor.startAsync();
       // executor.startUp();

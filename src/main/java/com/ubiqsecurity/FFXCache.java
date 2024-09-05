@@ -31,13 +31,13 @@ class FFXCache  {
      * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
      *
      */
-    public FFXCache(UbiqWebServices ubiqWebServices) {
+    public FFXCache(UbiqWebServices ubiqWebServices, UbiqConfiguration configuration) {
 
         //create a cache for FFS based on the <encryption_algorithm>-<name>
         FFXCache =
             CacheBuilder.newBuilder()
             .maximumSize(1000)                               // maximum 1000 records can be cached
-            .expireAfterAccess(24 * 60 * 3, TimeUnit.MINUTES)        // cache will expire after 3 days
+            .expireAfterWrite(configuration.getKeyCacheTtlSeconds(), TimeUnit.SECONDS)        // cache will expire after 3 days
             .build(new CacheLoader<FFS_KeyId, FFX_Ctx>() {  // build the cacheloader
                 @Override
                 public FFX_Ctx load(FFS_KeyId keyId) throws Exception {
