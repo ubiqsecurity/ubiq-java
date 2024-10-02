@@ -17,14 +17,14 @@ import java.time.temporal.ChronoUnit;
 
 import java.util.concurrent.TimeUnit;
 
-public class UbiqFPEEncryptTest
+public class UbiqStructuredEncryptTest
 {
 
     static void testCycleEncryption(String dataset_name, String plainText, UbiqCredentials ubiqCredentials) {
 
-        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-            String result = ubiqEncryptDecrypt.encryptFPE(dataset_name, plainText, null);
-            result = ubiqEncryptDecrypt.decryptFPE(dataset_name, result, null);
+        try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+            String result = ubiqEncryptDecrypt.encrypt(dataset_name, plainText, null);
+            result = ubiqEncryptDecrypt.decrypt(dataset_name, result, null);
         }
     }
 
@@ -36,10 +36,7 @@ public class UbiqFPEEncryptTest
       final byte[] tweak = null;
 
       try {
-        // testRt("ALPHANUM_SSN", ";0123456-789ABCDEF|", ";!!!E7`+-ai1ykOp8r|");
-
-      testSimpleRt(dataset_name, plainText, expectedCt, ubiqCredentials, tweak);
-      testBatchRt(dataset_name, plainText, expectedCt, ubiqCredentials, tweak);
+        testBatchRt(dataset_name, plainText, expectedCt, ubiqCredentials, tweak);
       }
      catch (Exception ex) {
       System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
@@ -50,37 +47,16 @@ public class UbiqFPEEncryptTest
   }
 
 
-    static void testSimpleRt(String dataset_name, String plainText, String expectedCt, UbiqCredentials ubiqCredentials,  byte[] tweak) 
-    throws IOException, InvalidCipherTextException{
-        String ct = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, dataset_name, plainText, tweak);
-        String pt = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, dataset_name, ct, tweak);
-        assertEquals(plainText, pt);
-
-        pt = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, dataset_name, expectedCt, tweak);
-        assertEquals(plainText, pt);
-
-        String[] ct_arr = UbiqFPEEncryptDecrypt.encryptForSearch(ubiqCredentials, dataset_name, plainText, tweak);
-
-        Boolean foundCt = false;
-        for (String x : ct_arr) {
-          foundCt = foundCt || (expectedCt.equals(x));
-          pt = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, dataset_name, x, tweak);
-          assertEquals(plainText, pt);
-        }
-        assertEquals(foundCt, true);
-
-  }
-
     static void testBatchRt(String dataset_name, String plainText, String expectedCt, UbiqCredentials ubiqCredentials,  byte[] tweak)
       throws IOException, InvalidCipherTextException{
 
-        UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials);
+        UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials);
 
-          String ct = ubiqEncryptDecrypt.encryptFPE(dataset_name, plainText, null);
-          String pt = ubiqEncryptDecrypt.decryptFPE(dataset_name, ct, null);
+          String ct = ubiqEncryptDecrypt.encrypt(dataset_name, plainText, null);
+          String pt = ubiqEncryptDecrypt.decrypt(dataset_name, ct, null);
           assertEquals(plainText, pt);
 
-          pt = ubiqEncryptDecrypt.decryptFPE(dataset_name, expectedCt, null);
+          pt = ubiqEncryptDecrypt.decrypt(dataset_name, expectedCt, null);
           assertEquals(plainText, pt);
 
           String[] ct_arr = ubiqEncryptDecrypt.encryptForSearch(dataset_name, plainText, tweak);
@@ -88,7 +64,7 @@ public class UbiqFPEEncryptTest
           Boolean foundCt = false;
           for (String x : ct_arr) {
             foundCt = foundCt || (expectedCt.equals(x));
-            pt = ubiqEncryptDecrypt.decryptFPE(dataset_name, x, tweak);
+            pt = ubiqEncryptDecrypt.decrypt(dataset_name, x, tweak);
             assertEquals(plainText, pt);
           }
           assertEquals(foundCt, true);
@@ -96,32 +72,32 @@ public class UbiqFPEEncryptTest
       }
 
     @Test
-    public void encryptFPE_ALPHANUM_SSN() {
+    public void encryptStructured_ALPHANUM_SSN() {
             testRt("ALPHANUM_SSN", ";0123456-789ABCDEF|", ";!!!E7`+-ai1ykOp8r|");
     }
 
     @Test
-    public void encryptFPE_BIRTH_DATE() {
+    public void encryptStructured_BIRTH_DATE() {
       testRt("BIRTH_DATE", ";01\\02-1960|", ";!!\\!!-oKzi|");
     }
 
     @Test
-    public void encryptFPE_SSN() {
+    public void encryptStructured_SSN() {
       testRt("SSN", "-0-1-2-3-4-5-6-7-8-9-", "-0-0-0-0-1-I-L-8-j-D-");
     }
 
     @Test
-    public void encryptFPE_UTF8_STRING_COMPLEX() {
+    public void encryptStructured_UTF8_STRING_COMPLEX() {
       testRt("UTF8_STRING_COMPLEX", "ÑÒÓķĸĹϺϻϼϽϾÔÕϿは世界abcdefghijklmnopqrstuvwxyzこんにちÊʑʒʓËÌÍÎÏðñòóôĵĶʔʕ", "ÑÒÓにΪΪΪΪΪΪ3ÔÕoeϽΫAÛMĸOZphßÚdyÌô0ÝϼPtĸTtSKにVÊϾέÛはʑʒʓÏRϼĶufÝK3MXaʔʕ");
     }
 
     @Test
-    public void encryptFPE_UTF8_STRING_COMPLEX_2() {
+    public void encryptStructured_UTF8_STRING_COMPLEX_2() {
       testRt("UTF8_STRING_COMPLEX", "ķĸĹϺϻϼϽϾϿは世界abcdefghijklmnopqrstuvwxyzこんにちÊËÌÍÎÏðñòóôĵĶ", "にΪΪΪΪΪΪ3oeϽΫAÛMĸOZphßÚdyÌô0ÝϼPtĸTtSKにVÊϾέÛはÏRϼĶufÝK3MXa");
     }
 
     @Test
-    public void encryptFPE_TEST_CACHING() {
+    public void encryptStructured_TEST_CACHING() {
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
 
@@ -131,22 +107,22 @@ public class UbiqFPEEncryptTest
             String pt_alphanum = ";01\\02-1960|";
             String ct_alphanum = "";
 
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-                ct_generic = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", pt_generic, null);
+            try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+                ct_generic = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", pt_generic, null);
             }
 
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-                ct_alphanum = ubiqEncryptDecrypt.encryptFPE("BIRTH_DATE", pt_alphanum, null);
+            try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+                ct_alphanum = ubiqEncryptDecrypt.encrypt("BIRTH_DATE", pt_alphanum, null);
             }
 
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+            try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
 
               ubiqEncryptDecrypt.addReportingUserDefinedMetadata("{ \"att_encryption_wrapper\" : true }");
-              String ct_generic_2 = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", pt_generic, null);
-              String ct_alphanum_2 = ubiqEncryptDecrypt.encryptFPE("BIRTH_DATE", pt_alphanum, null);
+              String ct_generic_2 = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", pt_generic, null);
+              String ct_alphanum_2 = ubiqEncryptDecrypt.encrypt("BIRTH_DATE", pt_alphanum, null);
 
-              String pt_generic_2 = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", ct_generic, null);
-              String pt_alphanum_2 = ubiqEncryptDecrypt.decryptFPE("BIRTH_DATE", ct_alphanum, null);
+              String pt_generic_2 = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", ct_generic, null);
+              String pt_alphanum_2 = ubiqEncryptDecrypt.decrypt("BIRTH_DATE", ct_alphanum, null);
 
 
               assertEquals(ct_generic, ct_generic_2);
@@ -155,35 +131,6 @@ public class UbiqFPEEncryptTest
               assertEquals(pt_generic, pt_generic_2);
               assertEquals(pt_alphanum, pt_alphanum_2);
             }
-
-        } catch (Exception ex) {
-            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
-            fail(ex.toString());
-        }
-    }
-
-
-    @Test
-    public void encryptFPE_Simple() {
-        try {
-            UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
-
-            String pt_generic = ";0123456-789ABCDEF|";
-            String ct_generic = "";
-            String ct_generic_2 = "";
-            String pt_generic_2 = "";
-
-            {
-              try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-                  ct_generic = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", pt_generic, null);
-              }
-            }
-
-            ct_generic_2 = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, "ALPHANUM_SSN", pt_generic, null);
-            pt_generic_2 = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, "ALPHANUM_SSN", ct_generic, null);
-
-            assertEquals(ct_generic, ct_generic_2);
-            assertEquals(pt_generic, pt_generic_2);
 
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
@@ -203,9 +150,9 @@ public class UbiqFPEEncryptTest
             String ct_alphanum = "";
 
             boolean match = false;
-            UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials);
-            ct_generic = ubiqEncryptDecrypt.encryptFPE("SSN", pt_generic, null);
-            ct_alphanum = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", pt_alphanum, null);
+            UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials);
+            ct_generic = ubiqEncryptDecrypt.encrypt("SSN", pt_generic, null);
+            ct_alphanum = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", pt_alphanum, null);
 
             String ct_generic_array[] = ubiqEncryptDecrypt.encryptForSearch("SSN", pt_generic, null);
             String ct_alphanum_array[] = ubiqEncryptDecrypt.encryptForSearch("ALPHANUM_SSN", pt_alphanum, null);
@@ -234,50 +181,7 @@ public class UbiqFPEEncryptTest
     }
 
     @Test
-    public void encryptSearchSimple() {
-        try {
-            UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
-
-            String pt_generic = "123456789";
-            String ct_generic = "";
-            String pt_alphanum = "123456789789ABCDEF";
-            String ct_alphanum = "";
-
-            boolean match = false;
-            {
-              UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials);
-              ct_generic = ubiqEncryptDecrypt.encryptFPE("SSN", pt_generic, null);
-              ct_alphanum = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", pt_alphanum, null);
-            }
-
-            String ct_generic_array[] =  UbiqFPEEncryptDecrypt.encryptForSearch(ubiqCredentials, "SSN", pt_generic, null);
-            String ct_alphanum_array[] =  UbiqFPEEncryptDecrypt.encryptForSearch(ubiqCredentials, "ALPHANUM_SSN", pt_alphanum, null);
-
-            match = false;
-            for (String ct : ct_generic_array) {
-              match = match || (ct.equals(ct_generic));
-            }
-
-            if (!match) {
-              fail("Unable to find matching value for '" + pt_generic + "'");
-            }
-
-            match = false;
-            for (String ct : ct_alphanum_array) {
-              match = match || (ct.equals(ct_alphanum));
-            }
-
-            if (!match) {
-              fail("Unable to find matching value for '" + pt_alphanum + "'");
-            }
-        } catch (Exception ex) {
-            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
-            fail(ex.toString());
-        }
-    }
-
-    @Test
-    public void encryptFPE_MultipleCachedKeys() {
+    public void encryptStructured_MultipleCachedKeys() {
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
 
@@ -287,48 +191,48 @@ public class UbiqFPEEncryptTest
                 (byte)0x31, (byte)0x30,
             };
 
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+            try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
                 String original = "123-45-6789";
                 String pt_generic =  ";01\\02-1960|";
 
-                String cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                String cipher2 = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
+                String cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                String cipher2 = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
                 // clear the key cache and force going back to server
 
                 ubiqEncryptDecrypt.clearKeyCache();
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
                 // clear the key cache and force going back to server
                 ubiqEncryptDecrypt.clearKeyCache();
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
-                String cipher_generic = ubiqEncryptDecrypt.encryptFPE("BIRTH_DATE", pt_generic, tweakFF1);
-                cipher = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
+                String cipher_generic = ubiqEncryptDecrypt.encrypt("BIRTH_DATE", pt_generic, tweakFF1);
+                cipher = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", original, tweakFF1);
 
                 assertEquals(cipher, cipher2);
 
-                String decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                String decrypted2 = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                String decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                String decrypted2 = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
                 // clear the key cache and force going back to server
                 ubiqEncryptDecrypt.clearKeyCache();
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("BIRTH_DATE", cipher_generic, tweakFF1);
-                decrypted = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("BIRTH_DATE", cipher_generic, tweakFF1);
+                decrypted = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", cipher, tweakFF1);
 
                 assertEquals(decrypted, decrypted2);
 
@@ -345,7 +249,7 @@ public class UbiqFPEEncryptTest
 
 /*
     @Test
-    public void encryptFPE_Speed() {
+    public void encryptStructured_Speed() {
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("credentials", "default");
 
@@ -357,18 +261,18 @@ public class UbiqFPEEncryptTest
             String ct_alphanum = "";
 
             
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+            try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
               long start = System.nanoTime();
               int count = 1000000;
               for (int i = 0; i < count; i++) {
-                ct_generic = ubiqEncryptDecrypt.encryptFPE("GENERIC_STRING", pt_generic, null);
+                ct_generic = ubiqEncryptDecrypt.encrypt("GENERIC_STRING", pt_generic, null);
               }
               long finish = System.nanoTime();
               System.out.println(String.format("Encrypt %s %d records in %.4f seconds or %.4f ms/rec", "GENERIC_STRING", count,  ((finish - start) / 1000000000.0), ((finish - start) / 1000000.0)/count));
 
               start = System.nanoTime();
               for (int i = 0; i < count; i++) {
-                tmp = ubiqEncryptDecrypt.decryptFPE("GENERIC_STRING", ct_generic, null);
+                tmp = ubiqEncryptDecrypt.decrypt("GENERIC_STRING", ct_generic, null);
               }
               finish = System.nanoTime();
               System.out.println(String.format("Decrypt %s %d records in %.4f seconds or %.4f ms/rec", "GENERIC_STRING", count,  ((finish - start) / 1000000000.0), ((finish - start) / 1000000.0)/count));
@@ -376,18 +280,18 @@ public class UbiqFPEEncryptTest
 
             }
 
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+            try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
               long start = System.nanoTime();
               int count = 1000000;
               for (int i = 0; i < count; i++) {
-                ct_alphanum = ubiqEncryptDecrypt.encryptFPE("SO_ALPHANUM_PIN", pt_alphanum, null);
+                ct_alphanum = ubiqEncryptDecrypt.encrypt("SO_ALPHANUM_PIN", pt_alphanum, null);
               }
               long finish = System.nanoTime();
               System.out.println(String.format("Encrypt %s %d records in %.4f seconds or %.4f ms/rec", "SO_ALPHANUM_PIN", count,  ((finish - start) / 1000000000.0), ((finish - start) / 1000000.0)/ count));
 
               start = System.nanoTime();
               for (int i = 0; i < count; i++) {
-                tmp = ubiqEncryptDecrypt.decryptFPE("SO_ALPHANUM_PIN", ct_alphanum, null);
+                tmp = ubiqEncryptDecrypt.decrypt("SO_ALPHANUM_PIN", ct_alphanum, null);
               }
               finish = System.nanoTime();
               System.out.println(String.format("Decrypt %s %d records in %.4f seconds or %.4f ms/rec", "SO_ALPHANUM_PIN", count,  ((finish - start) / 1000000000.0), ((finish - start) / 1000000.0)/ count));
@@ -404,20 +308,20 @@ public class UbiqFPEEncryptTest
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_InvalidFFS() {
+    public void encryptStructured_InvalidDataset() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
         } catch (Exception ex) {
         }
 
-        testCycleEncryption("ERROR FFS", "ABCDEFGHI", ubiqCredentials);
+        testCycleEncryption("ERROR Dataset", "ABCDEFGHI", ubiqCredentials);
     }
 
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_InvalidCredentials() {
+    public void encryptStructured_InvalidCredentials() {
         UbiqCredentials ubiqCredentials= null;
         try {
             ubiqCredentials = UbiqFactory.createCredentials("a","b","c", "d");
@@ -430,7 +334,7 @@ public class UbiqFPEEncryptTest
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_PT_CT() {
+    public void encryptStructured_Invalid_PT_CT() {
         UbiqCredentials ubiqCredentials= null;
         try {
             ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -441,7 +345,7 @@ public class UbiqFPEEncryptTest
     }
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_LEN_1() {
+    public void encryptStructured_Invalid_LEN_1() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -452,7 +356,7 @@ public class UbiqFPEEncryptTest
     }
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_LEN_2() {
+    public void encryptStructured_Invalid_LEN_2() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -464,7 +368,7 @@ public class UbiqFPEEncryptTest
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_specific_creds_1() {
+    public void encryptStructured_Invalid_specific_creds_1() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -480,7 +384,7 @@ public class UbiqFPEEncryptTest
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_specific_creds_2() {
+    public void encryptStructured_Invalid_specific_creds_2() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -496,7 +400,7 @@ public class UbiqFPEEncryptTest
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_specific_creds_3() {
+    public void encryptStructured_Invalid_specific_creds_3() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -512,7 +416,7 @@ public class UbiqFPEEncryptTest
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_specific_creds_4() {
+    public void encryptStructured_Invalid_specific_creds_4() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -528,7 +432,7 @@ public class UbiqFPEEncryptTest
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_specific_creds_5() {
+    public void encryptStructured_Invalid_specific_creds_5() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -543,7 +447,7 @@ public class UbiqFPEEncryptTest
     }
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_specific_creds_6() {
+    public void encryptStructured_Invalid_specific_creds_6() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -559,24 +463,24 @@ public class UbiqFPEEncryptTest
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Invalid_keynum() {
+    public void encryptStructured_Invalid_keynum() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
         } catch (Exception ex) {
         }
 
-        try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-                String cipher = ubiqEncryptDecrypt.encryptFPE("SSN", " 0123456789", null);
+        try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+                String cipher = ubiqEncryptDecrypt.encrypt("SSN", " 0123456789", null);
                 StringBuilder newcipher = new StringBuilder(cipher);
                 newcipher.setCharAt(0, '}');
-                String decrypted = ubiqEncryptDecrypt.decryptFPE("SSN", newcipher.toString(), null);
+                String decrypted = ubiqEncryptDecrypt.decrypt("SSN", newcipher.toString(), null);
         }
     }
 
 
     @Test(expected = Exception.class)
-    public void encryptFPE_Error_handling_invalid_ffs() {
+    public void encryptStructured_Error_handling_invalid_dataset() {
         UbiqCredentials ubiqCredentials= null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
@@ -594,7 +498,7 @@ public class UbiqFPEEncryptTest
       } catch (Exception ex) {
       }
 
-      try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+      try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
 
 
       Throwable exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncryptDecrypt.addReportingUserDefinedMetadata(""));
@@ -607,7 +511,7 @@ public class UbiqFPEEncryptTest
 
 /* Test works fine when run by itself but often fails when run with others - timing issue
     @Test
-    public void encryptFPE_getUsageReporting() {
+    public void encryptStructured_getUsageReporting() {
         try {
             UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
             // Use long interval to make sure early records aren't flushed before test finishes
@@ -615,9 +519,9 @@ public class UbiqFPEEncryptTest
 
             String pt_generic = "0123456789ABCDEF";
 
-            try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials, cfg)) {
-                String ct_generic = ubiqEncryptDecrypt.encryptFPE("ALPHANUM_SSN", pt_generic, null);
-                pt_generic = ubiqEncryptDecrypt.decryptFPE("ALPHANUM_SSN", ct_generic, null);
+            try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials, cfg)) {
+                String ct_generic = ubiqEncryptDecrypt.encrypt("ALPHANUM_SSN", pt_generic, null);
+                pt_generic = ubiqEncryptDecrypt.decrypt("ALPHANUM_SSN", ct_generic, null);
                 // Wait for billing events to get caught up
                 TimeUnit.SECONDS.sleep(1);
 
@@ -629,8 +533,8 @@ public class UbiqFPEEncryptTest
                 JsonArray firstArray = (new JsonParser()).parse(usage).getAsJsonObject().getAsJsonArray("usage");
                 assertEquals(usage, 2, firstArray.size());
                 // Make ure to get different usage records
-                ct_generic = ubiqEncryptDecrypt.encryptFPE("BIRTH_DATE", "01-02-3456", null);
-                pt_generic = ubiqEncryptDecrypt.decryptFPE("BIRTH_DATE", ct_generic, null);
+                ct_generic = ubiqEncryptDecrypt.encrypt("BIRTH_DATE", "01-02-3456", null);
+                pt_generic = ubiqEncryptDecrypt.decrypt("BIRTH_DATE", ct_generic, null);
                 // Wait for billing events to get caught up
                 TimeUnit.SECONDS.sleep(1);
 

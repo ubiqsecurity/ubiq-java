@@ -1,7 +1,7 @@
 # Ubiq Security Sample Application using Java Library
 
 Provided are two sample applications. One called "UbiqSample.java" demonstrates how to perform unstructured encryption and decryption on typical data that you might
-encounter in your own applications. The other sample application called "UbiqSampleFPE.java" demonstrates how to perform structured encryption and decryption.
+encounter in your own applications. The other sample application called "UbiqSampleStructured.java" demonstrates how to perform structured encryption and decryption.
 
 
 ## Documentation for UbiqSample.java
@@ -65,9 +65,9 @@ Usage: Ubiq Security Example [options]
       Default: false
     --help, -h
       Print app parameter summary
-  * --in, -i
+    --in, -i
       Set input file name
-  * --out, -o
+    --out, -o
       Set output file name
     --piecewise, -p
       Use the piecewise encryption / decryption interfaces
@@ -131,7 +131,7 @@ java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -i readme
 
 
 
-## Documentation for UbiqSampleFPE.java
+## Documentation for UbiqSampleStructured.java
 
 See the [Java API docs](https://dev.ubiqsecurity.com/docs/api).
 
@@ -170,18 +170,16 @@ From within the example directory, use the ```java ``` command to execute the st
 
 <pre>
 # Linux / Mac
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -h
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleStructured  -h
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE  -h
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleStructured  -h
 </pre>
 
 <pre>
 Usage: Ubiq Security Example [options]
   Options:
-    --bulk, -b
-      Use the bulk encryption / decryption interfaces
     --creds, -c
       Set the file name with the API credentials
     --decrypttext, -d
@@ -189,15 +187,13 @@ Usage: Ubiq Security Example [options]
     --encrypttext, -e
       Set the field text value to encrypt and will return the encrypted cipher
       text.
-  * --ffsname, -n
+    --dataset, -n
       Set the dataset name, for example SSN.
     --help, -h
       Print app parameter summary
     --profile, -P
       Identify the profile within the credentials file
       Default: default
-    --simple, -s
-      Use the simple encryption / decryption interfaces
     --version, -V
       Show program's version number and exit
 </pre>
@@ -208,20 +204,20 @@ Usage: Ubiq Security Example [options]
 
 <pre>
 # Linux / Mac
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleStructured  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleStructured  -e '123-45-6789' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 
 #### Demonstrate structured decryption of a social security number and returning the plain text
 
 <pre>
 # Linux / Mac
-java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
+java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleStructured  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>
 <pre>
 # Windows
-java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
+java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleStructured  -d 'W$+-qF-oMMV' -c credentials -n 'ALPHANUM_SSN' -s
 </pre>

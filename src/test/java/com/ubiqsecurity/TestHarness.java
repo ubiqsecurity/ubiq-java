@@ -10,7 +10,7 @@ import java.io.File;
 import com.beust.jcommander.JCommander;
 import com.ubiqsecurity.UbiqCredentials;
 import com.ubiqsecurity.UbiqFactory;
-import com.ubiqsecurity.UbiqFPEEncryptDecrypt;
+import com.ubiqsecurity.UbiqStructuredEncryptDecrypt;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonArray;
 
@@ -81,7 +81,7 @@ public class TestHarness {
         cmdArgs.max_total_encrypt = getEnv(cmdArgs.max_total_encrypt, UBIQ_MAX_TOTAL_ENCRYPT);
         cmdArgs.max_total_decrypt = getEnv(cmdArgs.max_total_decrypt, UBIQ_MAX_TOTAL_DECRYPT);
 
-        UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials);
+        UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials);
 
         List<String> names = new ArrayList<String>();
         File file = new File(cmdArgs.inputFileName);
@@ -115,14 +115,14 @@ public class TestHarness {
                 dataset_counts.put(data.dataset, (long) 0);
                 timing_encrypt.put(data.dataset, (long) 0);
                 timing_decrypt.put(data.dataset, (long) 0);
-                String ct = ubiqEncryptDecrypt.encryptFPE(data.dataset, data.plaintext, tweak);
-                String pt = ubiqEncryptDecrypt.decryptFPE(data.dataset, data.ciphertext, tweak);
+                String ct = ubiqEncryptDecrypt.encrypt(data.dataset, data.plaintext, tweak);
+                String pt = ubiqEncryptDecrypt.decrypt(data.dataset, data.ciphertext, tweak);
                 }
 
               Instant s = Instant.now();
-              String ct = ubiqEncryptDecrypt.encryptFPE(data.dataset, data.plaintext, tweak);
+              String ct = ubiqEncryptDecrypt.encrypt(data.dataset, data.plaintext, tweak);
               Instant e = Instant.now();
-              String pt = ubiqEncryptDecrypt.decryptFPE(data.dataset, data.ciphertext, tweak);
+              String pt = ubiqEncryptDecrypt.decrypt(data.dataset, data.ciphertext, tweak);
               Instant d = Instant.now();
 
               timing_encrypt.put(data.dataset, timing_encrypt.get(data.dataset) + Duration.between(s, e).toNanos());
