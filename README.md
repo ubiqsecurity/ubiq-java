@@ -35,8 +35,7 @@ where X.Y.Z represents the appropriate version number.
 #### Others
 The following is a list of the JAR files required to compile, test, or deploy the ubiqsecurity library
 
-- [ubiqsecurity-2.2.0.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity/2.2.0/ubiqsecurity-2.2.0.jar)
-- [ubiqsecurity-fpe-2.1.1.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity-fpe/2.1.1/ubiqsecurity-fpe-2.1.1.jar)
+- [ubiqsecurity-2.2.2.jar](https://repo1.maven.org/maven2/com/ubiqsecurity/ubiqsecurity/2.2.2/ubiqsecurity-2.2.2.jar)
 - [bcprov-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.76/bcprov-jdk18on-1.76.jar)
 - [bcutil-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.76/bcutil-jdk18on-1.76.jar)
 - [bcpkix-jdk18on-1.76.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.76/bcpkix-jdk18on-1.76.jar)
@@ -64,7 +63,6 @@ Use following command to use [gradlew] to build the JAR file
 ### Requirements
 
 -   OpenJDK 8 or later
--   This library has dependencies on ubiq-fpe-java library available for download in the Ubiq GitHub/GitLab repository.
 
 
 ## Usage
@@ -76,15 +74,26 @@ specified file, or read from the default location (~/.ubiq/credentials).  A conf
 
 
 
+
+
 ### Referencing the Ubiq Security library
 Make sure your source files import these public types from the ```ubiqsecurity``` library:
 
 ```java
 import com.ubiqsecurity.UbiqCredentials;
+import com.ubiqsecurity.UbiqConfiguration;
 import com.ubiqsecurity.UbiqDecrypt;
 import com.ubiqsecurity.UbiqEncrypt;
 import com.ubiqsecurity.UbiqFactory;
 ```
+
+
+### Read configuration from a specific file
+
+```java
+UbiqConfiguration cfg = UbiqFactory.readConfigurationFromFile(file.getAbsolutePath());
+```
+
 
 ### Read credentials from a specific file and use a specific profile
 ```java
@@ -94,6 +103,11 @@ UbiqCredentials credentials = UbiqFactory.readCredentialsFromFile("some-credenti
 ### Read credentials from ~/.ubiq/credentials and use the default profile
 ```java
 UbiqCredentials credentials = UbiqFactory.readCredentialsFromFile("", "default");
+```
+
+### Read configuration from ~/.ubiq/configuration if it exists or use default values
+```java
+UbiqConfiguration cfg = UbiqFactory.defaultConfiguration()
 ```
 
 ### Use the following environment variables to set the credential values
@@ -179,6 +193,61 @@ static void piecewiseEncryption(String inFile, String outFile, UbiqCredentials u
 }
 ```
 
+### Encrypt several objects using the same data encryption key (fewer calls to the server)
+
+In this example, the same data encryption key is used to encrypt several different plain text objects, object1 .. objectn.  In each case, a different initialization vector, IV, is automatically used but the ubiq platform is not called to obtain a new data encryption key, resulting in better throughput.  For data security reasons, you should limit n to be less than 2^32 (4,294,967,296) for each unique data encryption key.
+
+1. Create an encryption object using the credentials.
+2. Repeat following three steps as many times as appropriate
+*  Call the encryption instance begin method
+*  Call the encryption instance update method repeatedly until a single object's data is processed
+*  Call the encryption instance end method
+3. Call the encryption instance close method
+
+```java
+      UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+
+      ... 
+      UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1);
+
+      List<Byte> cipherBytes = new ArrayList<Byte>();
+      // object1 is a full unencrypted object
+      byte[] tmp = ubiqEncrypt.begin();
+      cipherBytes.addAll(Bytes.asList(tmp))
+      tmp = ubiqEncrypt.update(object1, 0, object1.length);
+      cipherBytes.addAll(Bytes.asList(tmp))
+      tmp = ubiqEncrypt.end();
+      cipherBytes.addAll(Bytes.asList(tmp))
+      // Do something with the encrypted data: cipherBytes
+
+      // In this case, object2 is broken into two pieces, object2_part1 and object2_part2
+      cipherBytes = new ArrayList<Byte>();
+      tmp = ubiqEncrypt.begin();
+      cipherBytes.addAll(Bytes.asList(tmp))
+      tmp = ubiqEncrypt.update(object2_part1, 0, object2_part1.length);
+      cipherBytes.addAll(Bytes.asList(tmp))
+      tmp = ubiqEncrypt.update(object2_part2, 0, object2_part2.length);
+      cipherBytes.addAll(Bytes.asList(tmp))
+      tmp = ubiqEncrypt.end();
+      cipherBytes.addAll(Bytes.asList(tmp))
+      // Do something with the encrypted data: cipherBytes
+
+      ...
+      // In this case, objectb is broken into two pieces, object2_part1 and object2_part2
+      cipherBytes = new ArrayList<Byte>();
+      // objectn is a full unencrypted object
+      tmp = ubiqEncrypt.begin();
+      cipherBytes.addAll(Bytes.asList(tmp))
+      tmp = ubiqEncrypt.update(objectn, 0, objectn.length);
+      cipherBytes.addAll(Bytes.asList(tmp))
+      tmp = ubiqEncrypt.end();
+      cipherBytes.addAll(Bytes.asList(tmp))
+      // Do something with the encrypted data: cipherBytes
+
+      ubiqEncrypt.close()
+}
+```
+
 ### Unstructured decryption of a large data element where data is loaded in chunks
 
 - Create a unstructured decryption object using the credentials.
@@ -217,12 +286,11 @@ static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials u
 }
 ```
 
-## Structured Encryption
+## Ubiq Structured Encryption
 
 ## Requirements
 
 -   Please follow the same requirements as described above for the unstructured encryption.
--   Structured encryption requires an additional library called [ubiq-fpe-java] available for download in the Ubiq GitHub/GitLab repository.
 
 ## Usage
 
@@ -237,7 +305,7 @@ Make sure your source files import these public types from the ```ubiqsecurity``
 
 ```java
 import com.ubiqsecurity.UbiqCredentials;
-import com.ubiqsecurity.UbiqFPEEncryptDecrypt;
+import com.ubiqsecurity.UbiqStructuredEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 ```
 
@@ -247,56 +315,13 @@ The structured encryption functions work with the credentials file and/or enviro
 earlier in this document. You'll only need to make sure that the API keys you pull from the Ubiq dashboard are associated with a structured dataset
 
 
-### Encrypt a social security text field - simple interface
-Pass credentials, the name of a structured dataset and data into the encryption function.
-The encrypted data will be returned.
-
-```java
-import ubiqsecurity.UbiqCredentials;
-import ubiqsecurity.UbiqFPEEncryptDecrypt;
-import com.ubiqsecurity.UbiqFactory;
-
-String datasetName = "SSN";
-String plainText = "123-45-6789";
-
-UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
-
-String cipher = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, datasetName, plainText, null);
-System.out.println("ENCRYPTED cipher= " + cipher + "\n");
-
-```
-
-### Decrypt a social security text field - simple interface
-Pass credentials, the name of a structured dataset and data into the decryption function.
-The plain text data will be returned.
-
-```java
-import ubiqsecurity.UbiqCredentials;
-import ubiqsecurity.UbiqFPEEncryptDecrypt;
-import com.ubiqsecurity.UbiqFactory;
-
-String datasetName = "SSN";
-String cipherText = "7\"c-`P-fGj?";
-
-UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
-
-String plainText = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, datasetName, cipherText, null);
-System.out.println("DECRYPTED plain text= " + plainText + "\n");
-
-```
-### Encrypt a social security text field - bulk interface
+### Encrypt a social security text field
 Create an Encryption / Decryption object with the credentials and then allow repeatedly call encrypt
 data using a structured dataset and the data.  The encrypted data will be returned after each call
 
-
-Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE
-calls, for example when you are bulk processing many such encrypt / decrypt operations in a session.
-
-
-
 ```java
 import ubiqsecurity.UbiqCredentials;
-import ubiqsecurity.UbiqFPEEncryptDecrypt;
+import ubiqsecurity.UbiqStructuredEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
 String datasetName = "SSN";
@@ -304,25 +329,20 @@ String plainText = "123-45-6789";
 
 UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
 // Create single object but use many times
-try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-  // Can call encryptFPE / decryptFPE many times without creating new UbiqFPEEncryptDecrypt object.
-  String cipherText = ubiqEncryptDecrypt.encryptFPE(datasetName, plainText, null);
+try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+  // Can call encrypt / decrypt many times without creating new UbiqStructuredEncryptDecrypt object.
+  String cipherText = ubiqEncryptDecrypt.encrypt(datasetName, plainText, null);
 }
 ```
 
-### Decrypt a social security text field - bulk interface
+### Decrypt a social security text field
 Create an Encryption / Decryption object with the credentials and then repeatedly decrypt
 data using a structured dataset and the data.  The decrypted data will be returned after each call.
 
 
-Note that you would only need to create the "ubiqEncryptDecrypt" object once for any number of encryptFPE and decryptFPE
-calls, for example when you are bulk processing many such encrypt / decrypt operations in a session.
-
-
-
 ```java
 import ubiqsecurity.UbiqCredentials;
-import ubiqsecurity.UbiqFPEEncryptDecrypt;
+import ubiqsecurity.UbiqStructuredEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
 String datasetName = "SSN";
@@ -330,9 +350,9 @@ String cipherText = "7\"c-`P-fGj?";
 
 UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
 // Create single object but use many times
-try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
-  // Can call encryptFPE / decryptFPE many times without creating new UbiqFPEEncryptDecrypt object.
-  String plainText = ubiqEncryptDecrypt.encryptFPE(datasetName, cipherText, null);
+try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+  // Can call encrypt / decrypt many times without creating new UbiqStructuredEncryptDecrypt object.
+  String plainText = ubiqEncryptDecrypt.encrypt(datasetName, cipherText, null);
 }
 ```
 ## Custom Metadata for Usage Reporting
@@ -343,7 +363,7 @@ The <b>addReportingUserDefinedMetadata</b> function accepts a string in JSON for
 Examples are shown below.
 ```
 ...
-try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
+try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
    ubiqEncryptDecrypt.addReportingUserDefinedMetadata("{\"some_meaningful_flag\" : true }")
    ....
    // Structured Encrypt and Decrypt operations
@@ -368,12 +388,12 @@ String plainText = "123-45-6789";
 final byte[] tweak = null;
 
 UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
-UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials);
+UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials);
 String[] ct_arr = ubiqEncryptDecrypt.encryptForSearch(dataset_name, plainText, tweak);
 ```
 
 Additional information on how to use these datasets in your own applications is available by contacting
-Ubiq. You may also view some use-cases implemented in the unit test [UbiqFPEEncryptTest.java] and the sample application [UbiqSampleFPE.java] source code
+Ubiq. You may also view some use-cases implemented in the unit test [UbiqStructuredEncryptTest.java] and the sample application [UbiqSampleStructured.java] source code
 
 ### Configuration File
 
@@ -406,6 +426,9 @@ The <b>event_reporting</b> section contains values to control how often the usag
 The <b>key_caching</b> section contains values to control how and when keys are cached.
 
 - <b>ttl_seconds</b> indicates how many seconds a cache element should remain before it must be re-retrieved. (default: 1800)
+- <b>structured</b> indicates whether keys will be cached when doing structured encryption and decryption. (default: true)
+- <b>unstructured</b> indicates whether keys will be cached when doing unstructured decryption. (default: true)
+- <b>encrypt</b> indicates if keys should be stored encrypted. If keys are encrypted, they will be harder to access via memory, but require them to be decrypted with each use. (default: false)
 
 ```json
 {
@@ -417,14 +440,28 @@ The <b>key_caching</b> section contains values to control how and when keys are 
     "timestamp_granularity" : "NANOS"
   },
   "key_caching" : {
+     "structured" : true,
+     "unstructured" : true,
+     "encrypted" : false,
      "ttl_seconds" : 1800
   }
 }
 ```
+## Ubiq API Error Reference
+
+Occasionally, you may encounter issues when interacting with the Ubiq API. 
+
+| Status Code | Meaning | Solution |
+|---|---|---|
+| 400 | Bad Request | Check name of datasets and credentials are complete. |
+| 401 | Authentication issue | Check you have the correct API keys, and it has access to the datasets you are using.  Check dataset name. |
+| 426 | Upgrade Required | You are using an out of date version of the library, or are trying to use newer features not supported by the library you are using.  Update the library and try again.
+| 429 | Rate Limited | You are performing operations too quickly. Either slow down, or contact support@ubiqsecurity.com to increase your limits. | 
+| 500 | Internal Server Error | Something went wrong. Contact support if this persists.  | 
+| 504 | Internal Error | Possible API key issue.  Check credentials or contact support.  | 
 
 [dashboard]:https://dashboard.ubiqsecurity.com/
 [credentials]:https://dev.ubiqsecurity.com/docs/how-to-create-api-keys
 [gradlew]:https://docs.gradle.org/current/userguide/gradle_wrapper.html
-[UbiqFPEEncryptTest.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/src/test/java/com/ubiqsecurity/UbiqFPEEncryptTest.java
-[ubiq-fpe-java]:https://gitlab.com/ubiqsecurity/ubiq-fpe-java
-[UbiqSampleFPE.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/example/src/main/java/UbiqSampleFPE.java
+[UbiqStructuredEncryptTest.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/src/test/java/com/ubiqsecurity/UbiqStructuredEncryptTest.java
+[UbiqSampleStructured.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/example/src/main/java/UbiqSampleStructured.java
