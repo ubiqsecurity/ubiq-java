@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.2.2 - 2024-09-16
+* Key caching improvement for unstructured decryption
+* Key caching options got structured encryption / decryption
+* Deprecated simple interfaces for structured encryption
+* Incorporated structured encryption submodule directly into this package
+* Updated exception handling and updated README documentation
+* Updated README code samples
+
 ## 2.2.1 - 2024-09-05
 * Added support for key caching TTL
 

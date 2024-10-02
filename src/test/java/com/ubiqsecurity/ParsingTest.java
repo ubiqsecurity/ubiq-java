@@ -6,8 +6,7 @@ import java.math.BigInteger;
 
 
 import java.util.Arrays;
-import ubiqsecurity.fpe.FF1;
-import ubiqsecurity.fpe.FF3_1;
+import com.ubiqsecurity.structured.FF1;
 import com.ubiqsecurity.UbiqFactory;
 
 import java.util.concurrent.ExecutionException;

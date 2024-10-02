@@ -22,10 +22,9 @@ dependencies {
     compile "com.google.guava:guava:18+"
     
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.10'
-    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity', version: '2.2.1'
+    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity', version: '2.2.2'
     implementation group: 'org.bouncycastle', name: 'bcpkix-jdk18on', version: '1.76'
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
-    implementation group: 'com.ubiqsecurity', name: 'ubiqsecurity-fpe', version: '2.1.1'
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.14'
 }
 
@@ -42,17 +41,19 @@ build {
       println('')
       println('To Run the sample application: ')
       if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+         println('For Unstructured:  ')
          println('                               java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample [options]')
          println('                      Example: java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSample -h')
-         println('For FPE:  ')
-         println('                               java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE [options]')
-         println('                      Example: java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleFPE -h')
+         println('For Structured:  ')
+         println('                               java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleStructured [options]')
+         println('                      Example: java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleStructured -h')
       } else {
+         println('For Unstructured:  ')
          println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample [options]')
          println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSample -h')
-         println('For FPE:  ')
-         println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE [options]')
-         println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleFPE -h')
+         println('For Structured:  ')
+         println('                               java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleStructured [options]')
+         println('                      Example: java -cp "./build/libs/ubiq-sample.jar:./build/deps/lib/*"  UbiqSampleStructured -h')
       }
    }
 }

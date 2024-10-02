@@ -7,12 +7,6 @@ class DecryptionKeyResponse {
     @SerializedName("encrypted_private_key")
     String EncryptedPrivateKey;
 
-    @SerializedName("encryption_session")
-    String EncryptionSession;
-
-    @SerializedName("key_fingerprint")
-    String KeyFingerprint;
-
     @SerializedName("wrapped_data_key")
     String WrappedDataKey;
 
@@ -20,11 +14,21 @@ class DecryptionKeyResponse {
     @Expose(serialize = false, deserialize = false)
     byte[] UnwrappedDataKey;
 
-    // not serialized - used only at runtime
-    @Expose(serialize = false, deserialize = false)
-    int KeyUseCount;
+    @Override
+    public int hashCode() {
+      int result = 17;
+      result = 31 * result + ((WrappedDataKey != null) ? WrappedDataKey.hashCode() : 0);
+      return result;
+    }
 
-    // not serialized - used only at runtime
-    @Expose(serialize = false, deserialize = false)
-    byte[] LastCipherHeaderEncryptedDataKeyBytes;
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
+      final DecryptionKeyResponse other = (DecryptionKeyResponse) obj;
+
+      return (this.hashCode() == other.hashCode());
+    }
+
 }

@@ -43,7 +43,7 @@ public abstract class UbiqFactory {
       Boolean eventReportingTrapExceptions) {
         return createConfiguration(eventReportingWakeInterval, eventReportingMinimumCount,
           eventReportingFlushInterval, eventReportingTrapExceptions, ChronoUnit.NANOS, 
-          null, null, null);
+          null, null, null, null);
       }
 
     public static UbiqConfiguration createConfiguration(
@@ -55,7 +55,7 @@ public abstract class UbiqFactory {
         
       return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount, 
           eventReportingFlushInterval, eventReportingTrapExceptions, eventReportingTimestampGranularity,
-          null, null, null);
+          null, null, null, null);
     }
 
     public static UbiqConfiguration createConfiguration(
@@ -67,10 +67,25 @@ public abstract class UbiqFactory {
       Boolean cacheEncryptKeys,
       Boolean cacheUnstructuredKeys,
       Integer cacheTtlSeconds ) {
+        return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount, 
+        eventReportingFlushInterval, eventReportingTrapExceptions, eventReportingTimestampGranularity,
+        cacheEncryptKeys, null, cacheUnstructuredKeys, cacheTtlSeconds);
+      }
+
+    public static UbiqConfiguration createConfiguration(
+      Integer eventReportingWakeInterval,
+      Integer eventReportingMinimumCount,
+      Integer eventReportingFlushInterval,
+      Boolean eventReportingTrapExceptions,
+      ChronoUnit eventReportingTimestampGranularity,
+      Boolean cacheEncryptKeys,
+      Boolean cacheStructuredKeys,
+      Boolean cacheUnstructuredKeys,
+      Integer cacheTtlSeconds ) {
 
       return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount,
           eventReportingFlushInterval, eventReportingTrapExceptions, eventReportingTimestampGranularity,
-          cacheEncryptKeys, cacheUnstructuredKeys, cacheTtlSeconds);
+          cacheEncryptKeys, cacheStructuredKeys, cacheUnstructuredKeys, cacheTtlSeconds);
     }
 
 
