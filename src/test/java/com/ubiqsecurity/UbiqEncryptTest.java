@@ -153,19 +153,13 @@ public class UbiqEncryptTest
       List<Byte> cipherBytes = new ArrayList<Byte>();
 
       byte [] x  = ubiqEncrypt.begin();
-      for (byte y : x) {
-        cipherBytes.add(y);
-      }
+      cipherBytes.addAll(Bytes.asList(x));
 
       x = ubiqEncrypt.update(pt, 0, pt.length);
-      for (byte y : x) {
-        cipherBytes.add(y);
-      }
+      cipherBytes.addAll(Bytes.asList(x));
 
       x = ubiqEncrypt.end();
-      for (byte y : x) {
-        cipherBytes.add(y);
-      }
+      cipherBytes.addAll(Bytes.asList(x));
 
       return Bytes.toArray(cipherBytes);
     }
@@ -174,19 +168,13 @@ public class UbiqEncryptTest
       List<Byte> ptBytes = new ArrayList<Byte>();
 
       byte [] x  = ubiqDecrypt.begin();
-      for (byte y : x) {
-        ptBytes.add(y);
-      }
+      ptBytes.addAll(Bytes.asList(x));
 
       x = ubiqDecrypt.update(ct, 0, ct.length);
-      for (byte y : x) {
-        ptBytes.add(y);
-      }
+      ptBytes.addAll(Bytes.asList(x));
 
       x = ubiqDecrypt.end();
-      for (byte y : x) {
-        ptBytes.add(y);
-      }
+      ptBytes.addAll(Bytes.asList(x));
 
       return Bytes.toArray(ptBytes);
     }

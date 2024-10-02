@@ -3,7 +3,10 @@ package com.ubiqsecurity;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+
 import java.util.Arrays;
+import java.util.Base64;
 
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
@@ -19,6 +22,7 @@ public class UbiqDecrypt implements AutoCloseable {
     private BillingEventsProcessor executor;
     private UbiqCredentials ubiqCredentials;
     private UbiqConfiguration ubiqConfiguration;
+    private UnstructuredKeyCache unstructuredKeyCache;
 
     public UbiqDecrypt(UbiqCredentials ubiqCredentials) {
       this(ubiqCredentials, UbiqFactory.defaultConfiguration());
@@ -28,6 +32,7 @@ public class UbiqDecrypt implements AutoCloseable {
       this.ubiqCredentials = ubiqCredentials;
       this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
       this.ubiqConfiguration = ubiqConfiguration;
+      this.unstructuredKeyCache = new UnstructuredKeyCache(this.ubiqWebServices,this.ubiqConfiguration);
 
       billing_events = new BillingEvents(this.ubiqConfiguration);
       executor = new BillingEventsProcessor(this.ubiqWebServices, this.billing_events, this.ubiqConfiguration);
@@ -104,40 +109,33 @@ public class UbiqDecrypt implements AutoCloseable {
                 // success: prune cipher header bytes from the buffer
                 this.byteQueue.dequeue(this.cipherHeader.calcLength());
 
-                if (this.decryptionKey != null) {
-                    // See if we can reuse the key from a previous decryption, meaning
-                    // the new data was encrypted with the same key as the old data - i.e.
-                    // both cipher headers have the same key.
-                    //
-                    // If not, clear the previous decryption key.
-                    if (!Arrays.equals(this.cipherHeader.encryptedDataKeyBytes,
-                            this.decryptionKey.LastCipherHeaderEncryptedDataKeyBytes)) {
-                        reset();
-                        assert this.decryptionKey == null;
-                    }
-                }
+                try {
+                // JIT: request encryption key from server.  Will return from cache
+                this.decryptionKey = this.unstructuredKeyCache.unstructuredCache.get(Base64.getEncoder().encodeToString(this.cipherHeader.encryptedDataKeyBytes));
 
-                // If needed, use the header info to fetch the decryption key.
-                if (this.decryptionKey == null) {
-                    // JIT: request encryption key from server
-                    this.decryptionKey = this.ubiqWebServices.getDecryptionKey(this.cipherHeader.encryptedDataKeyBytes);
+                // Cache may or may not have unwrapped key.  Will not be set if 
+                // configuration wants cache encrypted.
+                byte[] unwrappedDataKey = this.decryptionKey.UnwrappedDataKey;
+                if (unwrappedDataKey.length == 0) {
+                  unwrappedDataKey = ubiqWebServices.getUnwrappedKey(this.decryptionKey.EncryptedPrivateKey, this.decryptionKey.WrappedDataKey);
                 }
 
                 if (this.decryptionKey != null) {
                     AlgorithmInfo algorithmInfo = new AlgorithmInfo(this.cipherHeader.algorithmId);
 
-                    // save key extracted from header to detect future key changes
-                    this.decryptionKey.LastCipherHeaderEncryptedDataKeyBytes = this.cipherHeader.encryptedDataKeyBytes;
-
                     // create decryptor from header-specified algorithm + server-supplied decryption key
                     this.aesGcmBlockCipher = new AesGcmBlockCipher(false, algorithmInfo,
-                            this.decryptionKey.UnwrappedDataKey, this.cipherHeader.initVectorBytes,
+                            unwrappedDataKey, this.cipherHeader.initVectorBytes,
                             ((this.cipherHeader.flags & CipherHeader.FLAGS_AAD_ENABLED) != 0)
                                 ? this.cipherHeader.serialize()
                                 : null);
 
                     billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), "", "", BillingEvents.BillingAction.DECRYPT, BillingEvents.DatasetType.UNSTRUCTURED, 0,1);
                 }
+              } catch (ExecutionException e) {
+                e.printStackTrace();
+              }
+
             } else {
                 // holding pattern... need more header bytes
                 return plainBytes;

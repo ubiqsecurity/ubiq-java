@@ -6,8 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.*;
-import ubiqsecurity.fpe.FF1;
-import ubiqsecurity.fpe.FF3_1;
+import com.ubiqsecurity.structured.FF1;
 import java.util.Base64;
 import java.security.SecureRandom;
 
@@ -290,12 +289,6 @@ class LoadSearchKeys  {
             ffsRecord.getMaxTweakLength(),
             ffsRecord.getInputCharacterSet().length(), ffsRecord.getInputCharacterSet()),
             key_number);
-        break;
-        case "FF3_1":
-            ctx.setFF3_1(new FF3_1(key, 
-              tweak,
-              ffsRecord.getInputCharacterSet().length(), ffsRecord.getInputCharacterSet()),
-              key_number);
         break;
         default:
             throw new RuntimeException("Unknown FPE Algorithm: " + ffsRecord.getEncryptionAlgorithm());

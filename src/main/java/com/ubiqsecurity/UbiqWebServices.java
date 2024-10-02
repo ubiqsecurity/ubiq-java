@@ -96,6 +96,8 @@ class UbiqWebServices {
     private UbiqCredentials ubiqCredentials;
     private String baseUrl;
 
+    private BouncyCastleProvider bcProvider;
+
     private static String print(byte[] bytes) {
       StringBuilder sb = new StringBuilder();
       sb.append("[ ");
@@ -107,6 +109,7 @@ class UbiqWebServices {
    }
   
     UbiqWebServices(UbiqCredentials ubiqCredentials) {
+        this.bcProvider = new BouncyCastleProvider();
         this.ubiqCredentials = ubiqCredentials;
 
         if (!this.ubiqCredentials.getHost().startsWith("http")) {
@@ -129,6 +132,7 @@ class UbiqWebServices {
 
     byte[] getUnwrappedKey(String EncryptedPrivateKey, String WrappedDataKey) {
         byte[] UnwrappedDataKey = {(byte)0x00};
+        if (verbose) System.out.println("Unwrapping key");
         try {
             // decrypt the provided encryption key
             UnwrappedDataKey = unwrapKey(
@@ -345,11 +349,8 @@ class UbiqWebServices {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             DecryptionKeyResponse decryptionKeyResponse = gson.fromJson(jsonResponse, DecryptionKeyResponse.class);
 
-            // decrypt the server-provided encryption key
-            decryptionKeyResponse.UnwrappedDataKey = unwrapKey(
-                    decryptionKeyResponse.EncryptedPrivateKey,
-                    decryptionKeyResponse.WrappedDataKey,
-                    this.ubiqCredentials.getSecretCryptoAccessKey());
+            // To make sure it isn't null and length will be 0.
+            decryptionKeyResponse.UnwrappedDataKey = new byte[0];
 
             return decryptionKeyResponse;
         } catch (Exception ex) {
@@ -447,7 +448,7 @@ class UbiqWebServices {
         byte[] unwrappedDataKey = null;
 
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
+            Security.addProvider(this.bcProvider);
         } 
 
         try (PEMParser pemParser = new PEMParser(new StringReader(encryptedPrivateKey))) {
@@ -457,7 +458,7 @@ class UbiqWebServices {
                 throw new RuntimeException("Unrecognized Encrypted Private Key format");
             }
 
-            JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider(new BouncyCastleProvider());
+            JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider(this.bcProvider);
 
             // Decrypt the private key using our secret key
             InputDecryptorProvider decryptProvider  = builder.build(secretCryptoAccessKey.toCharArray());
@@ -465,7 +466,7 @@ class UbiqWebServices {
             PKCS8EncryptedPrivateKeyInfo keyInfo = (PKCS8EncryptedPrivateKeyInfo) object;
             PrivateKeyInfo privateKeyInfo = keyInfo.decryptPrivateKeyInfo(decryptProvider);
 
-            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider(new BouncyCastleProvider());
+            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider(this.bcProvider);
             PrivateKey privateKey = keyConverter.getPrivateKey(privateKeyInfo);
 
 
