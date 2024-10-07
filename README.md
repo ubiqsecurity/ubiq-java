@@ -461,7 +461,7 @@ Occasionally, you may encounter issues when interacting with the Ubiq API.
 | 504 | Internal Error | Possible API key issue.  Check credentials or contact support.  | 
 
 [dashboard]:https://dashboard.ubiqsecurity.com/
-[credentials]:https://dev.ubiqsecurity.com/docs/how-to-create-api-keys
+[credentials]:https://dev.ubiqsecurity.com/docs/api-keys
 [gradlew]:https://docs.gradle.org/current/userguide/gradle_wrapper.html
 [UbiqStructuredEncryptTest.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/src/test/java/com/ubiqsecurity/UbiqStructuredEncryptTest.java
 [UbiqSampleStructured.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/example/src/main/java/UbiqSampleStructured.java
