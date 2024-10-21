@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 public class UbiqStructuredEncryptTest
 {
+    private final String UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY = "UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY";
 
     static void testCycleEncryption(String dataset_name, String plainText, UbiqCredentials ubiqCredentials) {
 
@@ -508,6 +509,144 @@ public class UbiqStructuredEncryptTest
       exception = assertThrows(IllegalArgumentException.class, () -> ubiqEncryptDecrypt.addReportingUserDefinedMetadata("{\"long\" : \"" + String.format("%-1025s", "a") + "\"}"));
       }
     }
+
+    @Test
+    public void loadDataset() {
+      UbiqCredentials ubiqCredentials= null;
+      String datasetName = "SomeName";
+      try {
+        ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+      } catch (Exception ex) {
+      }
+
+      try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("name", datasetName);
+        obj.addProperty("salt", "TgTgXcV10ZWaTSo1UgLPvIx29QWLF6A6jpq7MZJt24c=");
+        obj.addProperty("min_input_length",6);
+        obj.addProperty("max_input_length",255);
+        obj.addProperty("tweak_source","constant");
+        obj.addProperty("encryption_algorithm","FF1");
+        obj.addProperty("passthrough","-");
+        obj.addProperty("input_character_set","0123456789");
+        obj.addProperty("output_character_set","0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        obj.addProperty("msb_encoding_bits",0);
+        obj.addProperty("tweak_min_len",6);
+        obj.addProperty("tweak_max_len",32);
+        obj.addProperty("tweak","adBSmNHICAz4miOwJQaqWxdHn1TlPzPu3bs7ZTpBZ50=");
+        obj.addProperty("fpe_definable_type","EfpeDefinition");
+        obj.add("passthrough_rules", new JsonArray());
+
+        System.out.println(obj.toString());
+       String name = ubiqEncryptDecrypt.loadDataset(obj.toString());
+       assertEquals(name, datasetName);
+
+      }catch (Exception ex) {
+        System.out.println("In Exception 1");
+        assertEquals(false, true);
+      }
+    }
+
+    @Test
+    public void loadKeyDef() {
+      String datasetName = "SomeName";
+      UbiqCredentials ubiqCredentials= null;
+      String encrypted_private_key = System.getenv(UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY);
+
+      try {
+        ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+      } catch (Exception ex) {
+      }
+
+      try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+
+        JsonObject obj = new JsonObject();
+        obj.addProperty("name", datasetName);
+        obj.addProperty("salt", "TgTgXcV10ZWaTSo1UgLPvIx29QWLF6A6jpq7MZJt24c=");
+        obj.addProperty("min_input_length",6);
+        obj.addProperty("max_input_length",255);
+        obj.addProperty("tweak_source","constant");
+        obj.addProperty("encryption_algorithm","FF1");
+        obj.addProperty("passthrough","-");
+        obj.addProperty("input_character_set","0123456789");
+        obj.addProperty("output_character_set","0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        obj.addProperty("msb_encoding_bits",0);
+        obj.addProperty("tweak_min_len",6);
+        obj.addProperty("tweak_max_len",32);
+        obj.addProperty("tweak","adBSmNHICAz4miOwJQaqWxdHn1TlPzPu3bs7ZTpBZ50=");
+        obj.addProperty("fpe_definable_type","EfpeDefinition");
+        obj.add("passthrough_rules", new JsonArray());
+
+       String name = ubiqEncryptDecrypt.loadDataset(obj.toString());
+
+        obj = new JsonObject();
+        obj.addProperty("encrypted_private_key",encrypted_private_key);
+        obj.addProperty("key_number","1");
+        obj.addProperty("wrapped_data_key","Ep/LbXUfDj2LwuFB6ytNcacXsHHZvXjbWzBLxFekKZipFKKXUwtR694T4OUzlYBxai8DRU84NBqMk2syRN8yX4g/TRCjAC12lmUFavKEXGhqeBilej2WqaZ/yjN4g/uKohQCD3IQCIM2Fs5vXv4hFR6ZXOtqwoVtndlKYsFjuMNxKQ8PwhMVy2XQxJK70oZZm9Sf+6PPoxBhVLBj2Wr2SIalA8TqS8x/SZn17QqB0pdSVkxrtlH5eRqAKI3MswWzDlt9RYkPcGPmmt+utM3GTXkN1d8rI2+J9pqdceOyyu2mtyg89XezzJCiUV/qGJedmFqwfN5MBPZg+4bSMgnFLXBPcrpKJUzBAWyzw4RdCWkqbDXQA9jNIFT3Rnu05Kp/bitULuZZngOqiogf1yLnFfU8yk/aAcxyAqw6z1LnUUC3cCMr3b9mVlssjxJDMQ1Dk7X5HgWtyaZ/ZDXmk05SRL1kuibhswckyeI/bGTe48TU5Kqle/n+AC4vocZ/Vcc4mkTxu5laGzG88onEVX7OpXgoH98t1wyXYFGzZUVJkUjtr3Uzp4wMLKU20GQNPzSVnppxY9CI6S6UG+POBLJM9Y4bF+STv0RM4Y2blkFJsCJ7aooAdQUF/jaZKag0jv2z6tk6OTMB+goF2MN1QCXfOsvS3M0uvnXKieadsOCRq6U=");
+
+        // LoadKeyDef requires the dataset to be loaded first
+         ubiqEncryptDecrypt.loadKeyDef(datasetName, obj.toString(), true);
+         assertEquals(true, true);
+
+      } catch (Exception ex) {
+        assertEquals(false, true);
+      }
+    }
+
+    @Test
+    public void loadDatasetDef() {
+      String datasetName = "SomeName";
+
+      String encrypted_private_key = System.getenv(UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY);
+
+
+      UbiqCredentials ubiqCredentials= null;
+      try {
+        ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+      } catch (Exception ex) {
+      }
+
+      try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+
+      JsonObject element = new JsonObject();
+      JsonObject obj = new JsonObject();
+
+      element.addProperty("name", datasetName);
+      element.addProperty("salt", "TgTgXcV10ZWaTSo1UgLPvIx29QWLF6A6jpq7MZJt24c=");
+      element.addProperty("min_input_length", 6);
+      element.addProperty("max_input_length", 255);
+      element.addProperty("tweak_source", "constant");
+      element.addProperty("encryption_algorithm", "FF1");
+      element.addProperty("passthrough", "-");
+      element.addProperty("input_character_set", "0123456789");
+      element.addProperty("output_character_set", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+      element.addProperty("msb_encoding_bits", 0);
+      element.addProperty("tweak_min_len", 6);
+      element.addProperty("tweak_max_len", 32);
+      element.addProperty("tweak", "adBSmNHICAz4miOwJQaqWxdHn1TlPzPu3bs7ZTpBZ50=");
+      element.addProperty("fpe_definable_type", "EfpeDefinition");
+      element.add("passthrough_rules", new JsonArray());
+
+      obj.add("ffs", element);
+      obj.addProperty("encrypted_private_key",encrypted_private_key);
+      obj.addProperty("current_key_number", 1);
+      obj.addProperty("retrieved", 1729122658);
+
+      JsonArray keys = new JsonArray();
+      keys.add("bswyRl9OaC8CskDo89pYhrXrlySUOq+mpG7sSVzD/cZV0ohdYhwCfI5Y+or8j91B/WBEUdNTb52vm1aHM6lWgzmLyzMSzJgkXNJZqA/RC0org+04M822AQKRYK36LgLYdtjUAO4lxRDSZ+sd/kHs25NlRjN8OQZtfSI+TcbhQVBlBEpsx/GAFhikX1EkJdbOCxy7Ht+o96sEfO68oq3pVPmxb3Atu5homqcd8IBg6hHW/w7jr8MRyHNeu91CQnl5fmig3ev+p4jLnhgo1aZc/VOghrwlauhn8QUsEykXwYCQ39c26oRown2u4IMi8bCK9DJ2gZIMeK6kRz7UYiVJ84K1elWElf1ctxllfn0cZQ7jI3Lp2eeheev7FHHUG3dolxruxmBp/MDdEAfpywzXni2LuxTDjoz4zZIo797c6vtfmxjf1RiVNLPPYqQUkwIPuw/DjBu3mwQmHIMmky+vzniJhwwqXh7MYva+5J5tLJsTCEsba0bKkqQUezUEJAFRxNovL7xvCY7SJ8lgeFuwsydEt/TjelNoftqahCXI55dh9NhDzhNQT0ekn2GwPz16XrCeNjASep8r0x3IesVt/ZwVhlrQcvFV3K8GswxCO8OBVmlJS+gtL1zJHrWg+IvmMUQ6t8maE1Jj1pCsPZP21lZ6O6pkdqJlHaVSXmuGvxE=");
+      keys.add("c5rfv5SxqSEu7rRAxZdY35cl6RcZWzfl2WhSLlU4siFKPjnO+5sOkLDW8xeYMrwyTMjnLHUVOnVR55jAJ9xLPxKzP6CYLhIN55mxM4ZOpCGg7WNsXjAI6Wz2wOLnr8xhdMyQv3LF6zPM3ZloSydYL32hQW8RRwqLXSLAX0w/rTSG+XVAZogmWN6fiwqFCfnQYX2kxYwF0x90C6bj17w5Lb03xGf6MqnZN9fOuUJMQSDDc/6Fk5hDL3XPm5CUC4h4AfMndhdxhsMUGdP7QVREMHirsiRvHoJkEPuiXAwNJDH6WffG0KurrLygyNOxYKgcHRjrx9gBVx0KEx0Bp55WF0BMYHiYtsBp4CN3JQpBBHN72OgvDsLyzbonx4jjCAKpIC5vLIUR7vO+ZwOkULPXI96Z6Xk0/kYD/yXHi/h/eW7WU/HWCGlpkfjB3j5CUxjOIveVPGOj+j3VvfcJT5Fq0P2S1YTdfuZiYcIRftLEC89QLtb8YmVIs1wlTYws+BJpM3XuiRNmoqJlg76qUci2jKWn44+IRkp5OhHqWevH5Ehl66ujp4RUMl5UxPgGkidTYTO2YFtMm2tXUvc6I2GYHnZkCs1zsCwyEgQysnD7D43bK+17CyVN8aG3K2y2SGrWOjtp1Znnip/rYNHV3hbvHE5itI8MHD0/gKW+t5F20+s=");
+      obj.add("keys", keys);
+
+      String name = ubiqEncryptDecrypt.loadDatasetDef(obj.toString());
+      assertEquals(name, datasetName);
+
+      } catch (Exception ex) {
+        System.out.println("Ex:" + ex.getMessage());
+        assertEquals(false, true);
+      }
+
+    }
+
 
 /* Test works fine when run by itself but often fails when run with others - timing issue
     @Test
