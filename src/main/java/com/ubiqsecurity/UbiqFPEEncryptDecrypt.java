@@ -183,4 +183,17 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     public String getCopyOfUsage() {
     return ubiqEncryptDecrypt.getCopyOfUsage();
     }
+
+    public String loadDatasetDef(final String dataset_def) {
+      return ubiqEncryptDecrypt.loadDatasetDef(dataset_def);
+    }
+
+    public String loadDataset(final String dataset_def) {
+      return ubiqEncryptDecrypt.loadDataset(dataset_def);
+    }
+
+    public void loadKeyDef(final String dataset_name, final String key_def, final Boolean current_key_flag) {
+      ubiqEncryptDecrypt.loadKeyDef(dataset_name, key_def, current_key_flag);
+    }
+
   }
