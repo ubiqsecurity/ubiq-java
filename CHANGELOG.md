@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.3 - 2024-10-16
+* Improved support for Apigee and added unit tests for methods specific to Apigee
+
 ## 2.2.2 - 2024-09-16
 * Key caching improvement for unstructured decryption
 * Key caching options got structured encryption / decryption
