@@ -70,7 +70,7 @@ Use following command to use [gradlew] to build the JAR file
 The library needs to be configured with your account credentials which is
 available in your [Ubiq Dashboard][dashboard] [credentials][credentials].
 The credentials can be set using environment variables, loaded from an explicitly
-specified file, or read from the default location (~/.ubiq/credentials).  A configuration can also be supplied to control specific behavior of the library.  The configuration file can be loaded from an explicit file or read from the default location [~/.ubiq/configuration].  See [below](#configuration-file) for a sample configuration file and content description.
+specified file, or read from the default location (~/.ubiq/credentials).  A configuration can also be supplied to control specific behavior of the library.  The configuration file can be loaded from an explicit file or read from the default location [~/.ubiq/configuration].  See [below](#configuration-file) for a sample configuration file and content description.  The credentials object needs to be initialized using the configuration object and the credentials.init method.  The credentials object only needs to be initialized one time, even if it is used to encrypt / decrypt many different object. 
 
 
 
@@ -108,6 +108,10 @@ UbiqCredentials credentials = UbiqFactory.readCredentialsFromFile("", "default")
 ### Read configuration from ~/.ubiq/configuration if it exists or use default values
 ```java
 UbiqConfiguration cfg = UbiqFactory.defaultConfiguration()
+
+// Use the configuration to finish initalizing the credentials
+credentials.init(configuration);
+
 ```
 
 ### Use the following environment variables to set the credential values
@@ -115,14 +119,28 @@ UBIQ_ACCESS_KEY_ID
 UBIQ_SECRET_SIGNING_KEY
 UBIQ_SECRET_CRYPTO_ACCESS_KEY
 ```java
-UbiqCredentials credentials = UbiqFactory.createCredentials(null, null, null, null);
+UbiqCredentials credentials = UbiqFactory.createCredentials(null, null, null, null, null, null);
 ```
 
 ### Explicitly set the credentials
 ```java
-UbiqCredentials credentials = UbiqFactory.createCredentials("<yourAccessKey>", "<yourSigningKey>", "<yourCryptoKey>", null);
+UbiqCredentials credentials = UbiqFactory.createCredentials("<yourAccessKey>", "<yourSigningKey>", "<yourCryptoKey>", null, null, null);
 ```
 
+### IDP integration
+Ubiq currently supports both Okta and Entra IDP integration.  Instead of using the credentials provided when creating the API Key, the username (email) and password will be used to authenticate with the IDP and provide access to the Ubiq platform.
+
+### Use the following environment variables to set the credential values
+UBIQ_IDP_USERNAME  
+UBIQ_IDP_PASSWORD  
+```java
+UbiqCredentials credentials = UbiqFactory.createCredentials(null, null, null, null, null, null);
+```
+
+### Explicitly set the credentials
+```java
+UbiqCredentials credentials = UbiqFactory.createCredentials(null, null, null, null, "<your_idp_username>", "<your_idp_password>");
+```
 ### Runtime exceptions
 
 Unsuccessful requests raise exceptions. The exception object will contain the error details.
@@ -430,6 +448,13 @@ The <b>key_caching</b> section contains values to control how and when keys are 
 - <b>unstructured</b> indicates whether keys will be cached when doing unstructured decryption. (default: true)
 - <b>encrypt</b> indicates if keys should be stored encrypted. If keys are encrypted, they will be harder to access via memory, but require them to be decrypted with each use. (default: false)
 
+#### IDP specific parameters
+- <b>type</b> indicates the IDP type, either <b>okta</b> or <b>entra</b>
+- <b>customer_id</b> The UUID for this customer.  Will be provided by Ubiq.
+- <b>token_endpoint_url</b> The endpoint needed to authenticate the user credentials, provided by Okta or Entra
+- <b>tenant_id</b> contains the tenant value provided by Okta or Entra
+- <b>client_secret</b> contains the client secret value provided by Okta or Entra
+
 ```json
 {
   "event_reporting": {
@@ -444,6 +469,13 @@ The <b>key_caching</b> section contains values to control how and when keys are 
      "unstructured" : true,
      "encrypted" : false,
      "ttl_seconds" : 1800
+  },
+   "idp": {
+    "type": "okta",
+    "customer_id": "f6f.....08c5",
+    "token_endpoint_url": " https://dev-<domain>.okta.com/oauth2/v1/token",
+    "tenant_id": "0o....d7",
+    "client_secret": "yro.....2Db"
   }
 }
 ```

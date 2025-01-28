@@ -184,10 +184,12 @@ public class UbiqFPEEncryptDecrypt implements AutoCloseable {
     return ubiqEncryptDecrypt.getCopyOfUsage();
     }
 
+    // Data is provided such as APIGEE
     public String loadDatasetDef(final String dataset_def) {
       return ubiqEncryptDecrypt.loadDatasetDef(dataset_def);
     }
 
+    // Data is provided such as APIGEE
     public String loadDataset(final String dataset_def) {
       return ubiqEncryptDecrypt.loadDataset(dataset_def);
     }
