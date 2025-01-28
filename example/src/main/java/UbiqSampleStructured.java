@@ -9,6 +9,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import com.ubiqsecurity.UbiqCredentials;
+import com.ubiqsecurity.UbiqConfiguration;
 import com.ubiqsecurity.UbiqStructuredEncryptDecrypt;
 import com.ubiqsecurity.UbiqFactory;
 
@@ -56,6 +57,21 @@ public class UbiqSampleStructured {
             }
 
             UbiqCredentials ubiqCredentials = null;
+            UbiqConfiguration ubiqConfig = null;
+
+            try {
+              if (options.configuration == null) {
+                // no file specified, so fall back to ENV vars and default host, if any
+                ubiqConfig = UbiqFactory.defaultConfiguration();
+              } else {
+                  // read credentials from caller-specified section of specified config file
+                  ubiqConfig = UbiqFactory.readConfigurationFromFile(options.configuration);
+              }
+            } catch (Exception ex) {
+              System.out.println(String.format("Unable to set configuration\nException: %s", ex.getMessage()));
+              System.exit(1);
+            }
+
             try {
               if (options.credentials == null) {
                   // no file specified, so fall back to ENV vars and default host, if any
@@ -67,6 +83,9 @@ public class UbiqSampleStructured {
             } catch (Exception ex) {
               System.out.println(String.format("Unable to set credentials\nException: %s", ex.getMessage()));
               System.exit(1);
+            }
+            if (ubiqConfig != null) {
+              ubiqCredentials.init(ubiqConfig);
             }
 
             if (ubiqCredentials == null || ubiqCredentials.getAccessKeyId() == null)  {
@@ -157,6 +176,13 @@ class ExampleArgsStructured {
         arity = 1,
         required = false)
     String profile = "default";
+
+    @Parameter(
+      names = { "--config", "-g" },
+      description = "Set the file name for the configuration file",
+      arity = 1,
+      required = false)
+    String configuration = null;
 
     @Parameter(
         names = { "--version", "-V" },
