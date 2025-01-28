@@ -69,7 +69,7 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
       }
       this.ubiqConfiguration = ubiqConfiguration;
       this.ubiqCredentials = ubiqCredentials;
-      this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
+      this.ubiqWebServices = new UbiqWebServices(ubiqCredentials, this.ubiqConfiguration);
       this.billing_events = new BillingEvents(this.ubiqConfiguration);
       this.ffxCache = new FFXCache(this.ubiqWebServices,this.ubiqConfiguration);
       this.ffs = new FFS(this.ubiqWebServices,this.ubiqConfiguration);

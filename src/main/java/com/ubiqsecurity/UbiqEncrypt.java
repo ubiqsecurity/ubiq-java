@@ -28,7 +28,7 @@ public class UbiqEncrypt implements AutoCloseable {
         this.ubiqCredentials = ubiqCredentials;
         this.ubiqConfiguration = ubiqConfiguration;
 
-        this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
+        this.ubiqWebServices = new UbiqWebServices(ubiqCredentials, this.ubiqConfiguration);
 
         billing_events = new BillingEvents(this.ubiqConfiguration);
         executor = new BillingEventsProcessor(this.ubiqWebServices, this.billing_events, this.ubiqConfiguration);

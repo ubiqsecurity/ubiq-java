@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.4 - 2025-01-22
+* Added support for IDP integration using Okta and Entra
+
 ## 2.2.3 - 2024-10-16
 * Improved support for Apigee and added unit tests for methods specific to Apigee
 

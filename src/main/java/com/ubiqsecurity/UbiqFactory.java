@@ -5,9 +5,14 @@ import java.time.temporal.ChronoUnit;
 
 public abstract class UbiqFactory {
 
+  public static UbiqCredentials createCredentials(String accessKeyId, String secretSigningKey,
+    String secretCryptoAccessKey, String host) {
+    return new UbiqCredentials(accessKeyId, secretSigningKey, secretCryptoAccessKey, host, null, null);
+  }
+
     public static UbiqCredentials createCredentials(String accessKeyId, String secretSigningKey,
-            String secretCryptoAccessKey, String host) {
-        return new UbiqCredentials(accessKeyId, secretSigningKey, secretCryptoAccessKey, host);
+            String secretCryptoAccessKey, String host, String idp_username, String idp_password) {
+        return new UbiqCredentials(accessKeyId, secretSigningKey, secretCryptoAccessKey, host, idp_username, idp_password);
     }
 
     public static UbiqCredentials readCredentialsFromFile(String pathname, String profile) throws IOException {
@@ -19,7 +24,7 @@ public abstract class UbiqFactory {
       try {
         creds = readCredentialsFromFile(null,null);
       } catch (IllegalArgumentException| IOException e) {
-        creds = createCredentials(null,null,null,null);
+        creds = createCredentials(null,null,null,null,null,null);
       }
       return creds;
     }

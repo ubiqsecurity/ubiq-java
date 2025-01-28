@@ -47,6 +47,23 @@ public class UbiqConfiguration {
 
   }
 
+  class Idp {
+    @SerializedName("type")
+    String type = null;
+
+    @SerializedName("token_endpoint_url")
+    String token_endpoint_url = null;
+
+    @SerializedName("tenant_id")
+    String tenant_id = null;
+
+    @SerializedName("client_secret")
+    String client_secret = null;
+
+    @SerializedName("customer_id")
+    String customer_id = null;
+  }
+
   class Configuration {
     @SerializedName("debug")
     Boolean debug = false;
@@ -56,6 +73,9 @@ public class UbiqConfiguration {
 
     @SerializedName("key_caching")
     KeyCaching keyCaching;
+
+    @SerializedName("idp")
+    Idp idp;
   }
 
 
@@ -74,6 +94,7 @@ public class UbiqConfiguration {
         config = new Configuration();
         config.keyCaching = new UbiqConfiguration.KeyCaching();
         config.eventReporting = new UbiqConfiguration.EventReporting();
+        config.idp = new UbiqConfiguration.Idp();
 
         if (eventReportingWakeInterval != null) {
           config.eventReporting.wakeInterval = eventReportingWakeInterval;
@@ -149,6 +170,7 @@ public class UbiqConfiguration {
         config = new Configuration();
         config.keyCaching = new UbiqConfiguration.KeyCaching();
         config.eventReporting = new UbiqConfiguration.EventReporting();
+        config.idp = new UbiqConfiguration.Idp();
 
         // Only load if file exists, otherwise use default values
         File temp = new File(pathname);
@@ -202,6 +224,25 @@ public class UbiqConfiguration {
                 config.keyCaching.ttlSeconds = tmpConfig.keyCaching.ttlSeconds;
               }
             }
+
+            if (tmpConfig.idp != null) {
+              if (tmpConfig.idp.type != null) {
+                config.idp.type = tmpConfig.idp.type;
+              }
+              if (tmpConfig.idp.token_endpoint_url != null) {
+                config.idp.token_endpoint_url = tmpConfig.idp.token_endpoint_url;
+              }
+              if (tmpConfig.idp.tenant_id != null) {
+                config.idp.tenant_id = tmpConfig.idp.tenant_id;
+              }
+              if (tmpConfig.idp.client_secret != null) {
+                config.idp.client_secret = tmpConfig.idp.client_secret;
+              }
+              if (tmpConfig.idp.customer_id != null) {
+                config.idp.customer_id = tmpConfig.idp.customer_id;
+              }
+            }
+
           }
 
         } catch (IOException e) {
@@ -245,5 +286,25 @@ public class UbiqConfiguration {
 
     public Integer getKeyCacheTtlSeconds() {
       return config.keyCaching.ttlSeconds;
+    }
+
+    public String getIdpType() {
+      return config.idp.type;
+    }
+
+    public String getIdpCustomerId() {
+      return config.idp.customer_id;
+    }
+
+    public String getIdpTenantId() {
+      return config.idp.tenant_id;
+    }
+
+    public String getIdpTokenEndpointUrl() {
+      return config.idp.token_endpoint_url;
+    }
+
+    public String getIdpClientSecret() {
+      return config.idp.client_secret;
+    }
   }
-}
