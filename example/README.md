@@ -78,6 +78,9 @@ Usage: Ubiq Security Example [options]
     --simple, -s
       Use the simple encryption / decryption interfaces
       Default: false
+    --config, -g
+      Set the file name for loading system configuration parameters
+      Default: ~/.ubiq/configuration
     --version, -v
       Print the app version
       Default: false
@@ -194,6 +197,9 @@ Usage: Ubiq Security Example [options]
     --profile, -P
       Identify the profile within the credentials file
       Default: default
+    --config, -g
+      Set the file name for loading system configuration parameters
+      Default: ~/.ubiq/configuration
     --version, -V
       Show program's version number and exit
 </pre>

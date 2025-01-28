@@ -30,7 +30,7 @@ public class UbiqDecrypt implements AutoCloseable {
 
     public UbiqDecrypt(UbiqCredentials ubiqCredentials, UbiqConfiguration ubiqConfiguration) {
       this.ubiqCredentials = ubiqCredentials;
-      this.ubiqWebServices = new UbiqWebServices(ubiqCredentials);
+      this.ubiqWebServices = new UbiqWebServices(ubiqCredentials, this.ubiqConfiguration);
       this.ubiqConfiguration = ubiqConfiguration;
       this.unstructuredKeyCache = new UnstructuredKeyCache(this.ubiqWebServices,this.ubiqConfiguration);
 

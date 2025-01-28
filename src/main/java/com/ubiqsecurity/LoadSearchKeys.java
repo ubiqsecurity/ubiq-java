@@ -38,6 +38,7 @@ class LoadSearchKeys  {
 
       if (verbose) System.out.println(String.format("%s started  \n", csu));
 
+      // Already swaps out the encrypted_private_key if this is IDP
       JsonObject fpe_search_keys = ubiqWebServices.getFpeDefKeys(ffs_name);
 
       if (verbose) System.out.println(String.format("%s before top_level  \n", csu));
@@ -64,6 +65,10 @@ class LoadSearchKeys  {
 
       if (verbose) System.out.println(String.format("%s before encrypted_private_key  \n", csu));
       String encrypted_private_key = top_level.get("encrypted_private_key").getAsString();
+
+      // if (ubiqCredentials.isIdp()) {
+      //   encrypted_private_key = ubiqCredentials.getEncryptedPrivateKey();
+      // }
       
       if (verbose) System.out.println(String.format("%s encrypted_private_key  %s\n", csu, encrypted_private_key));
 
@@ -138,7 +143,7 @@ class LoadSearchKeys  {
       }
     }
 
-
+    // Used to explicitly load data into the cache from something such as APIGEE
     public static String loadKeys(
       UbiqCredentials ubiqCredentials,
       UbiqWebServices ubiqWebServices,
@@ -309,6 +314,10 @@ class LoadSearchKeys  {
         JsonObject encrypted_data_key = null;
 
         String encrypted_private_key = key_data.get("encrypted_private_key").getAsString();
+
+        if (ubiqCredentials.isIdp()) {
+          encrypted_private_key = ubiqCredentials.getEncryptedPrivateKey();
+        }
 
         Integer key_number = key_data.get("key_number").getAsInt();
         String wrapped_data_key = key_data.get("wrapped_data_key").getAsString();
