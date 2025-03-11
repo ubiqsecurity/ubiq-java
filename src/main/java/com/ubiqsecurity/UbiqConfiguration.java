@@ -48,19 +48,19 @@ public class UbiqConfiguration {
   }
 
   class Idp {
-    @SerializedName("type")
+    @SerializedName("provider")
     String type = null;
 
-    @SerializedName("token_endpoint_url")
+    @SerializedName("idp_token_endpoint_url")
     String token_endpoint_url = null;
 
-    @SerializedName("tenant_id")
+    @SerializedName("idp_tenant_id")
     String tenant_id = null;
 
-    @SerializedName("client_secret")
+    @SerializedName("idp_client_secret")
     String client_secret = null;
 
-    @SerializedName("customer_id")
+    @SerializedName("ubiq_customer_id")
     String customer_id = null;
   }
 

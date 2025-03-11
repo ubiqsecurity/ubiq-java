@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.5 - 2025-02-27
+* Minor change in the configuration file for IDP support
+
 ## 2.2.4 - 2025-01-22
 * Added support for IDP integration using Okta and Entra
 

@@ -449,11 +449,11 @@ The <b>key_caching</b> section contains values to control how and when keys are 
 - <b>encrypt</b> indicates if keys should be stored encrypted. If keys are encrypted, they will be harder to access via memory, but require them to be decrypted with each use. (default: false)
 
 #### IDP specific parameters
-- <b>type</b> indicates the IDP type, either <b>okta</b> or <b>entra</b>
-- <b>customer_id</b> The UUID for this customer.  Will be provided by Ubiq.
-- <b>token_endpoint_url</b> The endpoint needed to authenticate the user credentials, provided by Okta or Entra
-- <b>tenant_id</b> contains the tenant value provided by Okta or Entra
-- <b>client_secret</b> contains the client secret value provided by Okta or Entra
+- <b>provider</b> indicates the IDP provider, either <b>okta</b> or <b>entra</b>
+- <b>ubiq_customer_id</b> The UUID for this customer.  Will be provided by Ubiq.
+- <b>idp_token_endpoint_url</b> The endpoint needed to authenticate the user credentials, provided by Okta or Entra
+- <b>idp_tenant_id</b> contains the tenant value provided by Okta or Entra
+- <b>idp_client_secret</b> contains the client secret value provided by Okta or Entra
 
 ```json
 {
@@ -471,11 +471,11 @@ The <b>key_caching</b> section contains values to control how and when keys are 
      "ttl_seconds" : 1800
   },
    "idp": {
-    "type": "okta",
-    "customer_id": "f6f.....08c5",
-    "token_endpoint_url": " https://dev-<domain>.okta.com/oauth2/v1/token",
-    "tenant_id": "0o....d7",
-    "client_secret": "yro.....2Db"
+    "provider": "okta",
+    "ubiq_customer_id": "f6f.....08c5",
+    "idp_token_endpoint_url": " https://dev-<domain>.okta.com/oauth2/v1/token",
+    "idp_tenant_id": "0o....d7",
+    "idp_client_secret": "yro.....2Db"
   }
 }
 ```

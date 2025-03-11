@@ -42,11 +42,11 @@ public class UbiqIdpTest {
     JsonObject obj = new JsonObject();
     JsonObject idp = new JsonObject();
 
-    idp.addProperty("type", System.getenv(UBIQ_UNITTEST_IDP_TYPE));
-    idp.addProperty("customer_id", System.getenv(UBIQ_UNITTEST_IDP_CUSTOMER_ID));
-    idp.addProperty("token_endpoint_url", System.getenv(UBIQ_UNITTEST_IDP_TOKEN_ENDPOINT_URL));
-    idp.addProperty("tenant_id", System.getenv(UBIQ_UNITTEST_IDP_TENANT_ID));
-    idp.addProperty("client_secret", System.getenv(UBIQ_UNITTEST_IDP_CLIENT_SECRET));
+    idp.addProperty("provider", System.getenv(UBIQ_UNITTEST_IDP_TYPE));
+    idp.addProperty("ubiq_customer_id", System.getenv(UBIQ_UNITTEST_IDP_CUSTOMER_ID));
+    idp.addProperty("idp_token_endpoint_url", System.getenv(UBIQ_UNITTEST_IDP_TOKEN_ENDPOINT_URL));
+    idp.addProperty("idp_tenant_id", System.getenv(UBIQ_UNITTEST_IDP_TENANT_ID));
+    idp.addProperty("idp_client_secret", System.getenv(UBIQ_UNITTEST_IDP_CLIENT_SECRET));
 
     obj.add("idp", idp);
     
