@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.6 - 2025-06-02
+* Fix issue with multi-threading for structured datasets
+
 ## 2.2.5 - 2025-02-27
 * Minor change in the configuration file for IDP support
 
