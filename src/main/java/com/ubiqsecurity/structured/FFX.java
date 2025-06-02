@@ -15,12 +15,14 @@ abstract class FFX
 
     public static final String DEFAULT_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
 
-    protected CBCBlockCipher cipher;
-    protected int radix;
-    protected long txtmin, txtmax;
-    protected long twkmin, twkmax;
-    protected byte[] twk;
-    protected String alpha;
+    // protected CBCBlockCipher cipher;
+    final protected int radix;
+    final protected long txtmin, txtmax;
+    final protected long twkmin, twkmax;
+    final protected byte[] twk;
+    final protected String alpha;
+    final protected byte[] key;
+    final protected int blksz;
 
     protected FFX(final byte[] key, final byte[] twk,
                   final long txtmax,
@@ -76,8 +78,15 @@ abstract class FFX
          * by not specifying the IV, the IV is set to 0's which is
          * what is called for in these algorithms
          */
-        this.cipher = new CBCBlockCipher(new AESEngine());
-        this.cipher.init(true, new KeyParameter(key));
+
+         // The Cipher needs to be local to the PRF function but we create once
+         // to get block size which will not change between calls.  We could
+
+        this.key = key;
+        CBCBlockCipher cipher = new CBCBlockCipher(new AESEngine());
+        cipher.init(true, new KeyParameter(key));
+        blksz = cipher.getBlockSize();
+        cipher.reset();
 
         this.radix = radix;
         this.alpha = alpha;
@@ -103,7 +112,12 @@ abstract class FFX
      */
     protected void prf(byte[] dst, final int doff,
                        final byte[] src, final int soff, final int len) {
-        final int blksz = this.cipher.getBlockSize();
+        
+        // There were threadsafe issues by having a BlockCipher instance variable
+        // Timing of creating and destroying this object is LESS in a large load
+        // than using locking mechanisms.
+        CBCBlockCipher cipher = new CBCBlockCipher(new AESEngine());
+        cipher.init(true, new KeyParameter(this.key));
 
         if ((src.length - soff) % blksz != 0) {
             throw new IllegalArgumentException("invalid source length");
@@ -115,10 +129,10 @@ abstract class FFX
         // block size and will terminate the look.  In othercases, len will
         // be the size of the src but len - soff will terminate that.  however
         // cannot easily combine both checks into a single math equation.
-        for (int i = 0; i < len && i < src.length - soff; i += blksz) {
-            this.cipher.processBlock(src, soff + i, dst, doff);
+        for (int i = 0; i < len && i < src.length - soff; i += this.blksz) {
+            cipher.processBlock(src, soff + i, dst, doff);
         }
-        this.cipher.reset();
+        cipher.reset();
     }
 
     /*
@@ -136,7 +150,7 @@ abstract class FFX
      * output as a separate byte array
      */
     protected byte[] ciph(final byte[] src) {
-        byte[] dst = new byte[this.cipher.getBlockSize()];
+        byte[] dst = new byte[this.blksz];
         ciph(dst, 0, src, 0);
         return dst;
     }
