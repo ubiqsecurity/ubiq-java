@@ -50,6 +50,7 @@ import java.util.TimeZone;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.methods.RequestBuilder;
@@ -103,6 +104,12 @@ class UbiqWebServices {
     private String baseUrl;
 
     private BouncyCastleProvider bcProvider;
+    private String proxyHost = null;
+    private int proxyPort = -1;
+    public void setProxy(String host, int port) {
+        this.proxyHost = host;
+        this.proxyPort = port;
+    }
 
     private static String print(byte[] bytes) {
       StringBuilder sb = new StringBuilder();
@@ -118,7 +125,10 @@ class UbiqWebServices {
         this.bcProvider = new BouncyCastleProvider();
         this.ubiqCredentials = ubiqCredentials;
         this.ubiqConfiguration = ubiqConfiguration;
-
+        if (this.ubiqConfiguration.getProxyHost() != null && this.ubiqConfiguration.getProxyPort() != null) {
+            this.proxyHost = this.ubiqConfiguration.getProxyHost();
+            this.proxyPort = this.ubiqConfiguration.getProxyPort();
+        }
         if (!this.ubiqCredentials.getHost().startsWith("http")) {
             this.baseUrl = String.format("https://%s", this.ubiqCredentials.getHost());
         } else {
@@ -426,10 +436,7 @@ class UbiqWebServices {
     String GetOAuthToken() {
       HttpResponse response = null;
       
-      try (CloseableHttpClient client = HttpClients.custom()
-          .setDefaultRequestConfig(RequestConfig.custom()
-          .setCookieSpec(CookieSpecs.STANDARD)
-          .build()).build()) {
+      try (CloseableHttpClient client = createHttpClientWithProxy()) {
         HttpPost post = new HttpPost(new URI(this.ubiqConfiguration.getIdpTokenEndpointUrl()));
 
         post.setHeader("Accept", ContentType.APPLICATION_JSON.toString());
@@ -483,10 +490,7 @@ String getSso(String access_token, String csr) {
   HttpResponse response = null;
       
   String responseString = null;
-      try (CloseableHttpClient client = HttpClients.custom()
-            .setDefaultRequestConfig(RequestConfig.custom()
-            .setCookieSpec(CookieSpecs.STANDARD)
-            .build()).build()) {
+      try (CloseableHttpClient client = createHttpClientWithProxy()) {
         HttpPost post = new HttpPost(new URI(String.format("%s/%s/%s/scim/sso", this.baseUrl, this.ubiqConfiguration.getIdpCustomerId(), this.restApiV3Root)));
 
         JsonObject jsonObject = new JsonObject();
@@ -655,10 +659,10 @@ String getSso(String access_token, String csr) {
         return unwrappedDataKey;
     }
 
-    private static String submitHttpRequest(HttpRequestBase httpRequest, int successCode)
+    private String submitHttpRequest(HttpRequestBase httpRequest, int successCode)
             throws IOException, InterruptedException {
 
-        HttpClient httpclient = HttpClients.createDefault();
+        CloseableHttpClient httpclient = createHttpClientWithProxy();
         HttpResponse response = httpclient.execute(httpRequest);
       
         BufferedReader reader = new BufferedReader(new InputStreamReader(
@@ -750,4 +754,21 @@ String getSso(String access_token, String csr) {
         // write bytes to caller-provided Stream
         hashStream.write(hashableBytes, 0, hashableBytes.length);
     }
+
+    public RequestConfig buildRequestConfig() {
+        RequestConfig.Builder configBuilder = RequestConfig.custom()
+                .setCookieSpec(CookieSpecs.STANDARD);
+        if (this.proxyHost != null && this.proxyPort != -1) {
+            configBuilder.setProxy(new HttpHost(this.proxyHost, this.proxyPort));
+        }
+        return configBuilder.build();
+    }
+
+    private CloseableHttpClient createHttpClientWithProxy() {
+
+        return HttpClients.custom()
+                .setDefaultRequestConfig(buildRequestConfig())
+                .build();
+    }
 }
+
