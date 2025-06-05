@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.7 - 2025-06-05
+* Added support for HTTP and HTTPS proxies
+
 ## 2.2.6 - 2025-06-02
 * Fix issue with multi-threading for structured datasets
 

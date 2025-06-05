@@ -9,9 +9,7 @@ import static org.junit.Assert.*;
 public class ProxyTest {
     @Test
     public void testBuildRequestConfigSetsProxy() {
-        UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(
-                "accessKeyId", "secretSigningKey", "secretCryptoKey", "keyFingerprint"
-        );
+        UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
         UbiqConfiguration ubiqConfiguration = UbiqFactory.createConfiguration(
                 null, null, null, null, null, null, null, null, null,
                 "proxy.example.com", 8080);
