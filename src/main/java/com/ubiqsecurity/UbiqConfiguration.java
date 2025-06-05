@@ -64,6 +64,14 @@ public class UbiqConfiguration {
     String customer_id = null;
   }
 
+  class Proxy {
+    @SerializedName("host")
+    String host = null;
+
+    @SerializedName("port")
+    Integer port = null;
+  }
+
   class Configuration {
     @SerializedName("debug")
     Boolean debug = false;
@@ -76,6 +84,9 @@ public class UbiqConfiguration {
 
     @SerializedName("idp")
     Idp idp;
+
+    @SerializedName("proxy")
+    Proxy proxy;
   }
 
 
@@ -88,13 +99,16 @@ public class UbiqConfiguration {
       Boolean cacheEncryptKeys,
       Boolean cacheStructuredKeys,
       Boolean cacheUnstructuredKeys,
-      Integer cacheTtlSeconds ) {
+      Integer cacheTtlSeconds,
+      String proxyHost,
+      Integer proxyPort) {
 
         // Create configuration with defaults
         config = new Configuration();
         config.keyCaching = new UbiqConfiguration.KeyCaching();
         config.eventReporting = new UbiqConfiguration.EventReporting();
         config.idp = new UbiqConfiguration.Idp();
+        config.proxy = new UbiqConfiguration.Proxy();
 
         if (eventReportingWakeInterval != null) {
           config.eventReporting.wakeInterval = eventReportingWakeInterval;
@@ -123,6 +137,15 @@ public class UbiqConfiguration {
         if (cacheTtlSeconds != null) {
           config.keyCaching.ttlSeconds = cacheTtlSeconds;
         }
+
+        if(proxyHost !=null) {
+          config.proxy.host = proxyHost;
+        }
+
+        if(proxyPort !=null) {
+          config.proxy.port = proxyPort;
+      }
+
     }
 
     ChronoUnit findEventReportingGranularity(String granularity) {
@@ -171,6 +194,7 @@ public class UbiqConfiguration {
         config.keyCaching = new UbiqConfiguration.KeyCaching();
         config.eventReporting = new UbiqConfiguration.EventReporting();
         config.idp = new UbiqConfiguration.Idp();
+        config.proxy = new UbiqConfiguration.Proxy();
 
         // Only load if file exists, otherwise use default values
         File temp = new File(pathname);
@@ -242,6 +266,14 @@ public class UbiqConfiguration {
                 config.idp.customer_id = tmpConfig.idp.customer_id;
               }
             }
+            if (tmpConfig.proxy != null) {
+              if (tmpConfig.proxy.host != null) {
+                config.proxy.host = tmpConfig.proxy.host;
+              }
+              if (tmpConfig.proxy.port != null) {
+                config.proxy.port = tmpConfig.proxy.port;
+              }
+            }
 
           }
 
@@ -306,5 +338,13 @@ public class UbiqConfiguration {
 
     public String getIdpClientSecret() {
       return config.idp.client_secret;
+    }
+
+    public String getProxyHost() {
+      return config.proxy.host;
+    }
+
+    public Integer getProxyPort() {
+      return config.proxy.port;
     }
   }
