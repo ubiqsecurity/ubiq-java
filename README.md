@@ -1,6 +1,52 @@
+
+
 # Ubiq Security Java Library
 
 The Ubiq Security Java library provides convenient interaction with the Ubiq Security Platform API from applications written in the Java language.  It includes a pre-defined set of classes that will provide simple interfaces to encrypt and decrypt data.
+
+<!-- TOC -->
+* [Ubiq Security Java Library](#ubiq-security-java-library)
+  * [Documentation](#documentation)
+  * [Installation](#installation)
+    * [Requirements](#requirements)
+      * [Gradle Users](#gradle-users)
+      * [Maven users](#maven-users)
+      * [Others](#others)
+      * [Building from source:](#building-from-source)
+    * [Requirements](#requirements-1)
+  * [Usage](#usage)
+    * [Referencing the Ubiq Security library](#referencing-the-ubiq-security-library)
+    * [Read configuration from a specific file](#read-configuration-from-a-specific-file)
+    * [Read credentials from a specific file and use a specific profile](#read-credentials-from-a-specific-file-and-use-a-specific-profile)
+    * [Read credentials from ~/.ubiq/credentials and use the default profile](#read-credentials-from-ubiqcredentials-and-use-the-default-profile)
+    * [Read configuration from ~/.ubiq/configuration if it exists or use default values](#read-configuration-from-ubiqconfiguration-if-it-exists-or-use-default-values)
+    * [Use the following environment variables to set the credential values](#use-the-following-environment-variables-to-set-the-credential-values)
+    * [Explicitly set the credentials](#explicitly-set-the-credentials)
+    * [IDP integration](#idp-integration)
+    * [Use the following environment variables to set the credential values](#use-the-following-environment-variables-to-set-the-credential-values-1)
+    * [Explicitly set the credentials](#explicitly-set-the-credentials-1)
+    * [Runtime exceptions](#runtime-exceptions)
+    * [Unstructured encryption of a simple block of data](#unstructured-encryption-of-a-simple-block-of-data)
+    * [Unstructured decryption of a simple block of data](#unstructured-decryption-of-a-simple-block-of-data)
+    * [Unstructured encryption of a large data element where data is loaded in chunks](#unstructured-encryption-of-a-large-data-element-where-data-is-loaded-in-chunks)
+    * [Encrypt several objects using the same data encryption key (fewer calls to the server)](#encrypt-several-objects-using-the-same-data-encryption-key-fewer-calls-to-the-server)
+    * [Unstructured decryption of a large data element where data is loaded in chunks](#unstructured-decryption-of-a-large-data-element-where-data-is-loaded-in-chunks)
+  * [Ubiq Structured Encryption](#ubiq-structured-encryption)
+  * [Requirements](#requirements-2)
+  * [Usage](#usage-1)
+    * [Referencing the Ubiq Security library](#referencing-the-ubiq-security-library-1)
+    * [Reading and setting credentials](#reading-and-setting-credentials)
+    * [Encrypt a social security text field](#encrypt-a-social-security-text-field)
+    * [Decrypt a social security text field](#decrypt-a-social-security-text-field)
+  * [Custom Metadata for Usage Reporting](#custom-metadata-for-usage-reporting)
+  * [Encrypt For Search](#encrypt-for-search)
+    * [Configuration File](#configuration-file)
+      * [Event Reporting](#event-reporting)
+      * [Key Caching](#key-caching)
+      * [IDP specific parameters](#idp-specific-parameters)
+  * [Ubiq API Error Reference](#ubiq-api-error-reference)
+  * [Using Ubiq Security Java library with proxy](#using-ubiq-security-java-library-with-proxy)
+<!-- TOC -->
 
 ## Documentation
 
@@ -497,3 +543,36 @@ Occasionally, you may encounter issues when interacting with the Ubiq API.
 [gradlew]:https://docs.gradle.org/current/userguide/gradle_wrapper.html
 [UbiqStructuredEncryptTest.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/src/test/java/com/ubiqsecurity/UbiqStructuredEncryptTest.java
 [UbiqSampleStructured.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/example/src/main/java/UbiqSampleStructured.java
+
+
+## Using the Ubiq Security Java Library with a Proxy
+
+You can configure the Ubiq Java library to use a proxy for its API calls by including an optional section in the configuration file:
+
+```json
+{
+  "proxy": {
+    "host": "192.168.1.10",
+    "port": 8080
+  }
+}
+```
+
+### Running a local proxy with Docker
+
+To quickly run a local proxy using Docker:
+
+```bash
+docker run --rm -it \
+  -p 8080:8080 \
+  mitmproxy/mitmproxy \
+  mitmproxy --mode regular --listen-port 8080
+```
+
+### Running mitmproxy without Docker
+
+If you prefer to run it directly on your system without Docker:
+
+```bash
+mitmproxy --mode regular --listen-port 8080
+```
