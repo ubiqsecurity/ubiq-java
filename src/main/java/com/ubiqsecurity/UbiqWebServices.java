@@ -105,8 +105,8 @@ class UbiqWebServices {
 
     private BouncyCastleProvider bcProvider;
     private String proxyHost = null;
-    private int proxyPort = -1;
-    public void setProxy(String host, int port) {
+    private Integer proxyPort = null;
+    public void setProxy(String host, Integer port) {
         this.proxyHost = host;
         this.proxyPort = port;
     }
@@ -758,7 +758,7 @@ String getSso(String access_token, String csr) {
     public RequestConfig buildRequestConfig() {
         RequestConfig.Builder configBuilder = RequestConfig.custom()
                 .setCookieSpec(CookieSpecs.STANDARD);
-        if (this.proxyHost != null && this.proxyPort != -1) {
+        if (this.proxyHost != null && this.proxyPort != null) {
             configBuilder.setProxy(new HttpHost(this.proxyHost, this.proxyPort));
         }
         return configBuilder.build();
