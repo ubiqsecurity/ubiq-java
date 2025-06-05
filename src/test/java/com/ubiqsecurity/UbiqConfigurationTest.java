@@ -36,6 +36,9 @@ public class UbiqConfigurationTest
       assertEquals(cfg.getKeyCacheUnstructuredKeys(), true);
       assertEquals(cfg.getKeyCacheStructuredKeys(), true);
       assertEquals(cfg.getKeyCacheTtlSeconds().compareTo(1800), 0);
+
+      assertNull(cfg.getProxyHost());
+      assertNull(cfg.getProxyPort());
     }
 
     @Test()
@@ -60,11 +63,15 @@ public class UbiqConfigurationTest
       assertEquals(cfg.getKeyCacheEncryptKeys(), cfg_default.getKeyCacheEncryptKeys());
       assertEquals(cfg.getKeyCacheUnstructuredKeys(), cfg_default.getKeyCacheUnstructuredKeys());
       assertEquals(cfg.getKeyCacheTtlSeconds().compareTo(cfg_default.getKeyCacheTtlSeconds()),0);
+
+      assertNull(cfg.getProxyHost());
+      assertNull(cfg.getProxyPort());
     }
 
     @Test()
     public void explicitCfg()  {
-      UbiqConfiguration cfg = UbiqFactory.createConfiguration(1,2,3,true, ChronoUnit.NANOS, true, true, 3600);
+      UbiqConfiguration cfg = UbiqFactory.createConfiguration(1,2,3,true, ChronoUnit.NANOS,
+              true, true, true, 3600, "proxy.example.com", 8080);
 
       assertNotNull(cfg);
       assertEquals(cfg.getEventReportingWakeInterval().compareTo(1),0);
@@ -75,6 +82,9 @@ public class UbiqConfigurationTest
       assertEquals(cfg.getKeyCacheEncryptKeys(), true);
       assertEquals(cfg.getKeyCacheUnstructuredKeys(), true);
       assertEquals(cfg.getKeyCacheTtlSeconds().compareTo(3600), 0);
+
+      assertEquals(cfg.getProxyHost().compareTo("proxy.example.com"), 0);
+      assertEquals(cfg.getProxyPort().compareTo(8080), 0);
     }
 
     @Test()
@@ -96,6 +106,10 @@ public class UbiqConfigurationTest
       myWriter.write("\"encrypt\" : true,");
       myWriter.write("\"unstructured\" : false,");
       myWriter.write("\"structured\" : false");
+      myWriter.write("},");
+      myWriter.write("\"proxy\" : { ");
+      myWriter.write("\"host\" : \"proxy.example.com\",");
+      myWriter.write("\"port\" : 8080");
       myWriter.write("}}");
       myWriter.close();
 
@@ -110,6 +124,8 @@ public class UbiqConfigurationTest
       assertEquals(cfg.getKeyCacheUnstructuredKeys(), false);
       assertEquals(cfg.getKeyCacheStructuredKeys(), false);
       assertEquals(cfg.getKeyCacheTtlSeconds().compareTo(2400), 0);
+      assertEquals(cfg.getProxyHost().compareTo("proxy.example.com"), 0);
+      assertEquals(cfg.getProxyPort().compareTo(8080), 0);
       file.deleteOnExit();
      
     }

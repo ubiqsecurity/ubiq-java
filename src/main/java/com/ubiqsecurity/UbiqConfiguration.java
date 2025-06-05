@@ -99,7 +99,9 @@ public class UbiqConfiguration {
       Boolean cacheEncryptKeys,
       Boolean cacheStructuredKeys,
       Boolean cacheUnstructuredKeys,
-      Integer cacheTtlSeconds ) {
+      Integer cacheTtlSeconds,
+      String proxyHost,
+      Integer proxyPort) {
 
         // Create configuration with defaults
         config = new Configuration();
@@ -135,6 +137,14 @@ public class UbiqConfiguration {
         if (cacheTtlSeconds != null) {
           config.keyCaching.ttlSeconds = cacheTtlSeconds;
         }
+
+        if(proxyHost !=null) {
+          config.proxy.host = proxyHost;
+        }
+      if(proxyPort !=null) {
+        config.proxy.port = proxyPort;
+      }
+
     }
 
     ChronoUnit findEventReportingGranularity(String granularity) {
