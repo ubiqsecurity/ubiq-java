@@ -503,6 +503,10 @@ The <b>key_caching</b> section contains values to control how and when keys are 
 - <b>idp_tenant_id</b> contains the tenant value provided by Okta or Entra
 - <b>idp_client_secret</b> contains the client secret value provided by Okta or Entra
 
+#### Proxy connection specific parameters
+- <b>host</b> indicates the address of the proxy server
+- <b>port</b> indicates the port number the proxy server is listening on
+
 ```json
 {
   "event_reporting": {
@@ -524,6 +528,10 @@ The <b>key_caching</b> section contains values to control how and when keys are 
     "idp_token_endpoint_url": " https://dev-<domain>.okta.com/oauth2/v1/token",
     "idp_tenant_id": "0o....d7",
     "idp_client_secret": "yro.....2Db"
+  },
+  "proxy": {
+    "host": "192.168.1.10",
+    "port": 8080
   }
 }
 ```
