@@ -125,7 +125,7 @@ class UbiqWebServices {
         this.bcProvider = new BouncyCastleProvider();
         this.ubiqCredentials = ubiqCredentials;
         this.ubiqConfiguration = ubiqConfiguration;
-        if (this.ubiqConfiguration.getProxyHost() != null && this.ubiqConfiguration.getProxyPort() != null) {
+        if (this.ubiqConfiguration != null && (this.ubiqConfiguration.getProxyHost() != null && this.ubiqConfiguration.getProxyPort() != null)) {
             this.proxyHost = this.ubiqConfiguration.getProxyHost();
             this.proxyPort = this.ubiqConfiguration.getProxyPort();
         }
