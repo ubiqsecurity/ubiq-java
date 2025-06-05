@@ -44,6 +44,7 @@ The Ubiq Security Java library provides convenient interaction with the Ubiq Sec
       * [Event Reporting](#event-reporting)
       * [Key Caching](#key-caching)
       * [IDP specific parameters](#idp-specific-parameters)
+      * [Proxy connection specific parameters](#proxy-connection-specific-parameters)
   * [Ubiq API Error Reference](#ubiq-api-error-reference)
   * [Using the Ubiq Security Java Library with a Proxy](#using-the-ubiq-security-java-library-with-a-proxy)
     * [Running a local proxy with Docker](#running-a-local-proxy-with-docker)
