@@ -560,6 +560,12 @@ Occasionally, you may encounter issues when interacting with the Ubiq API.
 
 You can configure the Ubiq Java library to use a proxy for its API calls by including an optional section in the configuration file:
 
+```mermaid
+flowchart LR
+  A[ubiq-java app] --> B[Proxy server]
+  B --> C[Ubiq API endpoint]
+```
+
 ```json
 {
   "proxy": {
