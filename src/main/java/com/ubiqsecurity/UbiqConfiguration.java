@@ -141,8 +141,9 @@ public class UbiqConfiguration {
         if(proxyHost !=null) {
           config.proxy.host = proxyHost;
         }
-      if(proxyPort !=null) {
-        config.proxy.port = proxyPort;
+
+        if(proxyPort !=null) {
+          config.proxy.port = proxyPort;
       }
 
     }
