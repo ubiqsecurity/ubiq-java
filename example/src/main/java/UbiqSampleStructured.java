@@ -103,7 +103,7 @@ public class UbiqSampleStructured {
             // demonstrate setting up the UbiqStructuredEncryptDecrypt manually so that it could be used
             // multiple times whenever many operations are to be performed in a session.
 
-            try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+            try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials, ubiqConfig)) {
 
                 if (options.encrypttext!= null) {
                     String plainText = options.encrypttext;

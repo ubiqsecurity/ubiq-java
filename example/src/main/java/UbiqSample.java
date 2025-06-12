@@ -101,15 +101,15 @@ public class UbiqSample {
 
             if (Boolean.TRUE.equals(options.simple)) {
                 if (Boolean.TRUE.equals(options.encrypt)) {
-                    simpleEncryption(options.inputFile, options.outputFile, ubiqCredentials);
+                    simpleEncryption(options.inputFile, options.outputFile, ubiqCredentials, ubiqConfig);
                 } else {
-                    simpleDecryption(options.inputFile, options.outputFile, ubiqCredentials);
+                    simpleDecryption(options.inputFile, options.outputFile, ubiqCredentials, ubiqConfig);
                 }
             } else {
                 if (Boolean.TRUE.equals(options.encrypt)) {
-                    piecewiseEncryption(options.inputFile, options.outputFile, ubiqCredentials);
+                    piecewiseEncryption(options.inputFile, options.outputFile, ubiqCredentials, ubiqConfig);
                 } else {
-                    piecewiseDecryption(options.inputFile, options.outputFile, ubiqCredentials);
+                    piecewiseDecryption(options.inputFile, options.outputFile, ubiqCredentials, ubiqConfig);
                 }
             }
 
@@ -121,25 +121,25 @@ public class UbiqSample {
         }
     }
 
-    private static void simpleEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
+    private static void simpleEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials, UbiqConfiguration ubiqConfiguration)
             throws IOException, IllegalStateException, InvalidCipherTextException {
         byte[] plainBytes = Files.readAllBytes(new File(inFile).toPath());
-        byte[] cipherBytes = UbiqEncrypt.encrypt(ubiqCredentials, plainBytes);
+        byte[] cipherBytes = UbiqEncrypt.encrypt(ubiqCredentials, plainBytes,ubiqConfiguration);
         Files.write(new File(outFile).toPath(), cipherBytes);
     }
 
-    private static void simpleDecryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
+    private static void simpleDecryption(String inFile, String outFile, UbiqCredentials ubiqCredentials, UbiqConfiguration ubiqConfiguration)
             throws IOException, IllegalStateException, InvalidCipherTextException {
         byte[] cipherBytes = Files.readAllBytes(new File(inFile).toPath());
-        byte[] plainBytes = UbiqDecrypt.decrypt(ubiqCredentials, cipherBytes);
+        byte[] plainBytes = UbiqDecrypt.decrypt(ubiqCredentials, cipherBytes, ubiqConfiguration);
         Files.write(new File(outFile).toPath(), plainBytes);
     }
 
-    private static void piecewiseEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
+    private static void piecewiseEncryption(String inFile, String outFile, UbiqCredentials ubiqCredentials, UbiqConfiguration ubiqConfiguration)
             throws IOException, IllegalStateException, InvalidCipherTextException {
         try (FileInputStream plainStream = new FileInputStream(inFile)) {
             try (FileOutputStream cipherStream = new FileOutputStream(outFile)) {
-                try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
+                try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1, ubiqConfiguration)) {
                     byte[] cipherBytes = ubiqEncrypt.begin();
                     cipherStream.write(cipherBytes);
 
@@ -157,11 +157,11 @@ public class UbiqSample {
         }
     }
 
-    private static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials ubiqCredentials)
+    private static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials ubiqCredentials, UbiqConfiguration ubiqConfiguration)
             throws FileNotFoundException, IOException, IllegalStateException, InvalidCipherTextException {
         try (FileInputStream cipherStream = new FileInputStream(inFile)) {
             try (FileOutputStream plainStream = new FileOutputStream(outFile)) {
-                try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
+                try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials, ubiqConfiguration)) {
                     byte[] plainBytes = ubiqDecrypt.begin();
                     plainStream.write(plainBytes);
 
