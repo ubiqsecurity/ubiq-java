@@ -109,20 +109,29 @@ public class UbiqEncrypt implements AutoCloseable {
         return finalBytes;
     }
 
+    public static byte[] encrypt(UbiqCredentials ubiqCredentials, byte[] data, UbiqConfiguration ubiqConfiguration)
+            throws IllegalStateException, InvalidCipherTextException {
+        return doEncrypt(new UbiqEncrypt(ubiqCredentials, 1, ubiqConfiguration), data);
+    }
+
     public static byte[] encrypt(UbiqCredentials ubiqCredentials, byte[] data)
             throws IllegalStateException, InvalidCipherTextException {
+        return doEncrypt(new UbiqEncrypt(ubiqCredentials, 1), data);
+    }
 
-        try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
-            try (ByteArrayOutputStream cipherStream = new ByteArrayOutputStream()) {
-                cipherStream.write(ubiqEncrypt.begin());
-                cipherStream.write(ubiqEncrypt.update(data, 0, data.length));
-                cipherStream.write(ubiqEncrypt.end());
+    private static byte[] doEncrypt(UbiqEncrypt ubiqEncrypt, byte[] data)
+            throws IllegalStateException, InvalidCipherTextException {
+        try (UbiqEncrypt encryptor = ubiqEncrypt;
+             ByteArrayOutputStream cipherStream = new ByteArrayOutputStream()) {
 
-                return cipherStream.toByteArray();
-            } catch (IOException ex) {
-                System.out.println("stream exception");
-                return null;
-            }
+            cipherStream.write(encryptor.begin());
+            cipherStream.write(encryptor.update(data, 0, data.length));
+            cipherStream.write(encryptor.end());
+
+            return cipherStream.toByteArray();
+        } catch (IOException ex) {
+            System.out.println("stream exception");
+            return null;
         }
     }
 

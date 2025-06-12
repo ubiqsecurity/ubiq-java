@@ -167,21 +167,31 @@ public class UbiqDecrypt implements AutoCloseable {
         return finalPlainBytes;
     }
 
-    public static byte[] decrypt(UbiqCredentials ubiqCredentials, byte[] data)
-            throws IllegalStateException, InvalidCipherTextException {
-        try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
-            try (ByteArrayOutputStream plainStream = new ByteArrayOutputStream()) {
-                plainStream.write(ubiqDecrypt.begin());
-                plainStream.write(ubiqDecrypt.update(data, 0, data.length));
-                plainStream.write(ubiqDecrypt.end());
+public static byte[] decrypt(UbiqCredentials ubiqCredentials, byte[] data)
+        throws IllegalStateException, InvalidCipherTextException {
+    return doDecrypt(new UbiqDecrypt(ubiqCredentials), data);
+}
 
-                return plainStream.toByteArray();
-            } catch (IOException ex) {
-                System.out.println("stream exception");
-                return null;
-            }
-        }
+public static byte[] decrypt(UbiqCredentials ubiqCredentials, byte[] data, UbiqConfiguration ubiqConfiguration)
+        throws IllegalStateException, InvalidCipherTextException {
+    return doDecrypt(new UbiqDecrypt(ubiqCredentials, ubiqConfiguration), data);
+}
+
+private static byte[] doDecrypt(UbiqDecrypt ubiqDecrypt, byte[] data)
+        throws IllegalStateException, InvalidCipherTextException {
+    try (UbiqDecrypt decryptor = ubiqDecrypt;
+         ByteArrayOutputStream plainStream = new ByteArrayOutputStream()) {
+
+        plainStream.write(decryptor.begin());
+        plainStream.write(decryptor.update(data, 0, data.length));
+        plainStream.write(decryptor.end());
+
+        return plainStream.toByteArray();
+    } catch (IOException ex) {
+        System.out.println("stream exception");
+        return null;
     }
+}
 
     // Reset the internal state of the decryption object.
     // This function can be called at any time to abort an existing
