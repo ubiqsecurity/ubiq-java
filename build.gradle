@@ -33,7 +33,15 @@ dependencies {
 
 
 task setVersion() {
-    def appProperties = new File("src/main/java/com/ubiqsecurity/Version.java")
+    // NOTE: This block executes during the configuration phase, not the execution phase.
+    // It will run even when invoking unrelated tasks like `./gradlew clean`.
+    // Use `file(...)` to resolve path relative to the project directory.
+    // `new File(...)` resolves relative to the JVM's working directory, which may differ.
+    def appProperties = file("src/main/java/com/ubiqsecurity/Version.java")
+
+    println "Writing version to: ${appProperties.absolutePath}"
+    println "VERSION_NAME: ${VERSION_NAME}"
+
     appProperties.withWriter { writer ->
         writer.write("// Do Not Edit\n// Built during the gradle build process using the VERSION information in gradle.properties\n")
         writer.write("package com.ubiqsecurity;\n")
