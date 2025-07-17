@@ -31,6 +31,13 @@ dependencies {
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.14'
 }
 
+task printEnv {
+    doLast {
+        System.getenv().each { key, value ->
+            println "$key=$value"
+        }
+    }
+}
 
 task setVersion() {
     // NOTE: This block executes during the configuration phase, not the execution phase.
