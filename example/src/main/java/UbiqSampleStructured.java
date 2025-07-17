@@ -75,8 +75,10 @@ public class UbiqSampleStructured {
             try {
               if (options.credentials == null) {
                   // no file specified, so fall back to ENV vars and default host, if any
+                  System.out.println(String.format("No explicit credentials provided – using default credentials"));
                   ubiqCredentials = UbiqFactory.defaultCredentials();
               } else {
+                  System.out.println(String.format("Loading credentials from %s, profile %s",options.credentials, options.profile));
                   // read credentials from caller-specified section of specified config file
                   ubiqCredentials = UbiqFactory.readCredentialsFromFile(options.credentials, options.profile);
               }
