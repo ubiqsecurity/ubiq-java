@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.8 - 2025-07-22
+* Fix loading configuration from a provided file
+
 ## 2.2.7 - 2025-06-05
 * Added support for HTTP and HTTPS proxies
 
