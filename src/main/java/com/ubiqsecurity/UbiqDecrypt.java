@@ -169,7 +169,12 @@ public class UbiqDecrypt implements AutoCloseable {
 
     public static byte[] decrypt(UbiqCredentials ubiqCredentials, byte[] data)
             throws IllegalStateException, InvalidCipherTextException {
-        try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
+        return decrypt(ubiqCredentials, data, UbiqFactory.defaultConfiguration());
+    }
+
+    public static byte[] decrypt(UbiqCredentials ubiqCredentials, byte[] data, UbiqConfiguration ubiqConfiguration)
+            throws IllegalStateException, InvalidCipherTextException {
+        try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials, ubiqConfiguration)) {
             try (ByteArrayOutputStream plainStream = new ByteArrayOutputStream()) {
                 plainStream.write(ubiqDecrypt.begin());
                 plainStream.write(ubiqDecrypt.update(data, 0, data.length));
