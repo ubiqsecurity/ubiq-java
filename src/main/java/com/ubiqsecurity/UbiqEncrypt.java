@@ -109,21 +109,25 @@ public class UbiqEncrypt implements AutoCloseable {
         return finalBytes;
     }
 
+    public static byte[] encrypt(UbiqCredentials ubiqCredentials, byte[] data, UbiqConfiguration ubiqConfiguration)
+            throws IllegalStateException, InvalidCipherTextException {
+        try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1, ubiqConfiguration);
+             ByteArrayOutputStream cipherStream = new ByteArrayOutputStream()) {
+
+            cipherStream.write(ubiqEncrypt.begin());
+            cipherStream.write(ubiqEncrypt.update(data, 0, data.length));
+            cipherStream.write(ubiqEncrypt.end());
+
+            return cipherStream.toByteArray();
+        } catch (IOException ex) {
+            System.out.println("stream exception");
+            return null;
+        }
+    }
+
     public static byte[] encrypt(UbiqCredentials ubiqCredentials, byte[] data)
             throws IllegalStateException, InvalidCipherTextException {
-
-        try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
-            try (ByteArrayOutputStream cipherStream = new ByteArrayOutputStream()) {
-                cipherStream.write(ubiqEncrypt.begin());
-                cipherStream.write(ubiqEncrypt.update(data, 0, data.length));
-                cipherStream.write(ubiqEncrypt.end());
-
-                return cipherStream.toByteArray();
-            } catch (IOException ex) {
-                System.out.println("stream exception");
-                return null;
-            }
-        }
+        return encrypt(ubiqCredentials, data, UbiqFactory.defaultConfiguration());
     }
 
     public void addReportingUserDefinedMetadata(String jsonString) {

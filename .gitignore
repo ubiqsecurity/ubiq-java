@@ -3,3 +3,5 @@
 .project
 build/
 
+.idea/
+**/.vscode/settings.json

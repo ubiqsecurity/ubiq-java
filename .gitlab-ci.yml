@@ -21,20 +21,20 @@ stages:
     - test
 
 build:
-    image: openjdk:11.0.11
+    image: openjdk:8
     variables:
         GIT_SUBMODULE_STRATEGY: recursive
     stage: build
     before_script:
-        - apt -y update
+      - apt -y update
     script:
         - ./gradlew clean assemble build -x test
 
 test:
-    image: openjdk:11.0.11
+    image: openjdk:8
     stage: test
     before_script:
-        - apt -y update
+      - apt -y update
     script:
         - ./gradlew test
 
