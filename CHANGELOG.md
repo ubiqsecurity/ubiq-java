@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.2.8 - 2025-07-22
+* Added loadCache to hydrate and refresh cache on demand rather than first use
 * Fix loading configuration from a provided file
 
 ## 2.2.7 - 2025-06-05

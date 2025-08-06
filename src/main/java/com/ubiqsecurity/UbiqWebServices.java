@@ -200,10 +200,18 @@ class UbiqWebServices {
 
 
     // Get the search keys using the fpe/def_keys endpoint
-    JsonObject getFpeDefKeys(String ffs_name) {
+    JsonObject getFpeDefKeys(String[] datasets) {
 
       String jsonRequest="";
-      String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));
+      String params = null;
+      
+      // If no datasets passed in, retrieve ALL datasets for the api_key
+      if (datasets.length > 0) {
+        String names = String.join(",", datasets);
+        params = String.format("ffs_name=%s&papi=%s", encode(names), encode(this.ubiqCredentials.getAccessKeyId()));
+      } else {
+        params = String.format("papi=%s", encode(this.ubiqCredentials.getAccessKeyId()));
+      }
       if (this.ubiqCredentials.isIdp()) {
           // Need to check cert before it is used
         this.ubiqCredentials.renewIdpCert();
@@ -228,8 +236,15 @@ class UbiqWebServices {
         // deserialize the JSON response to POJO
         JsonObject results = parser.parse(jsonResponse).getAsJsonObject();
  
+        // If this is IDP, then the 
         if (ubiqCredentials.isIdp()) {
-          results.getAsJsonObject(ffs_name).addProperty("encrypted_private_key", this.ubiqCredentials.getEncryptedPrivateKey());
+          for (String name : datasets)
+          {
+            JsonObject element = results.getAsJsonObject(name);
+            if (!element.isJsonNull()) {
+              results.getAsJsonObject(name).addProperty("encrypted_private_key", this.ubiqCredentials.getEncryptedPrivateKey());
+            }
+          }
           if (verbose) {
             System.out.println(String.format("getFpeDefKeys results: %s", results.toString()));
 
@@ -245,6 +260,7 @@ class UbiqWebServices {
     }
 
     FFS_Record getFFSDefinition(String ffs_name) {
+      // Boolean verbose = true;
         //String urlString = String.format("%s/%s/ffs/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId());
         String jsonRequest="";
         String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));

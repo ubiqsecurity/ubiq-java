@@ -1,5 +1,8 @@
 package com.ubiqsecurity;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import org.junit.Test;
 import static org.junit.Assert.*;
 import java.math.BigInteger;
@@ -177,6 +180,172 @@ public class UbiqStructuredEncryptTest
             }
         } catch (Exception ex) {
             System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+        }
+    }
+
+    @Test
+    public void loadCache() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+            UbiqConfiguration cfg = UbiqFactory.createConfiguration(
+              1800,
+              1800,
+              1800,
+              true,
+              ChronoUnit.MINUTES,
+              false,
+              true,
+              true,
+              3);
+
+            String pt_generic = "123456789";
+            String ct_generic = "";
+            String pt_alphanum = "123456789789ABCDEF";
+            String ct_alphanum = "";
+
+            boolean match = false;
+
+            UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials, cfg);
+
+            System.out.println("To verify - Change LoadSearchKeys verbose to True");
+            System.out.println("Before first Hydrate Call");
+            ubiqEncryptDecrypt.loadCache("ALPHANUM_SSN");
+            System.out.println("Before Second updateCache Call");
+            ubiqEncryptDecrypt.loadCache("ALPHANUM_SSN");
+            System.out.println("After Second Hydrate Call");
+
+            System.out.println("Sleep for 6 but should cause cache to be expired");
+            Thread.sleep(6000);
+            ubiqEncryptDecrypt.loadCache("ALPHANUM_SSN");
+            System.out.println("Sleep for 2 but should cause cache TTL to reset");
+            Thread.sleep(2000);
+            ubiqEncryptDecrypt.loadCache("ALPHANUM_SSN");
+            System.out.println("Sleep for 2 but should cause cache TTL to reset");
+            Thread.sleep(2000);
+            ubiqEncryptDecrypt.loadCache("ALPHANUM_SSN");
+            System.out.println("Sleep for 2 but should cause cache TTL to reset");
+            Thread.sleep(2000);
+            ubiqEncryptDecrypt.loadCache("ALPHANUM_SSN");
+            System.out.println("Sleep for 4 so cache should be expired");
+            Thread.sleep(4000);
+            ubiqEncryptDecrypt.loadCache("ALPHANUM_SSN");
+
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            fail(ex.toString());
+        }
+    }
+
+        @Test
+    public void loadCacheMultipleDatasets() {
+        try {
+            UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+            UbiqConfiguration cfg = UbiqFactory.createConfiguration(
+              1800,
+              1800,
+              1800,
+              true,
+              ChronoUnit.MINUTES,
+              false,
+              true,
+              true,
+              3);
+
+            final byte[] tweak = null;
+
+
+            String[] datasets = {"BIRTH_DATE", "ALPHANUM_SSN", "bad"};
+            String dataset = "ALPHANUM_SSN";
+            String pt = "121-34-5678";
+            String ct = "";
+
+            Long uncached_encrypt;
+            Long cached_encrypt;
+
+            boolean match = false;
+
+            {
+              UbiqStructuredEncryptDecrypt ubiqEncrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials, cfg);
+
+              Instant s = Instant.now();
+              ct = ubiqEncrypt.encrypt(dataset, pt, tweak);
+              Instant e = Instant.now();
+              uncached_encrypt = Duration.between(s, e).toNanos();
+            }
+
+            UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials, cfg);
+
+            System.out.println("To verify - Change LoadSearchKeys verbose to True");
+            System.out.println("Before first Hydrate Call");
+            ubiqEncryptDecrypt.loadCache(datasets);
+
+            {
+              Instant s = Instant.now();
+              ct = ubiqEncryptDecrypt.encrypt(dataset, pt, tweak);
+              Instant e = Instant.now();
+              cached_encrypt =  Duration.between(s, e).toNanos();
+              assertTrue(Duration.between(s, e).toNanos() < uncached_encrypt);
+            }
+
+            System.out.println("Before Second updateCache Call");
+            ubiqEncryptDecrypt.loadCache(datasets);
+            System.out.println("After Second Hydrate Call");
+
+            System.out.println("Sleep for 6 but should cause cache to be expired");
+            Thread.sleep(6000);
+            {
+              Instant s = Instant.now();
+              ct = ubiqEncryptDecrypt.encrypt(dataset, pt, tweak);
+              Instant e = Instant.now();
+              assertTrue(Duration.between(s, e).toNanos() > cached_encrypt);
+            }
+
+            ubiqEncryptDecrypt.loadCache(datasets);
+            System.out.println("Sleep for 2 but should cause cache TTL to reset");
+            Thread.sleep(2000);
+            ubiqEncryptDecrypt.loadCache(datasets);
+            {
+              Instant s = Instant.now();
+              ct = ubiqEncryptDecrypt.encrypt(dataset, pt, tweak);
+              Instant e = Instant.now();
+              cached_encrypt =  Duration.between(s, e).toNanos();
+              assertTrue(Duration.between(s, e).toNanos() < uncached_encrypt);
+            }
+
+            System.out.println("Sleep for 2 but should cause cache TTL to reset");
+            Thread.sleep(2000);
+            ubiqEncryptDecrypt.loadCache(datasets);
+            {
+              Instant s = Instant.now();
+              ct = ubiqEncryptDecrypt.encrypt(dataset, pt, tweak);
+              Instant e = Instant.now();
+              cached_encrypt =  Duration.between(s, e).toNanos();
+              assertTrue(Duration.between(s, e).toNanos() < uncached_encrypt);
+            }
+            System.out.println("Sleep for 2 but should cause cache TTL to reset");
+            Thread.sleep(2000);
+            ubiqEncryptDecrypt.loadCache(datasets);
+            {
+              Instant s = Instant.now();
+              ct = ubiqEncryptDecrypt.encrypt(dataset, pt, tweak);
+              Instant e = Instant.now();
+              cached_encrypt =  Duration.between(s, e).toNanos();
+              assertTrue(Duration.between(s, e).toNanos() < uncached_encrypt);
+            }
+            System.out.println("Sleep for 4 so cache should be expired");
+            Thread.sleep(4000);
+            {
+              Instant s = Instant.now();
+              ct = ubiqEncryptDecrypt.encrypt(dataset, pt, tweak);
+              Instant e = Instant.now();
+              assertTrue(Duration.between(s, e).toNanos() > cached_encrypt);
+            }
+            ubiqEncryptDecrypt.loadCache(datasets);
+
+        } catch (Exception ex) {
+            System.out.println(String.format("****************** Exception: %s", ex.getMessage()));
+            ex.printStackTrace();
             fail(ex.toString());
         }
     }

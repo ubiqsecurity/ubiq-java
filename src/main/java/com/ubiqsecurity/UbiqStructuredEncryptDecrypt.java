@@ -5,6 +5,7 @@ import java.util.Arrays;
 import com.ubiqsecurity.structured.FF1;
 import java.math.BigInteger;
 import com.ubiqsecurity.structured.Bn;
+
 import java.util.concurrent.ExecutionException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import java.lang.Math;
@@ -394,6 +395,9 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
             try {
 
               FFS_Record FFScaching = getFFS(ffs_name);
+              if (!FFScaching.canEncrypt()) {
+                throw new RuntimeException("API Key does not have encrypt rights for dataset '" + ffs_name + "'");
+              }
               FFX_Ctx ctx = getCtx(FFScaching, null);
 
               cipher = encryptData(FFScaching, ctx, PlainText, tweak);
@@ -458,6 +462,26 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
         return formatted_dest;
     }
 
+    // Get latest information from the server for the dataset
+    // Does not resets the TTL for all the cache elements
+    public void loadCache(final String dataset_name)
+      throws IllegalStateException, ExecutionException, Exception  {
+      String csu = "loadCache";
+
+      String[] names = {dataset_name};
+
+      loadCache(names);
+
+    }
+
+    public void loadCache(final String[] dataset_names)
+      throws IllegalStateException, ExecutionException, Exception  {
+      String csu = "loadCache";
+
+      // Load the search keys for this Dataset (FFS)
+      LoadSearchKeys.loadKeys(this.ubiqWebServices, this.ffs, this.ffxCache, dataset_names);
+    }
+
 
     public String[] encryptForSearch(final String ffs_name, final String PlainText, byte[] tweak)
         throws IllegalStateException  {
@@ -467,8 +491,9 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
 
           try {
 
-            // Load the search keys for this Dataset (FFS)
-            LoadSearchKeys.loadKeys(this.ubiqCredentials, this.ubiqWebServices, this.ffs, this.ffxCache, ffs_name);
+            // Load the search keys for this Dataset (FFS) - Does not reset the TTL
+            // of the data in case the dataset has already been loaded.
+            loadCache(ffs_name);
 
             if (verbose) System.out.println("\nencryptForSearch: " + PlainText);
 
@@ -476,6 +501,9 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
             // already be loaded into the cache because of the load search keys function above.
             FFS_Record FFScaching = getFFS(ffs_name);
             if (verbose) System.out.println("\n after getFFS: " + FFScaching.getName());
+            if (!FFScaching.canEncrypt()) {
+              throw new RuntimeException("API Key does not have encrypt rights for dataset '" + ffs_name + "'");
+            }
 
             FFX_Ctx ctx = getCtx(FFScaching, null);
             if (verbose) System.out.println("\n after getCtx: ");
@@ -523,9 +551,14 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
 
             if (verbose) System.out.println("\nDecrypting CipherText: " + CipherText);
 
+
             // attempt to load the FPEAlgorithm from the local cache
             try {
+
                 FFS_Record FFScaching = getFFS(ffs_name);
+                if (!FFScaching.canDecrypt()) {
+                  throw new RuntimeException("API Key does not have decrypt rights for dataset '" + ffs_name + "'");
+                }
 
                 // Parse the cipher text into trimmed and formatted output
                 ParsedData parsed_data = ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
