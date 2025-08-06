@@ -183,23 +183,27 @@ java -cp "./build/libs/ubiq-sample.jar;./build/deps/lib/*"  UbiqSampleStructured
 <pre>
 Usage: Ubiq Security Example [options]
   Options:
+    --config, -g
+      Set the file name for the configuration file
     --creds, -c
       Set the file name with the API credentials
+    --dataset, -n
+      Set the dataset name, for example SSN.
     --decrypttext, -d
       Set the cipher text value to decrypt and will return the decrypted text.
     --encrypttext, -e
       Set the field text value to encrypt and will return the encrypted cipher
       text.
-    --dataset, -n
-      Set the dataset name, for example SSN.
     --help, -h
       Print app parameter summary
     --profile, -P
       Identify the profile within the credentials file
       Default: default
-    --config, -g
-      Set the file name for loading system configuration parameters
-      Default: ~/.ubiq/configuration
+    --search, -s
+      Perform the EncryptForSearch.  Only compatibile with the -e option
+      Default: false
+    --tweak, -t
+      Tweak encoded as a base64 string
     --version, -V
       Show program's version number and exit
 </pre>
