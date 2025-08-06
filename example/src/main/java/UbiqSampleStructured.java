@@ -51,6 +51,9 @@ public class UbiqSampleStructured {
             if (options.encrypttext == options.decrypttext) {
                 throw new IllegalArgumentException("Encryption or Decryption have to be specified but not both.");
             }
+            if ((options.search) && (options.encrypttext == null)) {
+                throw new IllegalArgumentException("Search option is only allowed with Encryption.");
+            }
 
             if (options.datasetName == null) {
                 throw new IllegalArgumentException("dataset name must be specified.");
@@ -109,9 +112,17 @@ public class UbiqSampleStructured {
 
                 if (options.encrypttext!= null) {
                     String plainText = options.encrypttext;
+                    if (options.search) {
+                      String [] cipher = ubiqEncryptDecrypt.encryptForSearch(datasetName, plainText, tweakFF1);
+                      System.out.println("EncryptForSearch results:");
+                      for (String s : cipher) {
+                        System.out.println("\t" + s);
+                      }
+                    } else {
+                      String cipher = ubiqEncryptDecrypt.encrypt(datasetName, plainText, tweakFF1);
+                      System.out.println("ENCRYPTED cipher= " + cipher + "\n");
+                    }
 
-                    String cipher = ubiqEncryptDecrypt.encrypt(datasetName, plainText, tweakFF1);
-                    System.out.println("ENCRYPTED cipher= " + cipher + "\n");
 
                 } else if (options.decrypttext!= null) {
                     String cipher = options.decrypttext;
@@ -191,4 +202,12 @@ class ExampleArgsStructured {
         description = "Show program's version number and exit",
         help = true)
     boolean version = false;
+
+
+    @Parameter(
+        names = { "--search", "-s" },
+        description = "Perform the EncryptForSearch.  Only compatibile with the -e option",
+        required = false)
+    Boolean search = false;
+
 }

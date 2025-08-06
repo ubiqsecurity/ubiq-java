@@ -275,6 +275,14 @@ class FFS_Record {
     this.passthrough_rules_priority = passthrough_rules_priority;
   }
 
+  public boolean canEncrypt() {
+    return this.CanEncrypt;
+  }
+
+  public boolean canDecrypt() {
+    return this.CanDecrypt;
+  }
+
     @SerializedName("name")
     String Name;
 
@@ -316,6 +324,9 @@ class FFS_Record {
 
     @SerializedName("passthrough_rules")
     List<PassthroughRules> Passthrough_Rules;
+
+    transient Boolean CanEncrypt = false;
+    transient Boolean CanDecrypt = false;
 
     transient Integer PrefixPassthroughLength;
     transient Integer SuffixPassthroughLength;
@@ -367,6 +378,21 @@ class FFS_Record {
       rec.setMsbEncodingBits(getNumber(data,"msb_encoding_bits"));
       rec.setMinTweakLength(getNumber(data,"tweak_min_len"));
       rec.setMaxTweakLength(getNumber(data,"tweak_max_len"));
+
+      JsonElement permissions = data.get("permissions");
+      if (permissions != null && permissions.isJsonObject()) {
+        JsonObject p = permissions.getAsJsonObject();
+        JsonElement tmp = p.get("encrypt");
+        if (tmp != null && tmp.isJsonPrimitive() && tmp.getAsJsonPrimitive().isBoolean()){
+            rec.CanEncrypt = tmp.getAsBoolean();
+        }
+        tmp = p.get("decrypt");
+        if (tmp != null && tmp.isJsonPrimitive() && tmp.getAsJsonPrimitive().isBoolean()){
+            rec.CanDecrypt = tmp.getAsBoolean();
+        }
+
+      }
+
 
       JsonElement passthrough_rules = data.get("passthrough_rules");
       ArrayList<PassthroughRules> rules = new  ArrayList<PassthroughRules>();

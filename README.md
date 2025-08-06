@@ -462,6 +462,33 @@ String[] ct_arr = ubiqEncryptDecrypt.encryptForSearch(dataset_name, plainText, t
 Additional information on how to use these datasets in your own applications is available by contacting
 Ubiq. You may also view some use-cases implemented in the unit test [UbiqStructuredEncryptTest.java] and the sample application [UbiqSampleStructured.java] source code
 
+## Loading the cache for a specific dataset
+The library maintains a cache of the dataset information and data encryption keys.  The cache will automatically be populated on first use of a dataset or a specific encryption key.  There may be cases where it makes sense to load a cache ahead of time for a dataset and all of the dataset's data encryption keys.  The example below shows how to explicitly load or refresh the cache for a specific dataset
+
+```java
+String dataset_name = "SSN";
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials);
+ubiqEncryptDecrypt.loadCache(dataset_name);
+```
+
+The loadCache function can take an array of dataset names.  If the array is empty, it will load all datasets for the ApiKey used when creating the UbiqStructuredEncryptDecrypt object.  See the examples below
+
+```java
+// Load the cache for dataset1 and dataset2
+String [] datasets = {"dataset1","dataset2"};
+ubiqEncryptDecrypt.loadCache(datasets);
+```
+
+```java
+// Load the cache for all structured datasets associated with the credentials being used
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials);
+ubiqEncryptDecrypt.loadCache(new String[0]);
+```
+
+
 ### Configuration File
 
 A sample configuration file is shown below.  The configuration is in JSON format.  
