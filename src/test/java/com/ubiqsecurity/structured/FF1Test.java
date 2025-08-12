@@ -1,5 +1,6 @@
 package com.ubiqsecurity.structured;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.junit.Test;
@@ -646,4 +647,29 @@ public class FF1Test
               "8ϾĵϺÎ1ϼ1óËĸA14430ϿCϺķϽϻĹ1245ķ2Ï2óô9",
               " ÊËÌÍÎÏðñòóôĵĶķĸĹϺϻϼϽϾϿ0123456789abcABC");
     }
-}
+
+    @Test
+    public void bitlen() {
+      int b = 1;
+      int i = FF1.bitlen(BigInteger.valueOf(2).pow(b).subtract(BigInteger.ONE));
+      assertEquals(i, b);
+    }
+
+    @Test
+    public void bitlen2() {
+      int b = 10;
+      int i = FF1.bitlen(BigInteger.valueOf(2).pow(b).subtract(BigInteger.ONE));
+      assertEquals(i, b);
+    }
+
+    @Test
+    public void bitlen3() {
+      for (int b = 1; b < 100; b++) {
+        int i = FF1.bitlen(BigInteger.valueOf(2).pow(b).subtract(BigInteger.ONE));
+        assertEquals(i, b);
+        int j = FF1.bitlen(BigInteger.valueOf(2).pow(b));
+        assertEquals(b + 1, j);
+      }
+    }
+
+  }
