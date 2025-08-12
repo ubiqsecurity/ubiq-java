@@ -3,6 +3,8 @@
 ## 2.2.8 - 2025-07-22
 * Added loadCache to hydrate and refresh cache on demand rather than first use
 * Fix loading configuration from a provided file
+* Updated structured encryption to match algorithms in Second Public Draft - https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-38Gr1.2pd.pdf
+* Fixed shutdown problem in multithreaded environment
 
 ## 2.2.7 - 2025-06-05
 * Added support for HTTP and HTTPS proxies
