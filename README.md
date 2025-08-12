@@ -225,6 +225,7 @@ byte[] plainBytes = UbiqDecrypt.decrypt(credentials, encryptedBytes);
 ### Unstructured encryption of a large data element where data is loaded in chunks
 
 - Create an unstructured encryption object using the credentials.
+- Call the encryption instance ```initSession()``` method.
 - Call the encryption instance ```begin()``` method.
 - Call the encryption instance ```update()``` method repeatedly until all the data is processed.
 - Call the encryption instance ```end()``` method.
@@ -237,8 +238,12 @@ static void piecewiseEncryption(String inFile, String outFile, UbiqCredentials u
     try (FileInputStream plainStream = new FileInputStream(inFile)) {
         try (FileOutputStream cipherStream = new FileOutputStream(outFile)) {
             try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1)) {
+                // Obtain an encryption session variable to manage state between calls to ensure
+                // a threadsafe environment
+                UbiqUnstructuredEncryptSession encryptSession = ubiqEncrypt.initSession();
                 // start the encryption
-                byte[] cipherBytes = ubiqEncrypt.begin();
+
+                byte[] cipherBytes = ubiqEncrypt.begin(encryptSession);
                 cipherStream.write(cipherBytes);
 
                 // process 128KB at a time
@@ -247,12 +252,12 @@ static void piecewiseEncryption(String inFile, String outFile, UbiqCredentials u
                 // loop until the end of the input file is reached
                 int bytesRead = 0;
                 while ((bytesRead = plainStream.read(plainBytes, 0, plainBytes.length)) > 0) {
-                    cipherBytes = ubiqEncrypt.update(plainBytes, 0, bytesRead);
+                    cipherBytes = ubiqEncrypt.update(encryptSession, plainBytes, 0, bytesRead);
                     cipherStream.write(cipherBytes);
                 }
 
                 // finish the encryption
-                cipherBytes = ubiqEncrypt.end();
+                cipherBytes = ubiqEncrypt.end(encryptSession);
                 cipherStream.write(cipherBytes);
             }
         }
@@ -265,6 +270,7 @@ static void piecewiseEncryption(String inFile, String outFile, UbiqCredentials u
 In this example, the same data encryption key is used to encrypt several different plain text objects, object1 .. objectn.  In each case, a different initialization vector, IV, is automatically used but the ubiq platform is not called to obtain a new data encryption key, resulting in better throughput.  For data security reasons, you should limit n to be less than 2^32 (4,294,967,296) for each unique data encryption key.
 
 1. Create an encryption object using the credentials.
+2. Call the encryption instance initSession method.  This is passed into the begin, update, and end methods
 2. Repeat following three steps as many times as appropriate
 *  Call the encryption instance begin method
 *  Call the encryption instance update method repeatedly until a single object's data is processed
@@ -276,26 +282,28 @@ In this example, the same data encryption key is used to encrypt several differe
 
       ... 
       UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1);
+      UbiqUnstructuredEncryptSession encryptSession = ubiqEncrypt.initSession();
 
       List<Byte> cipherBytes = new ArrayList<Byte>();
+      
       // object1 is a full unencrypted object
-      byte[] tmp = ubiqEncrypt.begin();
+      byte[] tmp = ubiqEncrypt.begin(encryptSession);
       cipherBytes.addAll(Bytes.asList(tmp))
-      tmp = ubiqEncrypt.update(object1, 0, object1.length);
+      tmp = ubiqEncrypt.update(encryptSession, object1, 0, object1.length);
       cipherBytes.addAll(Bytes.asList(tmp))
-      tmp = ubiqEncrypt.end();
+      tmp = ubiqEncrypt.end(encryptSession);
       cipherBytes.addAll(Bytes.asList(tmp))
       // Do something with the encrypted data: cipherBytes
 
       // In this case, object2 is broken into two pieces, object2_part1 and object2_part2
       cipherBytes = new ArrayList<Byte>();
-      tmp = ubiqEncrypt.begin();
+      tmp = ubiqEncrypt.begin(encryptSession);
       cipherBytes.addAll(Bytes.asList(tmp))
-      tmp = ubiqEncrypt.update(object2_part1, 0, object2_part1.length);
+      tmp = ubiqEncrypt.update(encryptSession, object2_part1, 0, object2_part1.length);
       cipherBytes.addAll(Bytes.asList(tmp))
-      tmp = ubiqEncrypt.update(object2_part2, 0, object2_part2.length);
+      tmp = ubiqEncrypt.update(encryptSession, object2_part2, 0, object2_part2.length);
       cipherBytes.addAll(Bytes.asList(tmp))
-      tmp = ubiqEncrypt.end();
+      tmp = ubiqEncrypt.end(encryptSession);
       cipherBytes.addAll(Bytes.asList(tmp))
       // Do something with the encrypted data: cipherBytes
 
@@ -303,11 +311,11 @@ In this example, the same data encryption key is used to encrypt several differe
       // In this case, objectb is broken into two pieces, object2_part1 and object2_part2
       cipherBytes = new ArrayList<Byte>();
       // objectn is a full unencrypted object
-      tmp = ubiqEncrypt.begin();
+      tmp = ubiqEncrypt.begin(encryptSession);
       cipherBytes.addAll(Bytes.asList(tmp))
-      tmp = ubiqEncrypt.update(objectn, 0, objectn.length);
+      tmp = ubiqEncrypt.update(encryptSession, objectn, 0, objectn.length);
       cipherBytes.addAll(Bytes.asList(tmp))
-      tmp = ubiqEncrypt.end();
+      tmp = ubiqEncrypt.end(encryptSession);
       cipherBytes.addAll(Bytes.asList(tmp))
       // Do something with the encrypted data: cipherBytes
 
@@ -318,6 +326,7 @@ In this example, the same data encryption key is used to encrypt several differe
 ### Unstructured decryption of a large data element where data is loaded in chunks
 
 - Create a unstructured decryption object using the credentials.
+- Call the decryption instance ```initSession()``` method.
 - Call the decryption instance ```begin()``` method.
 - Call the decryption instance ```update()``` method repeatedly until all data is processed.
 - Call the decryption instance ```end()``` method
@@ -330,8 +339,11 @@ static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials u
     try (FileInputStream cipherStream = new FileInputStream(inFile)) {
         try (FileOutputStream plainStream = new FileOutputStream(outFile)) {
             try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials)) {
+                // Obtain an encryption session variable to manage state between calls to ensure
+                // a threadsafe environment
+                UbiqUnstructuredDecryptSession decryptSession = ubiqDecrypt.initSession();
                 // start the decryption
-                byte[] plainBytes = ubiqDecrypt.begin();
+                byte[] plainBytes = ubiqDecrypt.begin(decryptSession);
                 plainStream.write(plainBytes);
 
                 // process 128KB at a time
@@ -340,12 +352,12 @@ static void piecewiseDecryption(String inFile, String outFile, UbiqCredentials u
                 // loop until the end of the input file is reached
                 int bytesRead = 0;
                 while ((bytesRead = cipherStream.read(cipherBytes, 0, cipherBytes.length)) > 0) {
-                    plainBytes = ubiqDecrypt.update(cipherBytes, 0, bytesRead);
+                    plainBytes = ubiqDecrypt.update(decryptSession, cipherBytes, 0, bytesRead);
                     plainStream.write(plainBytes);
                 }
 
                 // finish the decryption
-                plainBytes = ubiqDecrypt.end();
+                plainBytes = ubiqDecrypt.end(decryptSession);
                 plainStream.write(plainBytes);
             }
         }
