@@ -15,6 +15,8 @@ import com.ubiqsecurity.UbiqConfiguration;
 import com.ubiqsecurity.UbiqDecrypt;
 import com.ubiqsecurity.UbiqEncrypt;
 import com.ubiqsecurity.UbiqFactory;
+import com.ubiqsecurity.UbiqUnstructuredEncryptSession;
+import com.ubiqsecurity.UbiqUnstructuredDecryptSession;
 
 public class UbiqSample {
     public static void main(String[] args) throws Exception {
@@ -140,17 +142,18 @@ public class UbiqSample {
         try (FileInputStream plainStream = new FileInputStream(inFile)) {
             try (FileOutputStream cipherStream = new FileOutputStream(outFile)) {
                 try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1, ubiqConfiguration)) {
-                    byte[] cipherBytes = ubiqEncrypt.begin();
+                    UbiqUnstructuredEncryptSession encryptSession = ubiqEncrypt.initSession();
+                    byte[] cipherBytes = ubiqEncrypt.begin(encryptSession);
                     cipherStream.write(cipherBytes);
 
                     byte[] plainBytes = new byte[0x20000];
                     int bytesRead = 0;
                     while ((bytesRead = plainStream.read(plainBytes, 0, plainBytes.length)) > 0) {
-                        cipherBytes = ubiqEncrypt.update(plainBytes, 0, bytesRead);
+                        cipherBytes = ubiqEncrypt.update(encryptSession, plainBytes, 0, bytesRead);
                         cipherStream.write(cipherBytes);
                     }
 
-                    cipherBytes = ubiqEncrypt.end();
+                    cipherBytes = ubiqEncrypt.end(encryptSession);
                     cipherStream.write(cipherBytes);
                 }
             }
@@ -162,17 +165,18 @@ public class UbiqSample {
         try (FileInputStream cipherStream = new FileInputStream(inFile)) {
             try (FileOutputStream plainStream = new FileOutputStream(outFile)) {
                 try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials, ubiqConfiguration)) {
-                    byte[] plainBytes = ubiqDecrypt.begin();
+                    UbiqUnstructuredDecryptSession decryptSession = ubiqDecrypt.initSession();
+                    byte[] plainBytes = ubiqDecrypt.begin(decryptSession);
                     plainStream.write(plainBytes);
 
                     byte[] cipherBytes = new byte[0x20000];
                     int bytesRead = 0;
                     while ((bytesRead = cipherStream.read(cipherBytes, 0, cipherBytes.length)) > 0) {
-                        plainBytes = ubiqDecrypt.update(cipherBytes, 0, bytesRead);
+                        plainBytes = ubiqDecrypt.update(decryptSession, cipherBytes, 0, bytesRead);
                         plainStream.write(plainBytes);
                     }
 
-                    plainBytes = ubiqDecrypt.end();
+                    plainBytes = ubiqDecrypt.end(decryptSession);
                     plainStream.write(plainBytes);
                 }
             }

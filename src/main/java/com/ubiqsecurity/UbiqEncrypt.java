@@ -13,11 +13,11 @@ public class UbiqEncrypt implements AutoCloseable {
 
     private UbiqWebServices ubiqWebServices; // null when closed
     private EncryptionKeyResponse encryptionKey;
-    private AesGcmBlockCipher aesGcmBlockCipher;
     private BillingEvents billing_events;
     private BillingEventsProcessor executor;
     private UbiqCredentials ubiqCredentials;
     private UbiqConfiguration ubiqConfiguration;
+    private UbiqUnstructuredEncryptSession session; // For compatibility of non-threadsafe methods
 
     public UbiqEncrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
       this(ubiqCredentials, usesRequested, UbiqFactory.defaultConfiguration());
@@ -35,6 +35,20 @@ public class UbiqEncrypt implements AutoCloseable {
         executor = new BillingEventsProcessor(this.ubiqWebServices, this.billing_events, this.ubiqConfiguration);
         executor.startAsync();
 
+        if (this.encryptionKey == null) {
+          // Get key at start to improve caching later.  Warm up can be done once and 
+          // key reused later
+          this.encryptionKey = this.ubiqWebServices.getEncryptionKey(this.usesRequested);
+        }
+        this.session = null;
+
+    }
+
+    public UbiqUnstructuredEncryptSession initSession() {
+      if (this.ubiqWebServices == null) {
+          throw new IllegalStateException("object closed");
+      } 
+      return new UbiqUnstructuredEncryptSession();
     }
 
     public void close() {
@@ -56,16 +70,37 @@ public class UbiqEncrypt implements AutoCloseable {
       }
     }
 
+    
+    /**
+     * Begin the encryption process and return encrypted bytes
+     * @return - encrypted bytes
+     * 
+     * @deprecated use instance method begin(UbiqUnstructuredEncryptSession session) instead.  
+     */
+    @Deprecated
     public byte[] begin() {
-        if (this.ubiqWebServices == null) {
-            throw new IllegalStateException("object closed");
-        } else if (this.aesGcmBlockCipher != null) {
-            throw new IllegalStateException("encryption in progress");
-        }
+      if (this.session != null && this.session.inUse()) {
+          throw new IllegalStateException("encryption in progress");
+      }
 
-        if (this.encryptionKey == null) {
-            // JIT: request encryption key from server
-            this.encryptionKey = this.ubiqWebServices.getEncryptionKey(this.usesRequested);
+      this.session = initSession();
+      return begin(this.session);
+
+    }
+
+    
+    /**
+     * Begin the encryption process and return encrypted bytes
+     * @param session Session object to manage state between begin, update, and end calls
+     * @return - encrypted bytes
+     * 
+     */
+    public byte[] begin(UbiqUnstructuredEncryptSession session) {
+
+        if (session == null) {
+            throw new IllegalStateException("Session was not created");
+        } else if (session.inUse()) {
+          throw new IllegalStateException("Session is already in use");
         }
 
         billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), "", "", BillingEvents.BillingAction.ENCRYPT, BillingEvents.DatasetType.UNSTRUCTURED, 0,1);
@@ -89,30 +124,78 @@ public class UbiqEncrypt implements AutoCloseable {
         byte[] cipherHeaderBytes = cipherHeader.serialize();
 
         // note: include cipher header bytes in AES calc!
-        this.aesGcmBlockCipher = new AesGcmBlockCipher(true, algorithmInfo, this.encryptionKey.UnwrappedDataKey,
+         AesGcmBlockCipher aesGcmBlockCipher = new AesGcmBlockCipher(true, algorithmInfo, this.encryptionKey.UnwrappedDataKey,
                 initVector, cipherHeaderBytes);
 
+        session.setCipher(aesGcmBlockCipher);
         return cipherHeaderBytes;
     }
 
+    /**
+     * Continue the encryption process with the additional plaintext bytes passed in
+     * @param plainBytes Source data to encrypt
+     * @param offset Offset into the source data
+     * @param count Number of bytes to use
+     * @return - encrypted bytes
+     * 
+     * @deprecated use instance method update(UbiqUnstructuredEncryptSession session, ...) instead.  
+     */
+    @Deprecated
     public byte[] update(byte[] plainBytes, int offset, int count) {
+      return update(this.session, plainBytes, offset, count);
+    }
+
+    /**
+     * Continue the encryption process with the additional plaintext bytes passed in
+
+     * @param session Session object to manage state between begin, update, and end calls
+     * @param plainBytes Source data to encrypt
+     * @param offset Offset into the source data
+     * @param count Number of bytes to use
+     * @return - encrypted bytes
+     */
+
+    public byte[] update(UbiqUnstructuredEncryptSession session, byte[] plainBytes, int offset, int count) {
         if (this.ubiqWebServices == null) {
             throw new IllegalStateException("object closed");
-        } else if ((this.encryptionKey == null) || (this.aesGcmBlockCipher == null)) {
-            throw new RuntimeException("encryptor not initialized");
+        } else if ((session == null) || (!session.inUse())) {
+            throw new RuntimeException("session not initialized");
         }
 
-        byte[] cipherBytes = this.aesGcmBlockCipher.update(plainBytes, offset, count);
+        byte[] cipherBytes = session.getCipher().update(plainBytes, offset, count);
         return cipherBytes;
     }
 
+    /**
+     * End the encryption process and return any remaining encrypted data
+     * @return - encrypted bytes
+     * 
+     * @throws IllegalStateException if the object have not been initialized correctly
+     * @throws InvalidCipherTextException if an exception was encountered while encrypting the data
+     * @deprecated use instance method end(UbiqUnstructuredEncryptSession session instead.  
+     */
+    @Deprecated
     public byte[] end() throws IllegalStateException, InvalidCipherTextException {
+        return end(this.session);
+    }
+
+    /**
+     * End the encryption process and return any remaining encrypted data
+     * @param session Session object to manage state between begin, update, and end calls
+     * @return - encrypted bytes
+     *
+     * @throws IllegalStateException if the object have not been initialized correctly
+     * @throws InvalidCipherTextException if an exception was encountered while encrypting the data
+     */
+    public byte[] end(UbiqUnstructuredEncryptSession session) throws IllegalStateException, InvalidCipherTextException {
         if (this.ubiqWebServices == null) {
             throw new IllegalStateException("object closed");
+        } else if ((session == null) || (!session.inUse())) {
+            throw new RuntimeException("session not initialized");
         }
 
-        byte[] finalBytes = this.aesGcmBlockCipher.doFinal();
-        this.aesGcmBlockCipher = null;
+        byte[] finalBytes = session.getCipher().doFinal();
+        session.close();
         return finalBytes;
     }
 
@@ -121,9 +204,11 @@ public class UbiqEncrypt implements AutoCloseable {
         try (UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1, ubiqConfiguration);
              ByteArrayOutputStream cipherStream = new ByteArrayOutputStream()) {
 
-            cipherStream.write(ubiqEncrypt.begin());
-            cipherStream.write(ubiqEncrypt.update(data, 0, data.length));
-            cipherStream.write(ubiqEncrypt.end());
+            UbiqUnstructuredEncryptSession session = ubiqEncrypt.initSession();
+
+            cipherStream.write(ubiqEncrypt.begin(session));
+            cipherStream.write(ubiqEncrypt.update(session,data, 0, data.length));
+            cipherStream.write(ubiqEncrypt.end(session));
 
             return cipherStream.toByteArray();
         } catch (IOException ex) {

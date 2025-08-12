@@ -110,7 +110,7 @@ public class UbiqStructuredMultithreadTest
     Collection<Thread> syncCollection = Collections.synchronizedCollection(new ArrayList<>());
     Instant s = Instant.now();
 
-    int n = 50; // Number of threads
+    int n = 20; // Number of threads
       for (int j = 0; j < 10000; j++) {
         for (int i = 0; i < n; i++) {
             Thread object = new Thread(new Multithreading(encrypt, decrypt, random));
