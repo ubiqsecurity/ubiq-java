@@ -15,15 +15,13 @@ public class UbiqDecrypt implements AutoCloseable {
     private boolean verbose= false;
     private UbiqWebServices ubiqWebServices; // null on close
 
-    private CipherHeader cipherHeader; // extracted from beginning of ciphertext
-    private ByteQueue byteQueue;
     private DecryptionKeyResponse decryptionKey;
-    private AesGcmBlockCipher aesGcmBlockCipher;
     private BillingEvents billing_events;
     private BillingEventsProcessor executor;
     private UbiqCredentials ubiqCredentials;
     private UbiqConfiguration ubiqConfiguration;
     private UnstructuredKeyCache unstructuredKeyCache;
+    private UbiqUnstructuredDecryptSession session; // For compatibility of non-threadsafe methods
 
     public UbiqDecrypt(UbiqCredentials ubiqCredentials) {
       this(ubiqCredentials, UbiqFactory.defaultConfiguration());
@@ -38,6 +36,16 @@ public class UbiqDecrypt implements AutoCloseable {
       billing_events = new BillingEvents(this.ubiqConfiguration);
       executor = new BillingEventsProcessor(this.ubiqWebServices, this.billing_events, this.ubiqConfiguration);
       executor.startAsync();
+
+      this.session = null;
+
+    }
+
+    public UbiqUnstructuredDecryptSession initSession() {
+      if (this.ubiqWebServices == null) {
+          throw new IllegalStateException("object closed");
+      } 
+      return new UbiqUnstructuredDecryptSession();
     }
 
     public void close() {
@@ -60,21 +68,65 @@ public class UbiqDecrypt implements AutoCloseable {
         }
     }
 
-    public byte[] begin() {
+    /**
+     * Begin the decryption process and return decrypted bytes
+     * @return - decrypted bytes
+     * 
+     * @throws IllegalStateException if the object have not been initialized correctly
+     * @deprecated use instance method begin(UbiqUnstructuredDecryptSession session) instead.  
+     */
+    @Deprecated
+    public byte[] begin() throws IllegalStateException {
+       if (this.session != null && this.session.inUse()) {
+          throw new IllegalStateException("encryption in progress");
+      }
+      this.session = initSession();
+      return begin(this.session);
+    }
+
+    /**
+     * Begin the decryption process and return decrypted bytes
+     * @param session Session object to manage state between begin, update, and end calls
+     * @return - decrypted bytes
+     * 
+     * @throws IllegalStateException if the object have not been initialized correctly
+     */
+    public byte[] begin(UbiqUnstructuredDecryptSession session) throws IllegalStateException {
+
         if (this.ubiqWebServices == null) {
             throw new IllegalStateException("object closed");
-        } else if (this.aesGcmBlockCipher != null) {
-            throw new IllegalStateException("decryption in progress");
+        } else if (session.inUse()) {
+          throw new IllegalStateException("Session is already in use");
         }
-
-        // prepare to receive initial header bytes
-        this.cipherHeader = null;
-        this.byteQueue = null;
 
         // note: cached 'decryptionKey' may be present from a previous decryption run
 
         return new byte[0];
     }
+
+    /**
+     * Continue the decryption process with the additional cipher text bytes passed in
+
+     * @param cipherBytes Source data to decrypt
+     * @param offset Offset into the source data
+     * @param count Number of bytes to use
+     * @return - decrypted bytes
+     * @deprecated use instance method update(UbiqUnstructuredDecryptSession session, ...) instead.  
+     */
+    @Deprecated
+    public byte[] update(byte[] cipherBytes, int offset, int count) {
+      return update(this.session, cipherBytes, offset, count);
+    }
+
+    /**
+     * Continue the decryption process with the additional cipher text bytes passed in
+
+     * @param session Session object to manage state between begin, update, and end calls
+     * @param cipherBytes Source data to decrypt
+     * @param offset Offset into the source data
+     * @param count Number of bytes to use
+     * @return - decrypted bytes
+     */
 
     // Each encryption has a header on it that identifies the algorithm
     // used and an encryption of the data key that was used to encrypt
@@ -89,36 +141,34 @@ public class UbiqDecrypt implements AutoCloseable {
     // key is sent to the server for decryption. After the header has
     // been successfully handled, this function always decrypts all of
     // the data in its internal buffer.
-    public byte[] update(byte[] cipherBytes, int offset, int count) {
+    public byte[] update(UbiqUnstructuredDecryptSession session, byte[] cipherBytes, int offset, int count) {
         if (this.ubiqWebServices == null) {
             throw new IllegalStateException("object closed");
+        } else if (session == null) { // Cannot check cipher because it cannot be built until data is seen
+            throw new RuntimeException("session not initialized");
         }
 
         byte[] plainBytes = new byte[0]; // returned
 
-        if (this.byteQueue == null) {
-            this.byteQueue = new ByteQueue(null);
-        }
-
         // make sure new data is appended to end
-        this.byteQueue.enqueue(cipherBytes, offset, count);
+        session.getByteQueue().enqueue(cipherBytes, offset, count);
 
-        if (this.cipherHeader == null) {
+        if (session.getCipherHeader() == null) {
             // see if we've got enough data for the header record
-            try (ByteArrayInputStream byteStream = new ByteArrayInputStream(this.byteQueue.peek())) {
-                this.cipherHeader = CipherHeader.deserialize(byteStream);
+            try (ByteArrayInputStream byteStream = new ByteArrayInputStream(session.getByteQueue().peek())) {
+                session.setCipherHeader(CipherHeader.deserialize(byteStream));
             } catch (IOException ex) {
                 System.out.println("stream exception");
                 // keep going anyway...
             }
 
-            if (this.cipherHeader != null) {
+            if (session.getCipherHeader() != null) {
                 // success: prune cipher header bytes from the buffer
-                this.byteQueue.dequeue(this.cipherHeader.calcLength());
+               session.getByteQueue().dequeue(session.getCipherHeader().calcLength());
 
                 try {
                 // JIT: request encryption key from server.  Will return from cache
-                this.decryptionKey = this.unstructuredKeyCache.unstructuredCache.get(Base64.getEncoder().encodeToString(this.cipherHeader.encryptedDataKeyBytes));
+                this.decryptionKey = this.unstructuredKeyCache.unstructuredCache.get(Base64.getEncoder().encodeToString(session.getCipherHeader().encryptedDataKeyBytes));
 
                 // Cache may or may not have unwrapped key.  Will not be set if 
                 // configuration wants cache encrypted.
@@ -128,15 +178,15 @@ public class UbiqDecrypt implements AutoCloseable {
                 }
 
                 if (this.decryptionKey != null) {
-                    AlgorithmInfo algorithmInfo = new AlgorithmInfo(this.cipherHeader.algorithmId);
+                    AlgorithmInfo algorithmInfo = new AlgorithmInfo(session.getCipherHeader().algorithmId);
 
                     // create decryptor from header-specified algorithm + server-supplied decryption key
-                    this.aesGcmBlockCipher = new AesGcmBlockCipher(false, algorithmInfo,
-                            unwrappedDataKey, this.cipherHeader.initVectorBytes,
-                            ((this.cipherHeader.flags & CipherHeader.FLAGS_AAD_ENABLED) != 0)
-                                ? this.cipherHeader.serialize()
+                    AesGcmBlockCipher aesGcmBlockCipher = new AesGcmBlockCipher(false, algorithmInfo,
+                            unwrappedDataKey, session.getCipherHeader().initVectorBytes,
+                            ((session.getCipherHeader().flags & CipherHeader.FLAGS_AAD_ENABLED) != 0)
+                                ? session.getCipherHeader().serialize()
                                 : null);
-
+                    session.setCipher(aesGcmBlockCipher);
                     billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), "", "", BillingEvents.BillingAction.DECRYPT, BillingEvents.DatasetType.UNSTRUCTURED, 0,1);
                 }
               } catch (ExecutionException e) {
@@ -150,30 +200,53 @@ public class UbiqDecrypt implements AutoCloseable {
         }
 
         // If we get this far, assume we have a valid header record.
-        assert this.cipherHeader != null;
+        assert session.getCipherHeader() != null;
 
-        if ((this.decryptionKey != null) && (this.aesGcmBlockCipher != null)) {
+        if ((this.decryptionKey != null) && session.inUse()) {
             // pass all available buffered bytes to the decryptor
-            if (this.byteQueue.getLength() > 0) {
-                byte[] bufferedBytes = this.byteQueue.dequeue(this.byteQueue.getLength());
-                plainBytes = this.aesGcmBlockCipher.update(bufferedBytes, 0, bufferedBytes.length);
+            if (session.getByteQueue().getLength() > 0) {
+                byte[] bufferedBytes = session.getByteQueue().dequeue(session.getByteQueue().getLength());
+                plainBytes = session.getCipher().update(bufferedBytes, 0, bufferedBytes.length);
             }
         }
 
         return plainBytes;
     }
 
+    /**
+     * End the decryption process and return any remaining decrypted data
+     * @return - decrypted bytes
+     * 
+     * @throws IllegalStateException if the object have not been initialized correctly
+     * @throws InvalidCipherTextException if an exception was encountered while decrypting the data
+     * @deprecated use instance method end(UbiqUnstructuredDecryptSession session instead.  
+     */
+    @Deprecated
     public byte[] end() throws IllegalStateException, InvalidCipherTextException {
+          return end(this.session);
+    }
+
+    /**
+     * End the decryption process and return any remaining decrypted data
+     * @param session Session object to manage state between begin, update, and end calls
+     * @return - decrypted bytes
+     * 
+     * @throws IllegalStateException if the object have not been initialized correctly
+     * @throws InvalidCipherTextException if an exception was encountered while decrypting the data
+     */
+    public byte[] end(UbiqUnstructuredDecryptSession session) throws IllegalStateException, InvalidCipherTextException {
         if (this.ubiqWebServices == null) {
             throw new IllegalStateException("object closed");
+        } else if ((session == null) || (!session.inUse())) {
+            throw new RuntimeException("session not initialized");
         }
 
-        byte[] finalPlainBytes = this.aesGcmBlockCipher.doFinal();
-        this.aesGcmBlockCipher = null;
-        this.byteQueue = null;
+        byte[] finalPlainBytes = session.getCipher().doFinal();
+        session.close();
         return finalPlainBytes;
     }
 
+    
     public static byte[] decrypt(UbiqCredentials ubiqCredentials, byte[] data)
             throws IllegalStateException, InvalidCipherTextException {
         return decrypt(ubiqCredentials, data, UbiqFactory.defaultConfiguration());
@@ -183,9 +256,12 @@ public class UbiqDecrypt implements AutoCloseable {
             throws IllegalStateException, InvalidCipherTextException {
         try (UbiqDecrypt ubiqDecrypt = new UbiqDecrypt(ubiqCredentials, ubiqConfiguration)) {
             try (ByteArrayOutputStream plainStream = new ByteArrayOutputStream()) {
-                plainStream.write(ubiqDecrypt.begin());
-                plainStream.write(ubiqDecrypt.update(data, 0, data.length));
-                plainStream.write(ubiqDecrypt.end());
+
+                UbiqUnstructuredDecryptSession session = ubiqDecrypt.initSession();
+
+                plainStream.write(ubiqDecrypt.begin(session));
+                plainStream.write(ubiqDecrypt.update(session, data, 0, data.length));
+                plainStream.write(ubiqDecrypt.end(session));
 
                 return plainStream.toByteArray();
             } catch (IOException ex) {
@@ -207,7 +283,7 @@ public class UbiqDecrypt implements AutoCloseable {
             this.decryptionKey = null;
         }
 
-        this.aesGcmBlockCipher = null;
+        this.session = null;
     }
 
     public void addReportingUserDefinedMetadata(String jsonString) {
