@@ -3,6 +3,7 @@ package com.ubiqsecurity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.concurrent.TimeUnit;
 
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
@@ -37,16 +38,22 @@ public class UbiqEncrypt implements AutoCloseable {
     }
 
     public void close() {
-      if (verbose) System.out.println("Close");
+      String csu = "close";
+      if (verbose) System.out.println(csu);
 
-        if (this.ubiqWebServices != null) {
+      if (this.ubiqWebServices != null) {
 
-            // this stops any remaining background billing processing since we'll make an explicit final call now
-            // executor.stopAsync();
-            executor.shutDown();
+          // this stops any remaining background billing processing
+          try {
+            if (executor != null) {
+              executor.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
+            }
+          } catch (Exception e) {
+              System.out.printf("%s   : %s Exception %s  messasge: %s\n", csu,new java.util.Date(),  e.getClass().getName(), e.getMessage());
+          }            
 
-            this.ubiqWebServices = null;
-        }
+          this.ubiqWebServices = null;
+      }
     }
 
     public byte[] begin() {

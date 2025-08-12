@@ -3,6 +3,7 @@ package com.ubiqsecurity.structured;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+
 /**
  * FF1 algorithm for format-preserving encryption
  */
@@ -33,6 +34,22 @@ public class FF1 extends FFX
       super(key, twk, (long)1 << 32, twkmin, twkmax, radix, alpha);
     }
 
+    public double log2(double x) {
+        return (double)(Math.log(x) / Math.log(2));
+    }
+
+    static public int bitlen(BigInteger n) {
+
+      int bits = 0;
+
+      while(!n.equals(BigInteger.ZERO)) {
+        n = n.shiftRight(1);
+        bits ++;
+      }
+
+    return bits;
+  }
+
     /*
      * The comments below reference the steps of the algorithm described here:
      *
@@ -44,8 +61,8 @@ public class FF1 extends FFX
         final int u = n / 2, v = n - u;
 
         /* Step 3, 4 */
-        final int b = ((int)Math.ceil(
-                           (Math.log(this.radix) / Math.log(2)) * v) + 7) / 8;
+        final int b = (int)Math.ceil(
+          ((bitlen(BigInteger.valueOf(this.radix).pow(v).subtract(BigInteger.ONE))) + 7) / 8);
         final int d = 4 * ((b + 3) / 4) + 4;
 
         final int p = 16;
