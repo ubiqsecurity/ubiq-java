@@ -18,6 +18,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Provides Format Preserving Encryption capability for a variety of field format models (aka FFS models)
@@ -86,13 +87,20 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
      *
      */
     public void close() {
-      if (verbose) System.out.println("Close");
+      String csu = "close";
+      if (verbose) System.out.println(csu);
       if (this.ubiqWebServices != null) {
             clearKeyCache();
 
-            // this stops any remaining background billing processing since we'll make an explicit final call now
-            // executor.stopAsync();
-            executor.shutDown();
+            // this stops any remaining background billing processing
+            try {
+              if (executor != null) {
+                executor.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
+              }
+            } catch (Exception e) {
+               System.out.printf("%s   : %s Exception %s  messasge: %s\n", csu,new java.util.Date(),  e.getClass().getName(), e.getMessage());
+            }            
+            // executor.shutDown();
 
             // Perform a final billing_events  processing for items that may not have been done by the async executor
             this.ubiqWebServices = null;

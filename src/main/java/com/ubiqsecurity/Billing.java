@@ -151,7 +151,7 @@ class BillingEvents {
         }
       });
 
-      return new RestCallFuture(future, events, submitCount);
+      return new RestCallFuture(execService, future, events, submitCount);
     }
 
     /**

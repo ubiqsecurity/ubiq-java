@@ -99,6 +99,7 @@ class BillingEventsProcessor extends AbstractScheduledService
             RestCallFuture restResults = (RestCallFuture)iter.next();
             if (restResults.future.isDone()) {
               Integer status = (Integer) restResults.future.get();
+              restResults.execService.shutdown();
               if (verbose) System.out.printf("%s future status %d\n", csu, status);
               if (status == 200) {
                 if (verbose) System.out.printf("%s remove \n", csu);
@@ -163,12 +164,15 @@ class BillingEventsProcessor extends AbstractScheduledService
         RestCallFuture restResults = iter.next();
         // Wait until the events have been processed
         try {
-          Integer res = (Integer) restResults.future.get();
+          Integer res = (Integer) restResults.future.get(2, TimeUnit.SECONDS);
+          
           if (verbose) System.out.printf("%s -- shutDown: res (%d)\n", csu, res);
 
         } catch (InterruptedException | ExecutionException e) {
           if (verbose) System.out.printf("%s -- InterruptedException: %s\n", csu, e.getMessage());
 
+        } finally {
+          restResults.execService.shutdown();
         }
       }
       // perform final list processing here
