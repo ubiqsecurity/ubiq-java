@@ -1,6 +1,6 @@
 // Do Not Edit
-// Built during the gradle build process using the VERSION information in gradle.properties
+// Built during the Maven build process using the project.version
 package com.ubiqsecurity;
-public final class Version { 
-   public static String VERSION = "2.2.8";
+public final class Version {
+    public static String VERSION = "2.2.8";
 }
