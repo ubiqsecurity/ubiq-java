@@ -100,14 +100,15 @@ The following is a list of the JAR files required to compile, test, or deploy th
 
 #### Building from source:
 
-Use following command to use [gradlew] to build the JAR file
+Use following command to use [maven] to build the JAR file
 ```sh
 #Linux / Mac
-./gradlew assemble build
+mvn clean compile package -DskipTests
 ```
 ```dos
 # windows
-.\gradlew assemble build
+mvn clean compile package -DskipTests
+
 ```
 ### Requirements
 
@@ -590,7 +591,7 @@ Occasionally, you may encounter issues when interacting with the Ubiq API.
 
 [dashboard]:https://dashboard.ubiqsecurity.com/
 [credentials]:https://dev.ubiqsecurity.com/docs/api-keys
-[gradlew]:https://docs.gradle.org/current/userguide/gradle_wrapper.html
+[maven]:https://maven.apache.org/
 [UbiqStructuredEncryptTest.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/src/test/java/com/ubiqsecurity/UbiqStructuredEncryptTest.java
 [UbiqSampleStructured.java]:https://gitlab.com/ubiqsecurity/ubiq-java/-/blob/master/example/src/main/java/UbiqSampleStructured.java
 

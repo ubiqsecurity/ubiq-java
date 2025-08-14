@@ -27,16 +27,18 @@ build:
     stage: build
     before_script:
       - apt -y update
+      - apt -y install maven
     script:
-        - ./gradlew clean assemble build -x test
+        - mvn clean compile package
 
 test:
     image: openjdk:8
     stage: test
     before_script:
       - apt -y update
+      - apt -y install maven
     script:
-        - ./gradlew test
+        - mvn test
 
 
 sast:
