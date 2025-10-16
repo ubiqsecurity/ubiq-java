@@ -31,7 +31,7 @@ build:
     script:
         - mvn clean compile package
 
-test:
+test_prod:
     image: openjdk:8
     stage: test
     before_script:
@@ -39,6 +39,27 @@ test:
       - apt -y install maven
     script:
         - mvn test
+    environment:
+      name: ubs-usw2-prcv3
+    rules:
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+        when: on_success
+      - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+        when: on_success
+
+test_dev:
+    image: openjdk:8
+    stage: test
+    before_script:
+      - apt -y update
+      - apt -y install maven
+    script:
+        - mvn test
+    environment:
+      name: ubs-usw2-dvc
+    rules:
+      - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != 'merge_request_event'
+
 
 
 sast:
