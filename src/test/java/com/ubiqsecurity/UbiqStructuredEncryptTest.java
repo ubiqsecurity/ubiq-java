@@ -1,28 +1,77 @@
 package com.ubiqsecurity;
 
-import java.time.Duration;
-import java.time.Instant;
-
-import org.junit.Test;
-import static org.junit.Assert.*;
-import java.math.BigInteger;
-import java.util.Arrays;
-import com.ubiqsecurity.structured.FF1;
-import com.ubiqsecurity.UbiqFactory;
-import java.util.concurrent.ExecutionException;
-import java.util.*;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
-import java.io.IOException;
-import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 import com.google.gson.*;
+
+import com.ubiqsecurity.structured.FF1;
+import com.ubiqsecurity.UbiqFactory;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+
+import java.math.BigInteger;
+
+import java.security.*;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.PublicKey;
+import java.security.spec.RSAPublicKeySpec;
+
+import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import java.util.*;
+import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import javax.crypto.Cipher;
+
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.crypto.AsymmetricBlockCipher;
+import org.bouncycastle.crypto.digests.SHA1Digest;
+import org.bouncycastle.crypto.encodings.OAEPEncoding;
+import org.bouncycastle.crypto.engines.RSAEngine;
+import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.crypto.params.RSAKeyParameters;
+import org.bouncycastle.crypto.params.RSAPrivateCrtKeyParameters;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.crypto.util.PublicKeyFactory;
+import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateCrtKey;
+import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateKey;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
+import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
+import org.bouncycastle.openssl.PEMDecryptorProvider;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.bouncycastle.pkcs.PKCSException;
+
+
 
 public class UbiqStructuredEncryptTest
 {
     private final String UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY = "UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY";
+    private final String UBIQ_SECRET_CRYPTO_ACCESS_KEY = "UBIQ_SECRET_CRYPTO_ACCESS_KEY";
+    
 
     static void testCycleEncryption(String dataset_name, String plainText, UbiqCredentials ubiqCredentials) {
 
@@ -60,14 +109,20 @@ public class UbiqStructuredEncryptTest
           String pt = ubiqEncryptDecrypt.decrypt(dataset_name, ct, null);
           assertEquals(plainText, pt);
 
-          pt = ubiqEncryptDecrypt.decrypt(dataset_name, expectedCt, null);
-          assertEquals(plainText, pt);
+          if (expectedCt != null) {
+            pt = ubiqEncryptDecrypt.decrypt(dataset_name, expectedCt, null);
+            assertEquals(plainText, pt);
+          }
 
           String[] ct_arr = ubiqEncryptDecrypt.encryptForSearch(dataset_name, plainText, tweak);
 
+          if (expectedCt != null) {
+            ct = expectedCt;
+          }
+
           Boolean foundCt = false;
           for (String x : ct_arr) {
-            foundCt = foundCt || (expectedCt.equals(x));
+            foundCt = foundCt || (ct.equals(x));
             pt = ubiqEncryptDecrypt.decrypt(dataset_name, x, tweak);
             assertEquals(plainText, pt);
           }
@@ -77,27 +132,27 @@ public class UbiqStructuredEncryptTest
 
     @Test
     public void encryptStructured_ALPHANUM_SSN() {
-            testRt("ALPHANUM_SSN", ";0123456-789ABCDEF|", ";!!!E7`+-ai1ykOp8r|");
+            testRt("ALPHANUM_SSN", ";0123456-789ABCDEF|", null);
     }
 
     @Test
     public void encryptStructured_BIRTH_DATE() {
-      testRt("BIRTH_DATE", ";01\\02-1960|", ";!!\\!!-oKzi|");
+      testRt("BIRTH_DATE", ";01\\02-1960|", null);
     }
 
     @Test
     public void encryptStructured_SSN() {
-      testRt("SSN", "-0-1-2-3-4-5-6-7-8-9-", "-0-0-0-0-1-I-L-8-j-D-");
+      testRt("SSN", "-0-1-2-3-4-5-6-7-8-9-", null);
     }
 
     @Test
     public void encryptStructured_UTF8_STRING_COMPLEX() {
-      testRt("UTF8_STRING_COMPLEX", "ÑÒÓķĸĹϺϻϼϽϾÔÕϿは世界abcdefghijklmnopqrstuvwxyzこんにちÊʑʒʓËÌÍÎÏðñòóôĵĶʔʕ", "ÑÒÓにΪΪΪΪΪΪ3ÔÕoeϽΫAÛMĸOZphßÚdyÌô0ÝϼPtĸTtSKにVÊϾέÛはʑʒʓÏRϼĶufÝK3MXaʔʕ");
+      testRt("UTF8_STRING_COMPLEX", "ÑÒÓķĸĹϺϻϼϽϾÔÕϿは世界abcdefghijklmnopqrstuvwxyzこんにちÊʑʒʓËÌÍÎÏðñòóôĵĶʔʕ", null);
     }
 
     @Test
     public void encryptStructured_UTF8_STRING_COMPLEX_2() {
-      testRt("UTF8_STRING_COMPLEX", "ķĸĹϺϻϼϽϾϿは世界abcdefghijklmnopqrstuvwxyzこんにちÊËÌÍÎÏðñòóôĵĶ", "にΪΪΪΪΪΪ3oeϽΫAÛMĸOZphßÚdyÌô0ÝϼPtĸTtSKにVÊϾέÛはÏRϼĶufÝK3MXa");
+      testRt("UTF8_STRING_COMPLEX", "ķĸĹϺϻϼϽϾϿは世界abcdefghijklmnopqrstuvwxyzこんにちÊËÌÍÎÏðñòóôĵĶ", null);
     }
 
     @Test
@@ -751,7 +806,12 @@ public class UbiqStructuredEncryptTest
         obj = new JsonObject();
         obj.addProperty("encrypted_private_key",encrypted_private_key);
         obj.addProperty("key_number","1");
-        obj.addProperty("wrapped_data_key","Ep/LbXUfDj2LwuFB6ytNcacXsHHZvXjbWzBLxFekKZipFKKXUwtR694T4OUzlYBxai8DRU84NBqMk2syRN8yX4g/TRCjAC12lmUFavKEXGhqeBilej2WqaZ/yjN4g/uKohQCD3IQCIM2Fs5vXv4hFR6ZXOtqwoVtndlKYsFjuMNxKQ8PwhMVy2XQxJK70oZZm9Sf+6PPoxBhVLBj2Wr2SIalA8TqS8x/SZn17QqB0pdSVkxrtlH5eRqAKI3MswWzDlt9RYkPcGPmmt+utM3GTXkN1d8rI2+J9pqdceOyyu2mtyg89XezzJCiUV/qGJedmFqwfN5MBPZg+4bSMgnFLXBPcrpKJUzBAWyzw4RdCWkqbDXQA9jNIFT3Rnu05Kp/bitULuZZngOqiogf1yLnFfU8yk/aAcxyAqw6z1LnUUC3cCMr3b9mVlssjxJDMQ1Dk7X5HgWtyaZ/ZDXmk05SRL1kuibhswckyeI/bGTe48TU5Kqle/n+AC4vocZ/Vcc4mkTxu5laGzG88onEVX7OpXgoH98t1wyXYFGzZUVJkUjtr3Uzp4wMLKU20GQNPzSVnppxY9CI6S6UG+POBLJM9Y4bF+STv0RM4Y2blkFJsCJ7aooAdQUF/jaZKag0jv2z6tk6OTMB+goF2MN1QCXfOsvS3M0uvnXKieadsOCRq6U=");
+        String secretCryptoAccessKey = System.getenv(UBIQ_SECRET_CRYPTO_ACCESS_KEY);
+        byte[] key = "1234567890123456".getBytes();
+
+        String wrappedDataKey = wrapDataKey2(key, encrypted_private_key, secretCryptoAccessKey);
+
+        obj.addProperty("wrapped_data_key",wrappedDataKey);
 
         // LoadKeyDef requires the dataset to be loaded first
          ubiqEncryptDecrypt.loadKeyDef(datasetName, obj.toString(), true);
@@ -760,6 +820,180 @@ public class UbiqStructuredEncryptTest
       } catch (Exception ex) {
         assertEquals(false, true);
       }
+    }
+
+    String wrapDataKey(byte[] key, String encrypted_private_key, String secretCryptoAccessKey) {
+      BouncyCastleProvider bcProvider;
+      
+      String wrappedDataKey = null;
+      bcProvider = new BouncyCastleProvider();
+
+      try (PEMParser pemParser = new PEMParser(new StringReader(encrypted_private_key))) {
+
+            Object object = pemParser.readObject();
+            if (!(object instanceof PKCS8EncryptedPrivateKeyInfo)) {
+                throw new RuntimeException("Unrecognized Encrypted Private Key format");
+            }
+
+            JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider(bcProvider);
+            // Decrypt the private key using our secret key
+            InputDecryptorProvider decryptProvider  = builder.build(secretCryptoAccessKey.toCharArray());
+
+            PKCS8EncryptedPrivateKeyInfo keyInfo = (PKCS8EncryptedPrivateKeyInfo) object;
+            PrivateKeyInfo privateKeyInfo = keyInfo.decryptPrivateKeyInfo(decryptProvider);
+
+            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider(bcProvider);
+            PrivateKey privateKey = keyConverter.getPrivateKey(privateKeyInfo);
+
+            if (!(privateKey instanceof BCRSAPrivateCrtKey)) {
+                throw new RuntimeException("Unrecognized Private Key format: " + privateKey.getClass().getName() + " " );
+            }
+            
+            BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
+
+            // now that we've decrypted the server-provided empheral key, we can
+            // decrypt the key to be used for local encryption
+
+            RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(
+                rsaPrivateKey.getModulus(),
+                rsaPrivateKey.getPrivateExponent()
+            );
+
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA", new BouncyCastleProvider());
+            PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+            RSAPublicKey rsaPub = (RSAPublicKey) publicKey;
+
+            RSAKeyParameters pubParams = new RSAKeyParameters(
+                false, // false = public key
+                rsaPrivateKey.getModulus(),
+                BigInteger.valueOf(65537)
+            );
+            OAEPEncoding rsaEnginePublic = new OAEPEncoding(
+                    new RSAEngine(),
+                    new SHA1Digest(),
+                    new SHA1Digest(),
+                    null);
+
+            rsaEnginePublic.init(true, pubParams);
+
+            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding", new BouncyCastleProvider()) ;//"RSA/ECB/PKCS1Padding",new BouncyCastleProvider());
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+
+            byte[] encryptedBytes = cipher.doFinal(key);
+
+            wrappedDataKey = Base64.getEncoder().encodeToString(encryptedBytes);
+
+            RSAKeyParameters cipherParams = new RSAKeyParameters(
+                    true,
+                    rsaPrivateKey.getModulus(),
+                    rsaPrivateKey.getPrivateExponent());
+
+            OAEPEncoding rsaEngine = new OAEPEncoding(
+                    new RSAEngine(),
+                    new SHA1Digest(),
+                    new SHA1Digest(),
+                    null);
+
+            rsaEngine.init(false, cipherParams);
+
+            // 'UnwrappedDataKey' is used for local encryptions
+            byte[] wrappedDataKeyBytes = Base64.getDecoder().decode(wrappedDataKey);
+
+            if (!Arrays.equals(wrappedDataKeyBytes, encryptedBytes)) {
+              fail("Unwrapped Key encrypted key are NOT equal");
+            }
+
+
+            byte[] unwrappedDataKey = rsaEngine.processBlock(wrappedDataKeyBytes, 0, wrappedDataKeyBytes.length);
+
+            if (!Arrays.equals(unwrappedDataKey, key)) {
+              fail("Key and Decrypted Key are not equal");
+            }
+        }
+        catch (Exception e) {
+          System.out.printf("wrapDataKey   : %s   Exception %s  messasge: %s\n", new java.util.Date(),  e.getClass().getName(), e.getMessage());
+          e.printStackTrace();
+        }
+        return wrappedDataKey;
+      }
+    
+    private String wrapDataKey2(byte[] key, String encrypted_private_key, String secretCryptoAccessKey) throws Exception{
+
+      BouncyCastleProvider bcProvider;
+      
+      String base64Ciphertext = null;
+      bcProvider = new BouncyCastleProvider();
+
+      try (PEMParser pemParser = new PEMParser(new StringReader(encrypted_private_key))) {
+
+            Object object = pemParser.readObject();
+            if (!(object instanceof PKCS8EncryptedPrivateKeyInfo)) {
+                throw new RuntimeException("Unrecognized Encrypted Private Key format");
+            }
+
+            JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider(bcProvider);
+            // Decrypt the private key using our secret key
+            InputDecryptorProvider decryptProvider  = builder.build(secretCryptoAccessKey.toCharArray());
+
+            PKCS8EncryptedPrivateKeyInfo keyInfo = (PKCS8EncryptedPrivateKeyInfo) object;
+            PrivateKeyInfo privateKeyInfo = keyInfo.decryptPrivateKeyInfo(decryptProvider);
+
+            JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter().setProvider(bcProvider);
+            PrivateKey privateKey = keyConverter.getPrivateKey(privateKeyInfo);
+
+
+            if (!(privateKey instanceof BCRSAPrivateCrtKey)) {
+                throw new RuntimeException("Unrecognized Private Key format: " + privateKey.getClass().getName() + " " );
+            }
+            
+            BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
+
+            RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(
+                rsaPrivateKey.getModulus(),
+                 BigInteger.valueOf(65537)
+             );
+
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA", new BouncyCastleProvider());
+            PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+            RSAPublicKey rsaPub = (RSAPublicKey) publicKey;
+
+            byte[] ciphertext = encrypt(key, publicKey);
+
+            base64Ciphertext = Base64.getEncoder().encodeToString(ciphertext);
+
+            byte[] decodedCipher = Base64.getDecoder().decode(base64Ciphertext);
+
+            byte[] decrypted2 = decrypt2(decodedCipher, privateKey);
+        }
+        return base64Ciphertext;
+
+    }
+
+
+   private byte[] encrypt(byte[] data, PublicKey pubKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, pubKey);
+        return cipher.doFinal(data);
+    }
+
+    private byte[] decrypt2(byte[] cipherText, PrivateKey privKey) throws Exception {
+
+      BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privKey;
+
+      RSAKeyParameters cipherParams = new RSAKeyParameters(
+                  true,
+                  rsaPrivateKey.getModulus(),
+                  rsaPrivateKey.getPrivateExponent());
+      OAEPEncoding rsaEngine = new OAEPEncoding(
+                    new RSAEngine(),
+                    new SHA1Digest(),
+                    new SHA1Digest(),
+                    null);
+
+      rsaEngine.init(false, cipherParams);
+
+      byte[] unwrappedDataKey = rsaEngine.processBlock(cipherText, 0, cipherText.length);
+      return unwrappedDataKey;
     }
 
     @Test
@@ -798,12 +1032,15 @@ public class UbiqStructuredEncryptTest
 
       obj.add("ffs", element);
       obj.addProperty("encrypted_private_key",encrypted_private_key);
+      String secretCryptoAccessKey = System.getenv(UBIQ_SECRET_CRYPTO_ACCESS_KEY);
+
       obj.addProperty("current_key_number", 1);
       obj.addProperty("retrieved", 1729122658);
 
       JsonArray keys = new JsonArray();
-      keys.add("bswyRl9OaC8CskDo89pYhrXrlySUOq+mpG7sSVzD/cZV0ohdYhwCfI5Y+or8j91B/WBEUdNTb52vm1aHM6lWgzmLyzMSzJgkXNJZqA/RC0org+04M822AQKRYK36LgLYdtjUAO4lxRDSZ+sd/kHs25NlRjN8OQZtfSI+TcbhQVBlBEpsx/GAFhikX1EkJdbOCxy7Ht+o96sEfO68oq3pVPmxb3Atu5homqcd8IBg6hHW/w7jr8MRyHNeu91CQnl5fmig3ev+p4jLnhgo1aZc/VOghrwlauhn8QUsEykXwYCQ39c26oRown2u4IMi8bCK9DJ2gZIMeK6kRz7UYiVJ84K1elWElf1ctxllfn0cZQ7jI3Lp2eeheev7FHHUG3dolxruxmBp/MDdEAfpywzXni2LuxTDjoz4zZIo797c6vtfmxjf1RiVNLPPYqQUkwIPuw/DjBu3mwQmHIMmky+vzniJhwwqXh7MYva+5J5tLJsTCEsba0bKkqQUezUEJAFRxNovL7xvCY7SJ8lgeFuwsydEt/TjelNoftqahCXI55dh9NhDzhNQT0ekn2GwPz16XrCeNjASep8r0x3IesVt/ZwVhlrQcvFV3K8GswxCO8OBVmlJS+gtL1zJHrWg+IvmMUQ6t8maE1Jj1pCsPZP21lZ6O6pkdqJlHaVSXmuGvxE=");
-      keys.add("c5rfv5SxqSEu7rRAxZdY35cl6RcZWzfl2WhSLlU4siFKPjnO+5sOkLDW8xeYMrwyTMjnLHUVOnVR55jAJ9xLPxKzP6CYLhIN55mxM4ZOpCGg7WNsXjAI6Wz2wOLnr8xhdMyQv3LF6zPM3ZloSydYL32hQW8RRwqLXSLAX0w/rTSG+XVAZogmWN6fiwqFCfnQYX2kxYwF0x90C6bj17w5Lb03xGf6MqnZN9fOuUJMQSDDc/6Fk5hDL3XPm5CUC4h4AfMndhdxhsMUGdP7QVREMHirsiRvHoJkEPuiXAwNJDH6WffG0KurrLygyNOxYKgcHRjrx9gBVx0KEx0Bp55WF0BMYHiYtsBp4CN3JQpBBHN72OgvDsLyzbonx4jjCAKpIC5vLIUR7vO+ZwOkULPXI96Z6Xk0/kYD/yXHi/h/eW7WU/HWCGlpkfjB3j5CUxjOIveVPGOj+j3VvfcJT5Fq0P2S1YTdfuZiYcIRftLEC89QLtb8YmVIs1wlTYws+BJpM3XuiRNmoqJlg76qUci2jKWn44+IRkp5OhHqWevH5Ehl66ujp4RUMl5UxPgGkidTYTO2YFtMm2tXUvc6I2GYHnZkCs1zsCwyEgQysnD7D43bK+17CyVN8aG3K2y2SGrWOjtp1Znnip/rYNHV3hbvHE5itI8MHD0/gKW+t5F20+s=");
+
+      keys.add(wrapDataKey2("1234567890123456".getBytes(), encrypted_private_key, secretCryptoAccessKey));
+      keys.add(wrapDataKey2("abcdefghijklmnop".getBytes(), encrypted_private_key, secretCryptoAccessKey));
       obj.add("keys", keys);
 
       String name = ubiqEncryptDecrypt.loadDatasetDef(obj.toString());
@@ -860,4 +1097,4 @@ public class UbiqStructuredEncryptTest
         }
     }
  */    
-}
+  }

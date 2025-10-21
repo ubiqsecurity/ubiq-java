@@ -231,10 +231,8 @@ class UbiqWebServices {
 
         if (verbose) System.out.println("\n    getFpeDefKeys: " + jsonResponse + "\n");
 
-        JsonParser parser = new JsonParser();
-
         // deserialize the JSON response to POJO
-        JsonObject results = parser.parse(jsonResponse).getAsJsonObject();
+        JsonObject results = JsonParser.parseString(jsonResponse).getAsJsonObject();
  
         // If this is IDP, then the 
         if (ubiqCredentials.isIdp()) {
@@ -483,7 +481,7 @@ class UbiqWebServices {
           try {
             sb.append(entry.getKey())
                       .append("=")
-                      .append(URLEncoder.encode(entry.getValue()));
+                      .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
           } catch (Exception e) {
             System.out.println("    GetOAuthToken exception sb : " + e.getMessage());
             throw new RuntimeException(e);
