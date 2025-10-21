@@ -616,8 +616,7 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
 
     // Dataset and Keys - Same payload as api/v0/fpe/def_keys
     public String loadDatasetDef(final String dataset_def) {
-      JsonParser parser = new JsonParser();
-      JsonObject dataset_data = parser.parse(dataset_def).getAsJsonObject();
+      JsonObject dataset_data =  JsonParser.parseString(dataset_def).getAsJsonObject();
 
       try {
         String dataset_name = LoadSearchKeys.loadKeys(
@@ -636,8 +635,7 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
 
     // Dataset - same payload as api/v0/ffs
     public String loadDataset(final String dataset_def) {
-      JsonParser parser = new JsonParser();
-      JsonObject dataset_data = parser.parse(dataset_def).getAsJsonObject();
+      JsonObject dataset_data =  JsonParser.parseString(dataset_def).getAsJsonObject();
 
       try {
         String dataset_name = LoadSearchKeys.loadDataset(
@@ -656,8 +654,7 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
 
       // FPE Key - same payload as api/v0/fpe/key which includes key number
       public void loadKeyDef(final String dataset_name, final String key_def, final Boolean current_key_flag) {
-      JsonParser parser = new JsonParser();
-      JsonObject key_data = parser.parse(key_def).getAsJsonObject();
+      JsonObject key_data =  JsonParser.parseString(key_def).getAsJsonObject();
 
       LoadSearchKeys.loadKeyDef(
         this.ubiqCredentials,
@@ -672,8 +669,7 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
     // Returns base64 encoded key
 
     public String decryptKey(final String key_def) {
-      JsonParser parser = new JsonParser();
-      JsonObject key_data = parser.parse(key_def).getAsJsonObject();
+      JsonObject key_data =  JsonParser.parseString(key_def).getAsJsonObject();
 
       return LoadSearchKeys.unwrapKey(
         this.ubiqWebServices,

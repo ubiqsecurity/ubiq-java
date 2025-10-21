@@ -7,6 +7,7 @@ import java.util.Arrays;
 import javax.crypto.Cipher;
 
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
+import org.bouncycastle.crypto.modes.CBCModeCipher;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.params.KeyParameter;
 
@@ -83,7 +84,7 @@ abstract class FFX
          // to get block size which will not change between calls.  We could
 
         this.key = key;
-        CBCBlockCipher cipher = new CBCBlockCipher(new AESEngine());
+        CBCModeCipher cipher = CBCBlockCipher.newInstance(AESEngine.newInstance());
         cipher.init(true, new KeyParameter(key));
         blksz = cipher.getBlockSize();
         cipher.reset();
@@ -116,7 +117,7 @@ abstract class FFX
         // There were threadsafe issues by having a BlockCipher instance variable
         // Timing of creating and destroying this object is LESS in a large load
         // than using locking mechanisms.
-        CBCBlockCipher cipher = new CBCBlockCipher(new AESEngine());
+        CBCModeCipher cipher = CBCBlockCipher.newInstance(AESEngine.newInstance());
         cipher.init(true, new KeyParameter(this.key));
 
         if ((src.length - soff) % blksz != 0) {

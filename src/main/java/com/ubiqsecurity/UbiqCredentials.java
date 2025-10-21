@@ -39,7 +39,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.PEMWriter;
 import org.bouncycastle.pkcs.*;
 import org.bouncycastle.pkcs.jcajce.*;
 import org.bouncycastle.pkcs.PKCSException;
@@ -224,7 +223,7 @@ public class UbiqCredentials {
           PrivateKey privateKeyParameter = keypair.getPrivate();
           PrivateKeyInfo pkInfo = PrivateKeyInfo.getInstance(privateKeyParameter.getEncoded());
 
-          PKCS8EncryptedPrivateKeyInfoBuilder​ builder = new PKCS8EncryptedPrivateKeyInfoBuilder​(pkInfo);
+          PKCS8EncryptedPrivateKeyInfoBuilder builder = new PKCS8EncryptedPrivateKeyInfoBuilder(pkInfo);
 
           PKCS8EncryptedPrivateKeyInfo encInfo = builder.build(
             new JcePKCSPBEOutputEncryptorBuilder(NISTObjectIdentifiers.id_aes256_CBC)
@@ -241,7 +240,7 @@ public class UbiqCredentials {
 
           // Create PEM formatted encrypted private key (optional)
           StringWriter stringWriter = new StringWriter();
-          PemWriter pemWriter = new PemWriter(stringWriter);
+          JcaPEMWriter pemWriter = new JcaPEMWriter(stringWriter);
           PemObject pemObject = new PemObject("ENCRYPTED PRIVATE KEY", encryptedKeyBytes);
           pemWriter.writeObject(pemObject);
           pemWriter.close();
@@ -273,7 +272,7 @@ public class UbiqCredentials {
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-        this.OauthResults = gson.fromJson((new JsonParser()).parse(tokenRsp), UbiqCredentials.OAuth2.class);
+        this.OauthResults = gson.fromJson(JsonParser.parseString(tokenRsp), UbiqCredentials.OAuth2.class);
 
         if (verbose) System.out.println("Expires in " + this.OauthResults.expires_in.toString());
 
@@ -284,7 +283,7 @@ public class UbiqCredentials {
         String ssoRsp = this.ubiqWebServices.getSso(token, this.csr);
         if (verbose) System.out.println(String.format("getSso: %s", ssoRsp.toString()));
 
-        this.SsoResults = gson.fromJson((new JsonParser()).parse(ssoRsp), UbiqCredentials.Sso.class);
+        this.SsoResults = gson.fromJson(JsonParser.parseString(ssoRsp), UbiqCredentials.Sso.class);
 
         if (this.SsoResults.enabled) {
           this.accessKeyId = this.SsoResults.public_value;

@@ -182,7 +182,6 @@ public class UbiqConfiguration {
       JsonObject cfgObject;
       JsonObject tmpObject;
       JsonElement tmpElement;
-      JsonParser parser = new JsonParser();
 
         if ((pathname == null) || pathname.isEmpty()) {
           pathname = String.format("%s/.ubiq/configuration", System.getProperty("user.home"));
@@ -203,7 +202,7 @@ public class UbiqConfiguration {
         }
         
         try {
-          tmpElement = parser.parse(new FileReader(pathname));
+          tmpElement = JsonParser.parseReader(new FileReader(pathname));
 
           Gson gson = new GsonBuilder().setPrettyPrinting().create();
 

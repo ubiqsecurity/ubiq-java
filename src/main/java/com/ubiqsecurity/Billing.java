@@ -72,8 +72,8 @@ class BillingEvents {
      * Constructs a new list of bills and manage sending to the server when needed
      *
      */
-    public BillingEvents (UbiqConfiguration ubiqConfiguration) {
-      this.ubiqConfiguration = ubiqConfiguration;
+    public BillingEvents (UbiqConfiguration cfg) {
+      ubiqConfiguration = cfg;
     }
 
     /**
@@ -272,7 +272,7 @@ class BillingEvents {
       if (jsonString.length() >= 1024) {
         throw new IllegalArgumentException("User defined Metadata cannot be longer than 1024 characters");
       }
-      JsonElement element = (new JsonParser()).parse(jsonString);
+      JsonElement element = JsonParser.parseString(jsonString);
       if (!element.isJsonObject()) {
         throw new IllegalArgumentException("User defined Metadata must be a valid Json object");
       }
