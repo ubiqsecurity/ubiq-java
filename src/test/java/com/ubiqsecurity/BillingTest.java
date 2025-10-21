@@ -22,13 +22,13 @@ public class BillingTest
       String s = b.serialize();
       String s2 = b.serialize(null, ChronoUnit.NANOS);
 
-      JsonElement element = (new JsonParser()).parse(s2);
+      JsonElement element = JsonParser.parseString(s2);
       JsonObject obj = element.getAsJsonObject().getAsJsonObject("user_defined");
       assertNull(obj);
       assertEquals(s, s2);
 
       s2 = b.serialize("{}", ChronoUnit.NANOS);
-      element = (new JsonParser()).parse(s2);
+      element = JsonParser.parseString(s2);
       obj = element.getAsJsonObject().getAsJsonObject("user_defined");
       assertNotNull(obj);
       
@@ -40,7 +40,7 @@ public class BillingTest
       BillingEvent b = new BillingEvent("apikey","dataset","dataset_group", BillingEvents.BillingAction.ENCRYPT, BillingEvents.DatasetType.STRUCTURED, 0, 5);
       String s = b.serialize("{ \"encryption_wrapper\" : true }", ChronoUnit.NANOS);
 
-      JsonObject element = (new JsonParser()).parse(s).getAsJsonObject();
+      JsonObject element =  JsonParser.parseString(s).getAsJsonObject();
       JsonObject obj = element.getAsJsonObject("user_defined");
       assertNotNull(obj);
       assertTrue(obj.getAsJsonPrimitive("encryption_wrapper").getAsBoolean());
@@ -111,7 +111,7 @@ public class BillingTest
 
       String s = b.getAndResetSerializedData();
 
-      JsonElement tmpElement = (new JsonParser()).parse(s);
+      JsonElement tmpElement =  JsonParser.parseString(s);
       JsonArray tmpArray = tmpElement.getAsJsonObject().getAsJsonArray("usage");
       Instant first_call_timestamp = Instant.parse(tmpArray.get(0).getAsJsonObject().getAsJsonPrimitive("first_call_timestamp").getAsString());
       System.out.println("first_call_timestamp truncate to " + setGranularity.toString() + ": " + first_call_timestamp);
