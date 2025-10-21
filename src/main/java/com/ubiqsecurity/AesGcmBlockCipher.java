@@ -3,11 +3,12 @@ package com.ubiqsecurity;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.GCMBlockCipher;
+import org.bouncycastle.crypto.modes.GCMModeCipher;
 import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 class AesGcmBlockCipher {
-    private GCMBlockCipher gcmBlockCipher;
+    private GCMModeCipher gcmBlockCipher;
 
     // 'additionalBytes' can be null
     AesGcmBlockCipher(boolean forEncryption, AlgorithmInfo algorithmInfo, byte[] key, byte[] initVector,
@@ -19,7 +20,7 @@ class AesGcmBlockCipher {
         }
 
         // get Cipher Instance
-        this.gcmBlockCipher = new GCMBlockCipher(new AESEngine());
+        this.gcmBlockCipher = GCMBlockCipher.newInstance(AESEngine.newInstance());
 
         AEADParameters aeadParameters = new AEADParameters(new KeyParameter(key), algorithmInfo.getMacLength() * 8,
                 initVector, additionalBytes);

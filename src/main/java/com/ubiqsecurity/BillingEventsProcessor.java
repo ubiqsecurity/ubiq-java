@@ -151,36 +151,36 @@ class BillingEventsProcessor extends AbstractScheduledService
 
         if (verbose) System.out.printf("%s -- shutDown:  trackingCalls.size() %d \n", csu,trackingCalls.size());
 
-      // Submit unbilled items.
-      if (billing_events.getEventCount() > 0) {
-        if (verbose) System.out.printf("%s -- eventCount(%d)\n", csu, billing_events.getEventCount());
-        trackingCalls.add(billing_events.processBillingEventsAsync(ubiqWebServices));
-      }
-      if (verbose) System.out.printf("%s -- shutDown: B", csu);
-      Iterator<RestCallFuture> iter = trackingCalls.iterator();
-      if (verbose) System.out.printf("%s -- shutDown: C", csu);
-      while (iter.hasNext()) {
-        if (verbose) System.out.printf("%s -- shutDown: finishing task\n", csu);
-        RestCallFuture restResults = iter.next();
-        // Wait until the events have been processed
-        try {
-          Integer res = (Integer) restResults.future.get(2, TimeUnit.SECONDS);
-          
-          if (verbose) System.out.printf("%s -- shutDown: res (%d)\n", csu, res);
-
-        } catch (InterruptedException | ExecutionException e) {
-          if (verbose) System.out.printf("%s -- InterruptedException: %s\n", csu, e.getMessage());
-
-        } finally {
-          restResults.execService.shutdown();
+        // Submit unbilled items.
+        if (billing_events.getEventCount() > 0) {
+          if (verbose) System.out.printf("%s -- eventCount(%d)\n", csu, billing_events.getEventCount());
+          trackingCalls.add(billing_events.processBillingEventsAsync(ubiqWebServices));
         }
+        if (verbose) System.out.printf("%s -- shutDown: B", csu);
+        Iterator<RestCallFuture> iter = trackingCalls.iterator();
+        if (verbose) System.out.printf("%s -- shutDown: C", csu);
+        while (iter.hasNext()) {
+          if (verbose) System.out.printf("%s -- shutDown: finishing task\n", csu);
+          RestCallFuture restResults = iter.next();
+          // Wait until the events have been processed
+          try {
+            Integer res = (Integer) restResults.future.get(2, TimeUnit.SECONDS);
+            
+            if (verbose) System.out.printf("%s -- shutDown: res (%d)\n", csu, res);
+
+          } catch (InterruptedException | ExecutionException e) {
+            if (verbose) System.out.printf("%s -- InterruptedException: %s\n", csu, e.getMessage());
+
+          } finally {
+            restResults.execService.shutdown();
+            }
+        }
+        // perform final list processing here
+        if (verbose) System.out.printf("%s-- Job terminated at: %s\n", csu, new java.util.Date());
+      }  catch (java.util.concurrent.TimeoutException e) {
+          if (verbose) System.out.printf("%s   : %s   TIMEOUT - OKAY TO IGNORE %s  messasge: %s\n", csu,new java.util.Date(),  e.getClass().getName(), e.getMessage());
       }
-      // perform final list processing here
-      if (verbose) System.out.printf("%s-- Job terminated at: %s\n", csu, new java.util.Date());
-    }  catch (Exception e) {
-      System.out.printf("%s   : %s   Exception %s  messasge: %s\n", csu,new java.util.Date(),  e.getClass().getName(), e.getMessage());
-    }
-    if (verbose) System.out.printf("%s -- shutDown: D\n", csu);
+      if (verbose) System.out.printf("%s -- shutDown: D\n", csu);
 
     }
     

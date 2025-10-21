@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.9 - 2025-10-16
+* Updated code to use latest methods from referenced libraries.  This included remove calls to deprecated functions
+
 ## 2.2.8 - 2025-08-12
 * Added loadCache to hydrate and refresh cache on demand rather than first use
 * Fix loading configuration from a provided file

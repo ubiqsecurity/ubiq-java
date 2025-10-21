@@ -351,7 +351,7 @@ class FFS_Record {
     }
 
     public static FFS_Record parse(String data) throws Exception{
-      return FFS_Record.parse(((new JsonParser()).parse(data).getAsJsonObject()));
+      return FFS_Record.parse((JsonParser.parseString(data).getAsJsonObject()));
     }
 
     /*
