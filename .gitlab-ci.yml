@@ -21,24 +21,31 @@ stages:
     - test
 
 build:
-    image: openjdk:8
+    image: amazoncorretto:8-al2023
     variables:
         GIT_SUBMODULE_STRATEGY: recursive
     stage: build
     before_script:
-      - apt -y update
-      - apt -y install maven
+      - yum -y update
+      - yum -y install maven
+      - alternatives --set java /usr/lib/jvm/java-1.8.0-amazon-corretto.x86_64/jre/bin/java
+      - alternatives --set javac /usr/lib/jvm/java-1.8.0-amazon-corretto.x86_64/bin/javac
     script:
         - mvn clean compile package -DskipTests
 
-test_prod:
-    image: openjdk:8
+.test_script:
+    image: amazoncorretto:8-al2023
     stage: test
     before_script:
-      - apt -y update
-      - apt -y install maven
+      - yum -y update
+      - yum -y install maven
+      - alternatives --set java /usr/lib/jvm/java-1.8.0-amazon-corretto.x86_64/jre/bin/java
+      - alternatives --set javac /usr/lib/jvm/java-1.8.0-amazon-corretto.x86_64/bin/javac
     script:
         - mvn test
+
+test_prod:
+    extends: .test_script
     environment:
       name: ubs-usw2-prcv3
     rules:
@@ -50,13 +57,7 @@ test_prod:
         when: on_success
 
 test_dev:
-    image: openjdk:8
-    stage: test
-    before_script:
-      - apt -y update
-      - apt -y install maven
-    script:
-        - mvn test
+    extends: .test_script
     environment:
       name: ubs-usw2-dvc
     rules:
@@ -71,5 +72,4 @@ sast:
     stage: test
 include:
     - template: Security/SAST.gitlab-ci.yml
-
 
