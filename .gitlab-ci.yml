@@ -70,6 +70,20 @@ sast:
     variables:
         SAST_EXCLUDED_PATHS: src/test, build
     stage: test
+
+secret_detection:
+    stage: test
+    variables:
+        SECRET_DETECTION_EXCLUDED_PATHS: "build/"
+
+dependency_scanning:
+    stage: test
+    variables:
+        DS_EXCLUDED_PATHS: "src/test, build"
+
+# GitLab Security Scanning Templates
 include:
     - template: Security/SAST.gitlab-ci.yml
+    - template: Security/Secret-Detection.gitlab-ci.yml
+    - template: Security/Dependency-Scanning.gitlab-ci.yml
 
