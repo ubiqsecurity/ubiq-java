@@ -36,7 +36,7 @@ public class UbiqEncryptTest
 
     }
 
-    static void testPiecewiseRt(byte[] plainText,UbiqCredentials ubiqCredentials) 
+    static void testPiecewiseRt(byte[] plainText,UbiqCredentials ubiqCredentials)
     throws InvalidCipherTextException {
 
       UbiqEncrypt ubiqEncrypt = new UbiqEncrypt(ubiqCredentials, 1);

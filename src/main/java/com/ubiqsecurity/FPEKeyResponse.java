@@ -16,5 +16,5 @@ class FPEKeyResponse {
     // not serialized - used only at runtime
     @Expose(serialize = false, deserialize = false)
     byte[] UnwrappedDataKey;
-    
+
 }

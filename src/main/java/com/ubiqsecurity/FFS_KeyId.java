@@ -1,11 +1,11 @@
 package com.ubiqsecurity;
 
 
-class FFS_KeyId {
+public class FFS_KeyId {
   Integer key_number;
   FFS_Record ffs;
 
-  FFS_KeyId(FFS_Record ffs, Integer number) {
+  public FFS_KeyId(FFS_Record ffs, Integer number) {
     this.ffs = ffs;
     this.key_number = number; // May be NULL - indicating an encrypt using currently active key
   }

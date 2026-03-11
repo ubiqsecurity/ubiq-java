@@ -10,6 +10,9 @@ import java.util.Base64;
 
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import java.util.concurrent.TimeUnit;
+import java.lang.RuntimeException;
+
+
 
 public class UbiqDecrypt implements AutoCloseable {
     private boolean verbose= false;
@@ -44,7 +47,7 @@ public class UbiqDecrypt implements AutoCloseable {
     public UbiqUnstructuredDecryptSession initSession() {
       if (this.ubiqWebServices == null) {
           throw new IllegalStateException("object closed");
-      } 
+      }
       return new UbiqUnstructuredDecryptSession();
     }
 
@@ -58,9 +61,12 @@ public class UbiqDecrypt implements AutoCloseable {
               if (executor != null) {
                 executor.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
               }
-            } catch (Exception e) {
-               System.out.printf("%s   : %s Exception %s  messasge: %s\n", csu,new java.util.Date(),  e.getClass().getName(), e.getMessage());
-            }            
+            } catch (Exception e) { // has getJavaOptionsAlwaysBubbleExceptions
+              if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+                throw new RuntimeException(e.getMessage(), e.getCause());
+              }
+              System.out.printf("%s   : %s Exception %s  messasge: %s\n", csu,new java.util.Date(),  e.getClass().getName(), e.getMessage());
+            }
 
             reset();
 
@@ -71,9 +77,9 @@ public class UbiqDecrypt implements AutoCloseable {
     /**
      * Begin the decryption process and return decrypted bytes
      * @return - decrypted bytes
-     * 
+     *
      * @throws IllegalStateException if the object have not been initialized correctly
-     * @deprecated use instance method begin(UbiqUnstructuredDecryptSession session) instead.  
+     * @deprecated use instance method begin(UbiqUnstructuredDecryptSession session) instead.
      */
     @Deprecated
     public byte[] begin() throws IllegalStateException {
@@ -88,7 +94,7 @@ public class UbiqDecrypt implements AutoCloseable {
      * Begin the decryption process and return decrypted bytes
      * @param session Session object to manage state between begin, update, and end calls
      * @return - decrypted bytes
-     * 
+     *
      * @throws IllegalStateException if the object have not been initialized correctly
      */
     public byte[] begin(UbiqUnstructuredDecryptSession session) throws IllegalStateException {
@@ -111,7 +117,7 @@ public class UbiqDecrypt implements AutoCloseable {
      * @param offset Offset into the source data
      * @param count Number of bytes to use
      * @return - decrypted bytes
-     * @deprecated use instance method update(UbiqUnstructuredDecryptSession session, ...) instead.  
+     * @deprecated use instance method update(UbiqUnstructuredDecryptSession session, ...) instead.
      */
     @Deprecated
     public byte[] update(byte[] cipherBytes, int offset, int count) {
@@ -157,9 +163,12 @@ public class UbiqDecrypt implements AutoCloseable {
             // see if we've got enough data for the header record
             try (ByteArrayInputStream byteStream = new ByteArrayInputStream(session.getByteQueue().peek())) {
                 session.setCipherHeader(CipherHeader.deserialize(byteStream));
-            } catch (IOException ex) {
-                System.out.println("stream exception");
-                // keep going anyway...
+            } catch (IOException e) { // has getJavaOptionsAlwaysBubbleExceptions
+              if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+                throw new RuntimeException(e.getMessage(), e.getCause());
+              }
+              System.out.println("stream exception");
+              // keep going anyway...
             }
 
             if (session.getCipherHeader() != null) {
@@ -170,7 +179,7 @@ public class UbiqDecrypt implements AutoCloseable {
                 // JIT: request encryption key from server.  Will return from cache
                 this.decryptionKey = this.unstructuredKeyCache.unstructuredCache.get(Base64.getEncoder().encodeToString(session.getCipherHeader().encryptedDataKeyBytes));
 
-                // Cache may or may not have unwrapped key.  Will not be set if 
+                // Cache may or may not have unwrapped key.  Will not be set if
                 // configuration wants cache encrypted.
                 byte[] unwrappedDataKey = this.decryptionKey.UnwrappedDataKey;
                 if (unwrappedDataKey.length == 0) {
@@ -189,9 +198,17 @@ public class UbiqDecrypt implements AutoCloseable {
                     session.setCipher(aesGcmBlockCipher);
                     billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), "", "", BillingEvents.BillingAction.DECRYPT, BillingEvents.DatasetType.UNSTRUCTURED, 0,1);
                 }
-              } catch (ExecutionException e) {
+              } catch (java.io.IOException | org.bouncycastle.operator.OperatorCreationException | org.bouncycastle.pkcs.PKCSException | org.bouncycastle.crypto.InvalidCipherTextException e) {
+                if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+                  throw new RuntimeException(e.getMessage(), e.getCause());
+                }
+              } catch (ExecutionException e) { // has getJavaOptionsAlwaysBubbleExceptions
+                if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+                  throw new RuntimeException(e.getMessage(), e.getCause());
+                }
                 e.printStackTrace();
               }
+
 
             } else {
                 // holding pattern... need more header bytes
@@ -216,10 +233,10 @@ public class UbiqDecrypt implements AutoCloseable {
     /**
      * End the decryption process and return any remaining decrypted data
      * @return - decrypted bytes
-     * 
+     *
      * @throws IllegalStateException if the object have not been initialized correctly
      * @throws InvalidCipherTextException if an exception was encountered while decrypting the data
-     * @deprecated use instance method end(UbiqUnstructuredDecryptSession session instead.  
+     * @deprecated use instance method end(UbiqUnstructuredDecryptSession session instead.
      */
     @Deprecated
     public byte[] end() throws IllegalStateException, InvalidCipherTextException {
@@ -230,7 +247,7 @@ public class UbiqDecrypt implements AutoCloseable {
      * End the decryption process and return any remaining decrypted data
      * @param session Session object to manage state between begin, update, and end calls
      * @return - decrypted bytes
-     * 
+     *
      * @throws IllegalStateException if the object have not been initialized correctly
      * @throws InvalidCipherTextException if an exception was encountered while decrypting the data
      */
@@ -246,7 +263,7 @@ public class UbiqDecrypt implements AutoCloseable {
         return finalPlainBytes;
     }
 
-    
+
     public static byte[] decrypt(UbiqCredentials ubiqCredentials, byte[] data)
             throws IllegalStateException, InvalidCipherTextException {
         return decrypt(ubiqCredentials, data, UbiqFactory.defaultConfiguration());
@@ -264,9 +281,12 @@ public class UbiqDecrypt implements AutoCloseable {
                 plainStream.write(ubiqDecrypt.end(session));
 
                 return plainStream.toByteArray();
-            } catch (IOException ex) {
-                System.out.println("stream exception");
-                return null;
+            } catch (IOException ex) { // has getJavaOptionsAlwaysBubbleExceptions
+              if (ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+                throw new RuntimeException(ex.getMessage(), ex.getCause());
+              }
+              System.out.println("stream exception");
+              return null;
             }
         }
     }
@@ -293,5 +313,5 @@ public class UbiqDecrypt implements AutoCloseable {
     public String getCopyOfUsage() {
       return billing_events.getSerializedData();
     }
- 
+
 }

@@ -58,7 +58,7 @@ public class UbiqFPEEncryptTest
     }
 
 
-    static void testRt(String dataset_name, String plainText, String expectedCt) 
+    static void testRt(String dataset_name, String plainText, String expectedCt)
     {
       UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
 
@@ -79,7 +79,7 @@ public class UbiqFPEEncryptTest
   }
 
 
-    static void testSimpleRt(String dataset_name, String plainText, String expectedCt, UbiqCredentials ubiqCredentials,  byte[] tweak) 
+    static void testSimpleRt(String dataset_name, String plainText, String expectedCt, UbiqCredentials ubiqCredentials,  byte[] tweak)
     throws IOException, InvalidCipherTextException{
         String ct = UbiqFPEEncryptDecrypt.encryptFPE(ubiqCredentials, dataset_name, plainText, tweak);
         String pt = UbiqFPEEncryptDecrypt.decryptFPE(ubiqCredentials, dataset_name, ct, tweak);
@@ -398,7 +398,7 @@ public class UbiqFPEEncryptTest
             String pt_alphanum = "ABCD";
             String ct_alphanum = "";
 
-            
+
             try (UbiqFPEEncryptDecrypt ubiqEncryptDecrypt = new UbiqFPEEncryptDecrypt(ubiqCredentials)) {
               long start = System.nanoTime();
               int count = 1000000;
@@ -826,13 +826,13 @@ public class UbiqFPEEncryptTest
             fail(ex.toString());
         }
     }
- */    
+ */
 
     private String wrapDataKey2(byte[] key, String encrypted_private_key, String secretCryptoAccessKey) throws Exception{
 
 
       BouncyCastleProvider bcProvider;
-      
+
       String base64Ciphertext = null;
       bcProvider = new BouncyCastleProvider();
 
@@ -856,7 +856,7 @@ public class UbiqFPEEncryptTest
             if (!(privateKey instanceof BCRSAPrivateCrtKey)) {
                 throw new RuntimeException("Unrecognized Private Key format: " + privateKey.getClass().getName() + " " );
             }
-            
+
             BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
 
              RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(

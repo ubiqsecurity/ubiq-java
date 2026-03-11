@@ -2,7 +2,7 @@ package com.ubiqsecurity.structured;
 
 import java.io.IOException ;
 import java.math.BigInteger;
- 
+
 
 /**
  * Algorithms to convert a numerical value in a given alphabet to a number
@@ -30,7 +30,7 @@ import java.math.BigInteger;
      * @param str the numerical value to be converted
      * @param alpha alphabet consists of single-byte symbols
      *
-     * @return the numerical value of the str pattern 
+     * @return the numerical value of the str pattern
      * position found in the alphabet
      */
     public static BigInteger __bigint_set_str(final String str, final String alpha)
@@ -52,7 +52,7 @@ import java.math.BigInteger;
             BigInteger m, a;
             int i;
             BigInteger x;
-            
+
             /* represents the numerical value of str */
             x = BigInteger.valueOf(0);
             /*
@@ -60,7 +60,7 @@ import java.math.BigInteger;
              * of the input into its correct position
              */
             m = BigInteger.valueOf(1);
-            
+
             for (i = 0; i < len; i++) {
                 final int pos;
                 /*
@@ -82,44 +82,44 @@ import java.math.BigInteger;
             }
             return x;
         }
-    
-    
+
+
     /**
      * Inserts a character at a position in a String.
      *
-     * Convenience function returns String with inserted char 
+     * Convenience function returns String with inserted char
      * at an index position.
      *
      * @param str the original String
      * @param ch the character to insert
      * @param position the index position where to insert the ch
      *
-     * @return    the new String containing the inserted ch 
-     */    
+     * @return    the new String containing the inserted ch
+     */
     public static String insertChar(String str, char ch, int position) {
         StringBuilder sb = new StringBuilder(str);
         sb.insert(position, ch);
         return sb.toString();
     }
-    
-    
+
+
     /**
      * Gets the str pattern of the alphabet given the numeric value.
      *
      * @param alpha alphabet consists of single-byte symbols
      * @param x the numerical value of the str pattern
      *
-     * @return the new String of the converted value 
-     */    
+     * @return the new String of the converted value
+     */
     public static String __bigint_get_str(final String alpha, final BigInteger x) {
         final int rad = alpha.length();
         BigInteger quotient = x;
         String str = "";
-        
+
         if (rad <= 0) {
             throw new IllegalArgumentException("invalid argument, alphabet cannot be empty");
         }
-        
+
         /*
          * to convert the numerical value, repeatedly
          * divide (storing the resulted quotient and the remainder)
@@ -131,17 +131,17 @@ import java.math.BigInteger;
          */
         while (quotient.compareTo(BigInteger.valueOf(0)) != 0) {
             int remainder;
-            
+
             BigInteger result[] = quotient.divideAndRemainder(BigInteger.valueOf(rad));
             remainder = result[1].intValue();
             quotient = result[0];
             str = insertChar(str, alpha.charAt(remainder), 0);
         }
-        
+
         if (str.length() == 0) {
             str = insertChar(str, alpha.charAt(0), 0);
         }
-                
+
         return str;
     }
 

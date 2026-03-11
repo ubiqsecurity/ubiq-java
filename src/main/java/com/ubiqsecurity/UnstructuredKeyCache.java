@@ -12,7 +12,13 @@ import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
 import java.util.Base64;
 
-
+import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.pkcs.PKCSException;
+import org.bouncycastle.operator.OperatorCreationException;
+import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
+import java.lang.InterruptedException;
+import java.security.InvalidKeyException;
 
 /**
  * Caches key information to minimize access to the server.
@@ -20,7 +26,6 @@ import java.util.Base64;
 class UnstructuredKeyCache  {
     private boolean verbose= false;
     public LoadingCache<String, DecryptionKeyResponse> unstructuredCache; // The KeyId is the FFS_NAME and optional KEY-number
-
 
     /**
      * UnstructuredKeyCache constructor
@@ -32,7 +37,7 @@ class UnstructuredKeyCache  {
     public UnstructuredKeyCache(UbiqWebServices ubiqWebServices, UbiqConfiguration configuration) {
 
         // If we want to cache unstructured keys, then use the TTL.
-        // If we don't want to cache unstructured keys, then set TTL to 0 second so it 
+        // If we don't want to cache unstructured keys, then set TTL to 0 second so it
         // will be purged after it is used once
 
         Integer ttl = configuration.getKeyCacheTtlSeconds();
@@ -49,9 +54,19 @@ class UnstructuredKeyCache  {
             .expireAfterWrite(ttl, TimeUnit.SECONDS)        // cache will expire after 3 days
             .build(new CacheLoader<String, DecryptionKeyResponse>() {  // build the cacheloader
                 @Override
-                public DecryptionKeyResponse load(String base64EncryptedDataKey) throws Exception {
+                public DecryptionKeyResponse load(String base64EncryptedDataKey) {
                    //make the expensive call
-                   return getUnstructuredKeyFromCloudAPI(ubiqWebServices, configuration, base64EncryptedDataKey);   // <AccessKeyId>-<FFS Name>
+                   DecryptionKeyResponse ret = null;
+                   try {
+                    // Cachebuilder catches checked and unchecked exceptions and casts them
+                    // to specific types.  To avoid this issue, we will simply convert to a Runtime Exception
+                    ret = getUnstructuredKeyFromCloudAPI(ubiqWebServices, configuration, base64EncryptedDataKey);   // <AccessKeyId>-<FFS Name>
+                   } catch (RuntimeException e) {
+                    throw e;
+                   } catch (Exception e) {
+                    throw new RuntimeException(e.getMessage(), e.getCause());
+                   }
+                   return ret;
                 }
          });
     }
@@ -73,7 +88,8 @@ class UnstructuredKeyCache  {
      * @param encryptedDataKey  the encrypted data key to decrypt
      *
      */
-    private  DecryptionKeyResponse getUnstructuredKeyFromCloudAPI(UbiqWebServices ubiqWebServices, UbiqConfiguration configuration, String base64EncryptedDataKey) {
+    private  DecryptionKeyResponse getUnstructuredKeyFromCloudAPI(UbiqWebServices ubiqWebServices, UbiqConfiguration configuration, String base64EncryptedDataKey)
+      throws java.io.IOException, OperatorCreationException, PKCSException, InvalidCipherTextException, URISyntaxException, NoSuchAlgorithmException, InterruptedException, InvalidKeyException {
 
         if (verbose) System.out.println("\n****** PERFORMING EXPENSIVE CALL ----- getDecryptionKey for caching key: " );
 

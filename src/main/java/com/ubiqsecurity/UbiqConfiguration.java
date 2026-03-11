@@ -32,6 +32,11 @@ public class UbiqConfiguration {
 
   }
 
+  class JavaOptions {
+    @SerializedName("always_bubble_exceptions")
+    Boolean alwaysBubbleExceptions = false;
+  }
+
   class KeyCaching {
     @SerializedName("unstructured")
     Boolean unstructured = true;
@@ -87,6 +92,9 @@ public class UbiqConfiguration {
 
     @SerializedName("proxy")
     Proxy proxy;
+
+    @SerializedName("java_options")
+    JavaOptions javaOptions;
   }
 
 
@@ -101,7 +109,8 @@ public class UbiqConfiguration {
       Boolean cacheUnstructuredKeys,
       Integer cacheTtlSeconds,
       String proxyHost,
-      Integer proxyPort) {
+      Integer proxyPort,
+      Boolean javaOptionsAlwaysBubbleExceptions) {
 
         // Create configuration with defaults
         config = new Configuration();
@@ -109,6 +118,7 @@ public class UbiqConfiguration {
         config.eventReporting = new UbiqConfiguration.EventReporting();
         config.idp = new UbiqConfiguration.Idp();
         config.proxy = new UbiqConfiguration.Proxy();
+        config.javaOptions = new UbiqConfiguration.JavaOptions();
 
         if (eventReportingWakeInterval != null) {
           config.eventReporting.wakeInterval = eventReportingWakeInterval;
@@ -144,7 +154,11 @@ public class UbiqConfiguration {
 
         if(proxyPort !=null) {
           config.proxy.port = proxyPort;
-      }
+        }
+
+        if (javaOptionsAlwaysBubbleExceptions != null) {
+          config.javaOptions.alwaysBubbleExceptions = javaOptionsAlwaysBubbleExceptions;
+        }
 
     }
 
@@ -194,13 +208,14 @@ public class UbiqConfiguration {
         config.eventReporting = new UbiqConfiguration.EventReporting();
         config.idp = new UbiqConfiguration.Idp();
         config.proxy = new UbiqConfiguration.Proxy();
+        config.javaOptions = new UbiqConfiguration.JavaOptions();
 
         // Only load if file exists, otherwise use default values
         File temp = new File(pathname);
         if (!temp.exists()) {
           throw new IllegalArgumentException(String.format("file does not exist: %s", pathname));
         }
-        
+
         try {
           tmpElement = JsonParser.parseReader(new FileReader(pathname));
 
@@ -274,6 +289,12 @@ public class UbiqConfiguration {
               }
             }
 
+            if (tmpConfig.javaOptions != null) {
+              if (tmpConfig.javaOptions.alwaysBubbleExceptions != null) {
+                config.javaOptions.alwaysBubbleExceptions = tmpConfig.javaOptions.alwaysBubbleExceptions;
+              }
+            }
+
           }
 
         } catch (IOException e) {
@@ -282,7 +303,7 @@ public class UbiqConfiguration {
           throw new IllegalArgumentException(String.format("file parsing error: %s", pathname));
         }
     }
-      
+
     public Integer getEventReportingWakeInterval() {
         return config.eventReporting.wakeInterval;
     }
@@ -345,5 +366,9 @@ public class UbiqConfiguration {
 
     public Integer getProxyPort() {
       return config.proxy.port;
+    }
+
+    public Boolean getJavaOptionsAlwaysBubbleExceptions() {
+      return config.javaOptions.alwaysBubbleExceptions;
     }
   }

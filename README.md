@@ -435,6 +435,151 @@ try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncrypt
   String plainText = ubiqEncryptDecrypt.encrypt(datasetName, cipherText, null);
 }
 ```
+### Encrypt / Decrypt / EncrypForSearch for Integer (32 bit) and Long (64 bit)
+This requires pre-configuration of an Integer dataset with the corresponding length, either 32 or 64 bit.
+```java
+import ubiqsecurity.UbiqCredentials;
+import ubiqsecurity.UbiqStructuredEncryptDecrypt;
+import com.ubiqsecurity.UbiqFactory;
+
+String int32DatasetName = "Int32";
+String int64DatasetName = "Int64";
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+// Create single object but use many times
+try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+  // Can call encrypt / decrypt many times without creating new UbiqStructuredEncryptDecrypt object.
+
+  // 32 Bit datasets can support unencrypted values
+  // between -99,999,999 and 99,999,999
+  // Encrypted result will be between -1,470,375,551 and 1,470,375,551
+  int intVal = 9 
+  int int32 = ubiqEncryptDecrypt.encryptInt(int32DatasetName, intVal, null);
+  int result32 = ubiqEncryptDecrypt.decryptInt(int32DatasetName, int32, null);
+  int[] search32 = ubiqEncryptDecrypt.encryptIntForSearch(int32DatasetName, intVal, null);
+
+  // 64 Bit datasets can support unencrypted values
+  // between -9,999,999,999,999,999 and 9,999,999,999,999,999
+  // Unencrypted value can be value between -9,999,999,999,999,999 and 9,999,999,999,999,999
+  // Encrypted result will be between -2,032,385,242,251,560,000 and 2,032,385,242,251,560,000
+  long longVal = -9; 
+  long int64 ubiqEncryptDecrypt.encryptLong(int64DatasetName, longVal, null);
+  long result64 = ubiqEncryptDecrypt.decryptLong(int64DatasetName, int64, null);
+
+  long[] search64 = ubiqEncryptDecrypt.encryptLongForSearch(int64DatasetName, longVal, null);
+}
+```
+### Encrypt / Decrypt / EncrypForSearch for DateTime (OffsetDateTime)
+This requires pre-configuration of a DateTime dataset.
+```java
+import ubiqsecurity.UbiqCredentials;
+import ubiqsecurity.UbiqStructuredEncryptDecrypt;
+import com.ubiqsecurity.UbiqFactory;
+import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+
+String datasetName = "datetime";
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+// Create single object but use many times
+try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+  // Can call encrypt / decrypt many times without creating new UbiqStructuredEncryptDecrypt object.
+
+  // Datetime values can support unencrypted values between 
+  // 1653-02-10 06:13:21 AM UTC and 11/20/2286 17:46:39 UTC
+  // Encrypted result will be between 1/16/0018 11:01:21 and 12/16/3921 12:58:39
+  OffsetDateTime dt = OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+  OffsetDateTime ct = ubiqEncryptDecrypt.encryptDateTime(datasetName, dt, null);
+  OffsetDateTime result = ubiqEncryptDecrypt.decryptDateTime(datasetName, ct, null);
+  OffsetDateTime[] searchCt = ubiqEncryptDecrypt.encryptDateTimeForSearch(datasetName, dt, null);
+}
+```
+
+### Encrypt / Decrypt / EncrypForSearch for Date (OffsetDateTime)
+This requires pre-configuration of a Date dataset.
+```java
+import ubiqsecurity.UbiqCredentials;
+import ubiqsecurity.UbiqStructuredEncryptDecrypt;
+import com.ubiqsecurity.UbiqFactory;
+import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+
+String datasetName = "datetime";
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+// Create single object but use many times
+try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+  // Can call encrypt / decrypt many times without creating new UbiqStructuredEncryptDecrypt object.
+
+  // Datetime values can support unencrypted values between 
+  // 1/1/0001 and 11/26/2738
+  // Encrypted result will be between 1/1/0001 and 11/26/2738
+  OffsetDateTime dt = OffsetDateTime.now().truncatedTo(ChronoUnit.DAYS),
+  OffsetDateTime ct = ubiqEncryptDecrypt.encryptDate(datasetName, dt, null);
+  OffsetDateTime result = ubiqEncryptDecrypt.decryptDate(datasetName, ct, null);
+  OffsetDateTime[] searchCt = ubiqEncryptDecrypt.encryptDateForSearch(datasetName, dt, null);
+}
+```
+### Encrypt / Decrypt / EncrypForSearch for Token, either 64 characters or 128 characters
+This requires pre-configuration of a Token dataset of the appropriate length
+```java
+import ubiqsecurity.UbiqCredentials;
+import ubiqsecurity.UbiqStructuredEncryptDecrypt;
+import com.ubiqsecurity.UbiqFactory;
+
+
+String datasetName64 = "token64";
+String datasetName128 = "token128";
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+// Create single object but use many times
+try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+  // Can call encrypt / decrypt many times without creating new UbiqStructuredEncryptDecrypt object.
+
+  // Input can be any string less 40 characters
+  // Output will string 64 characters long and base62 (A-Za-z0-9)
+  String ct64 = ubiqEncryptDecrypt.encrypt(datasetName64, "abc", null);
+  String result64 = ubiqEncryptDecrypt.decrypt(datasetName64, ct64, null);
+  String[] search64 = ubiqEncryptDecrypt.encryptForSearch(datasetName64, "abc", null);
+
+  // Input can be any string less 80 characters
+  // Output will string 64 characters long and base62 (A-Za-z0-9)
+  String ct128 = ubiqEncryptDecrypt.encrypt(datasetName128, "abc", null);
+  String result128 = ubiqEncryptDecrypt.decrypt(datasetName128, ct128, null);
+  String[] search128 = ubiqEncryptDecrypt.encryptForSearch(datasetName128, "abc", null);
+}
+```
+### Encrypt / Decrypt / EncrypForSearch for Generic string.  Input is base32 or base64 encoded and padded if necessary to reach minimum length.
+This requires pre-configuration of a Generic string dataset with the corresponding encoding and padding character
+```java
+import ubiqsecurity.UbiqCredentials;
+import ubiqsecurity.UbiqStructuredEncryptDecrypt;
+import com.ubiqsecurity.UbiqFactory;
+
+
+String datasetName32 = "generic32";
+String datasetName64 = "generic64";
+
+UbiqCredentials ubiqCredentials = UbiqFactory.readCredentialsFromFile("path/to/file", "default");
+// Create single object but use many times
+try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+  // Can call encrypt / decrypt many times without creating new UbiqStructuredEncryptDecrypt object.
+
+  // Input can be any UTF-8 string.  Output string is defined during dataset configuration
+  String ct32 = ubiqEncryptDecrypt.encrypt(datasetName32, "Ñáñ", null);
+  String result32 = ubiqEncryptDecrypt.decrypt(datasetName32, ct64, null);
+  String[] search32 = ubiqEncryptDecrypt.encryptForSearch(datasetName32, "Ñáñ", null);
+
+  // Input can be any UTF-8 string.  Output string is defined during dataset configuration
+  String ct64 = ubiqEncryptDecrypt.encrypt(datasetName64, "Ñáñ", null);
+  String result64 = ubiqEncryptDecrypt.decrypt(datasetName64, ct64, null);
+  String[] search64 = ubiqEncryptDecrypt.encryptForSearch(datasetName64, "Ñáñ", null);
+}
+```
 ## Custom Metadata for Usage Reporting
 There are cases where a developer would like to attach metadata to usage information reported by the application.  Both the structured and unstructured interfaces allow user_defined metadata to be sent with the usage information reported by the libraries.
 
@@ -548,6 +693,9 @@ The <b>key_caching</b> section contains values to control how and when keys are 
 - <b>host</b> indicates the address of the proxy server
 - <b>port</b> indicates the port number the proxy server is listening on
 
+#### Java specific options
+- <b>always_bubble_exceptions</b> always bubble up exceptions rather than trap and return empty or null object.  (default: false)
+
 ```json
 {
   "event_reporting": {
@@ -573,6 +721,9 @@ The <b>key_caching</b> section contains values to control how and when keys are 
   "proxy": {
     "host": "192.168.1.10",
     "port": 8080
+  },
+  "java_options": {
+    "always_bubble_exceptions" : true
   }
 }
 ```

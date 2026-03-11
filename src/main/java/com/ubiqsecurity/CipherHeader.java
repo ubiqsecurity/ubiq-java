@@ -69,7 +69,7 @@ class CipherHeader {
         }
 
         // Header values are in Network order (Big Endian)
-        // Java variables are Big Endian but make sure byte buffer is also 
+        // Java variables are Big Endian but make sure byte buffer is also
         // Big Endian
         ByteBuffer shortBytes = ByteBuffer.allocate(2);
         shortBytes.order(ByteOrder.BIG_ENDIAN);
@@ -98,7 +98,7 @@ class CipherHeader {
 
     byte[] serialize() {
         // Header values are in Network order (Big Endian)
-        // Java variables are Big Endian but make sure byte buffer is also 
+        // Java variables are Big Endian but make sure byte buffer is also
         // Big Endian
         ByteBuffer headerBytes = ByteBuffer.allocate(calcLength());
         headerBytes.order(ByteOrder.BIG_ENDIAN);

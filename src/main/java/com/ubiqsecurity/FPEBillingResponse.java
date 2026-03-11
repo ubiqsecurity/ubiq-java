@@ -5,7 +5,6 @@ import com.google.gson.annotations.SerializedName;
 
 class FPEBillingResponse {
 
-
     @SerializedName("message")
     String message;
 
@@ -16,5 +15,5 @@ class FPEBillingResponse {
       this.message = message;
       this.status = status;
     }
-  
+
 }

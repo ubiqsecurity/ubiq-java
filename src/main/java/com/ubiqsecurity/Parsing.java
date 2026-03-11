@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
- 
+
 
 /**
  * Algorithms to parse and build strings based on a given set
@@ -31,14 +31,14 @@ class Parsing implements AutoCloseable  {
      * @param source_character_set the character set from the source strings
      * @param passthrough_character_set the passthrough characters
      * @param dest_zeroth_char the zeroth character in the destination characterset
-     */ 
+     */
 
 
     public Parsing(
-      String source_string, 
-      String source_character_set, 
+      String source_string,
+      String source_character_set,
       String passthrough_character_set,
-      char dest_zeroth_char) 
+      char dest_zeroth_char)
     {
       this.source_character_set = source_character_set;
       this.passthrough_character_set = passthrough_character_set;
@@ -55,11 +55,11 @@ class Parsing implements AutoCloseable  {
     }
 
     /**
-     * Returns the current trimmed_characters value 
+     * Returns the current trimmed_characters value
      *
-     * @return    the trimmed_characters 
-     */        
-    public String get_trimmed_characters() 
+     * @return    the trimmed_characters
+     */
+    public String get_trimmed_characters()
     {
       if (verbose) System.out.println("before trimmed (" + passthrough_processed + "): " +  this.trimmed_characters.toString());
       if (!passthrough_processed) {
@@ -80,11 +80,11 @@ class Parsing implements AutoCloseable  {
 
 
     /**
-     * Returns the current formatted_output value 
+     * Returns the current formatted_output value
      *
-     * @return    the formatted_output 
-     */        
-    public String get_formatted_output() 
+     * @return    the formatted_output
+     */
+    public String get_formatted_output()
     {
       if (verbose) System.out.println("before formatted_output (" + passthrough_processed + "): " +  this.formatted_output.toString());
       if (!passthrough_processed) {
@@ -94,22 +94,22 @@ class Parsing implements AutoCloseable  {
       return this.formatted_output.toString();
     }
 
-    public String get_prefix_string() 
+    public String get_prefix_string()
     {
       if (verbose) System.out.println("prefix_string: " +  this.prefix_string.toString());
       return this.prefix_string.toString();
     }
 
-    public String get_suffix_string() 
+    public String get_suffix_string()
     {
       if (verbose) System.out.println("suffix_string: " +  this.suffix_string.toString());
       return this.suffix_string.toString();
     }
 
     /**
-     * Performs any wrapup when object is destroyed 
+     * Performs any wrapup when object is destroyed
      *
-     */        
+     */
     public void close() {
 
     }
@@ -122,65 +122,65 @@ class Parsing implements AutoCloseable  {
      * @param str the original String
      * @param ch the character to append
      *
-     * @return    the new String containing the inserted ch 
-     */    
-    public static String appendChar(String str, char ch) 
+     * @return    the new String containing the inserted ch
+     */
+    public static String appendChar(String str, char ch)
     {
         StringBuilder sb = new StringBuilder(str);
         sb.append(ch);
         return sb.toString();
     }
-    
 
-    
+
+
     /**
      * Replaces a character at a position in a String.
      *
-     * Convenience function returns String with replaced char 
+     * Convenience function returns String with replaced char
      * at an index position.
      *
      * @param str the original String
      * @param ch the character to replace
      * @param position the index position where to insert the ch
      *
-     * @return    the new String containing the inserted ch 
-     */    
-    public static String replaceChar(String str, char ch, int position) 
+     * @return    the new String containing the inserted ch
+     */
+    public static String replaceChar(String str, char ch, int position)
     {
         StringBuilder sb = new StringBuilder(str);
         sb.setCharAt(position, ch);
         return sb.toString();
     }
-    
-    
+
+
     /**
      * Creates a String of a specified size filled with a desired character string.
      *
      * @param stringLength the desired String length
      * @param strCharacter the desired character of type String
      *
-     * @return    the new String  
-     */    
+     * @return    the new String
+     */
     public static String createString(int stringLength, String strCharacter)
     {
         StringBuilder sbString = new StringBuilder(stringLength);
-        
+
         for(int i=0; i < stringLength; i++){
             sbString.append(strCharacter);
         }
         return sbString.toString();
     }
-    
-    
-        
+
+
+
 
     /**
      * Performs parsing of a string based on an input character set and
-     * applies the passthrough characters.  This takes into account prefix or 
+     * applies the passthrough characters.  This takes into account prefix or
      * suffix lengths that may have already been applied
      *
-     * @return    -1 if error encountered  
-     */    
+     * @return    -1 if error encountered
+     */
     public int ubiq_platform_efpe_parsing_parse_input()
     {
         int err = 0;
@@ -190,19 +190,19 @@ class Parsing implements AutoCloseable  {
             // Valid passthrough character, copy the character to Formatted output
             formatted_output.append(c);//setCharAt(idx, c);
           } else { //if (source_character_set.indexOf(c) != -1) {
-            // Can't validate against source character set at this moment because characters could be part of 
+            // Can't validate against source character set at this moment because characters could be part of
             // prefix / suffix and removed before encryption
             // If input characterset character, add to trimmed and set the formatted to zeroth char.
             trimmed_characters.append(c);
             formatted_output.append(dest_zeroth_char);
-          } 
+          }
         }
         passthrough_processed = true;
 
         return err;
       }
- 
-    public int process_prefix(final Integer prefix_length) 
+
+    public int process_prefix(final Integer prefix_length)
     {
         if (!passthrough_processed) {
           prefix_string = new StringBuilder(input_string.substring(0, prefix_length));
@@ -234,7 +234,7 @@ class Parsing implements AutoCloseable  {
       return 0;
     }
 
-    public int process_suffix(final Integer suffix_length) 
+    public int process_suffix(final Integer suffix_length)
     {
       if (!passthrough_processed) {
         suffix_string = new StringBuilder(input_string.substring(input_string.length() - suffix_length));
@@ -258,9 +258,9 @@ class Parsing implements AutoCloseable  {
           formatted_output.deleteCharAt(formatted_output.length() - 1);
         }
       }
-      
+
       return 0;
     }
-}    
+}
 
 

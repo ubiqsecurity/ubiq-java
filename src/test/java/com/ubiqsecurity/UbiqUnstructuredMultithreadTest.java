@@ -95,7 +95,7 @@ import java.lang.Thread;
           if (verbose) System.out.println(Thread.currentThread().getName() + " size: " + size);
           if (verbose) System.out.println(Thread.currentThread().getName() + " Thread: " + Thread.currentThread().getName() + ": \t  Average (uS): " + d / 1000 / count + ", Total(uS): " + d / 1000);
           average = (Long) (d / 1000 / count);
-   
+
         }
     }
 
@@ -115,7 +115,7 @@ public class UbiqUnstructuredMultithreadTest
 
     Integer size = 5000;
     Integer count = 50000;
-    
+
     int n = 25; // Number of threads
     for (int i = 0; i < n; i++) {
         UnstructuredMultithreading z = new UnstructuredMultithreading(encrypt, decrypt, random, size, count);

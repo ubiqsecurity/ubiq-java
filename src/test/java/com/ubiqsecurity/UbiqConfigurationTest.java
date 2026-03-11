@@ -39,6 +39,7 @@ public class UbiqConfigurationTest
 
       assertNull(cfg.getProxyHost());
       assertNull(cfg.getProxyPort());
+      assertEquals(cfg.getJavaOptionsAlwaysBubbleExceptions(), false);
     }
 
     @Test()
@@ -66,12 +67,13 @@ public class UbiqConfigurationTest
 
       assertNull(cfg.getProxyHost());
       assertNull(cfg.getProxyPort());
+      assertEquals(cfg.getJavaOptionsAlwaysBubbleExceptions(), false);
     }
 
     @Test()
     public void explicitCfg()  {
       UbiqConfiguration cfg = UbiqFactory.createConfiguration(1,2,3,true, ChronoUnit.NANOS,
-              true, true, true, 3600, "proxy.example.com", 8080);
+              true, true, true, 3600, "proxy.example.com", 8080, true);
 
       assertNotNull(cfg);
       assertEquals(cfg.getEventReportingWakeInterval().compareTo(1),0);
@@ -85,6 +87,8 @@ public class UbiqConfigurationTest
 
       assertEquals(cfg.getProxyHost().compareTo("proxy.example.com"), 0);
       assertEquals(cfg.getProxyPort().compareTo(8080), 0);
+      assertEquals(cfg.getJavaOptionsAlwaysBubbleExceptions(), true);
+
     }
 
     @Test()
@@ -100,6 +104,9 @@ public class UbiqConfigurationTest
       myWriter.write("\"minimum_count\" : 250,");
       myWriter.write("\"flush_interval\" : 390,");
       myWriter.write("\"trap_exceptions\" : true");
+      myWriter.write("},");
+      myWriter.write("\"java_options\" : { ");
+      myWriter.write("\"always_bubble_exceptions\" : true");
       myWriter.write("},");
       myWriter.write("\"key_caching\" : { ");
       myWriter.write("\"ttl_seconds\" : 2400,");
@@ -126,6 +133,7 @@ public class UbiqConfigurationTest
       assertEquals(cfg.getKeyCacheTtlSeconds().compareTo(2400), 0);
       assertEquals(cfg.getProxyHost().compareTo("proxy.example.com"), 0);
       assertEquals(cfg.getProxyPort().compareTo(8080), 0);
+      assertEquals(cfg.getJavaOptionsAlwaysBubbleExceptions(), true);
       file.deleteOnExit();
      
     }
@@ -158,6 +166,7 @@ public class UbiqConfigurationTest
       assertEquals(cfg.getKeyCacheEncryptKeys(), defaultCfg.getKeyCacheEncryptKeys());
       assertEquals(cfg.getKeyCacheUnstructuredKeys(), defaultCfg.getKeyCacheUnstructuredKeys());
       assertEquals(cfg.getKeyCacheTtlSeconds().compareTo(defaultCfg.getKeyCacheTtlSeconds()),0);
+      assertEquals(cfg.getJavaOptionsAlwaysBubbleExceptions(), defaultCfg.getJavaOptionsAlwaysBubbleExceptions());
 
       file.deleteOnExit();
      
@@ -173,6 +182,9 @@ public class UbiqConfigurationTest
       myWriter.write("{");
       myWriter.write("\"event_reporting\" : { ");
       myWriter.write("\"minimum_count\" : 250");
+      myWriter.write("},");
+      myWriter.write("\"java_options\" : { ");
+      myWriter.write("\"always_bubble_exceptions\" : true");
       myWriter.write("},");
       myWriter.write("\"key_caching\" : { ");
       myWriter.write("\"ttl_seconds\" : 2400");
@@ -192,6 +204,7 @@ public class UbiqConfigurationTest
       assertEquals(cfg.getKeyCacheUnstructuredKeys(), defaultCfg.getKeyCacheUnstructuredKeys());
       assertEquals(cfg.getKeyCacheStructuredKeys(), defaultCfg.getKeyCacheStructuredKeys());
       assertEquals(cfg.getKeyCacheTtlSeconds().compareTo(2400), 0);
+      assertEquals(cfg.getJavaOptionsAlwaysBubbleExceptions(), true);
 
 
       file.deleteOnExit();

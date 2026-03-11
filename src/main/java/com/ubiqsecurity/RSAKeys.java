@@ -45,7 +45,7 @@ public abstract class RSAKeys {
 
     if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
       Security.addProvider(getProvider());
-    } 
+    }
 
     // Generate 4096-bit RSA key pair
     KeyPairGenerator generator = KeyPairGenerator.getInstance(type);

@@ -22,7 +22,7 @@ import com.google.gson.GsonBuilder;
 import java.nio.file.Paths;
 
 public class UbiqIdpTest {
-  
+
   private final String UBIQ_UNITTEST_IDP_TYPE = "UBIQ_UNITTEST_IDP_TYPE";
   private final String UBIQ_UNITTEST_IDP_CUSTOMER_ID = "UBIQ_UNITTEST_IDP_CUSTOMER_ID";
   private final String UBIQ_UNITTEST_IDP_TOKEN_ENDPOINT_URL = "UBIQ_UNITTEST_IDP_TOKEN_ENDPOINT_URL";
@@ -49,7 +49,7 @@ public class UbiqIdpTest {
     idp.addProperty("idp_client_secret", System.getenv(UBIQ_UNITTEST_IDP_CLIENT_SECRET));
 
     obj.add("idp", idp);
-    
+
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     myWriter.write(gson.toJson(obj));//obj.toString());
@@ -69,7 +69,7 @@ public class UbiqIdpTest {
     myWriter.write(String.format("IDP_USERNAME=%s\n", System.getenv(UBIQ_UNITTEST_IDP_USERNAME)));
     myWriter.write(String.format("IDP_PASSWORD=%s\n", System.getenv(UBIQ_UNITTEST_IDP_PASSWORD)));
     myWriter.close();
-      
+
     return file.getAbsolutePath();
   }
 
@@ -129,7 +129,7 @@ public void encrypt_SSN() {
     System.out.println("Error: " + e.getMessage());
     fail(e.toString());
   }
-  
+
 
 }
 

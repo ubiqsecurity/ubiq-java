@@ -71,18 +71,23 @@ public class UbiqStructuredEncryptTest
 {
     private final String UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY = "UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY";
     private final String UBIQ_SECRET_CRYPTO_ACCESS_KEY = "UBIQ_SECRET_CRYPTO_ACCESS_KEY";
-    
 
     static void testCycleEncryption(String dataset_name, String plainText, UbiqCredentials ubiqCredentials) {
 
-        try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+        UbiqConfiguration ubiqConfiguration = UbiqFactory.defaultConfiguration();
+        testCycleEncryption(dataset_name, plainText, ubiqCredentials, ubiqConfiguration);
+    }
+
+    static void testCycleEncryption(String dataset_name, String plainText, UbiqCredentials ubiqCredentials, UbiqConfiguration ubiqConfiguration) {
+        try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials, ubiqConfiguration)) {
             String result = ubiqEncryptDecrypt.encrypt(dataset_name, plainText, null);
             result = ubiqEncryptDecrypt.decrypt(dataset_name, result, null);
+                        System.out.println("Decrypted\n");
+            assertEquals(result, plainText);
         }
     }
 
-
-    static void testRt(String dataset_name, String plainText, String expectedCt) 
+    static void testRt(String dataset_name, String plainText, String expectedCt)
     {
       UbiqCredentials ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
 
@@ -108,6 +113,7 @@ public class UbiqStructuredEncryptTest
           String ct = ubiqEncryptDecrypt.encrypt(dataset_name, plainText, null);
           String pt = ubiqEncryptDecrypt.decrypt(dataset_name, ct, null);
           assertEquals(plainText, pt);
+
 
           if (expectedCt != null) {
             pt = ubiqEncryptDecrypt.decrypt(dataset_name, expectedCt, null);
@@ -485,7 +491,7 @@ public class UbiqStructuredEncryptTest
             String pt_alphanum = "ABCD";
             String ct_alphanum = "";
 
-            
+
             try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
               long start = System.nanoTime();
               int count = 1000000;
@@ -569,7 +575,7 @@ public class UbiqStructuredEncryptTest
         testCycleEncryption("SSN", " 123456789$", ubiqCredentials);
     }
 
-    @Test(expected = Exception.class)
+    @Test(expected = IllegalArgumentException.class)
     public void encryptStructured_Invalid_LEN_1() {
         UbiqCredentials ubiqCredentials= null;
         try {
@@ -577,10 +583,10 @@ public class UbiqStructuredEncryptTest
         } catch (Exception ex) {
         }
 
-        testCycleEncryption("SSN", " 1234", ubiqCredentials);
+        testCycleEncryption("SSN", "1234", ubiqCredentials);
     }
 
-    @Test(expected = Exception.class)
+    @Test(expected = IllegalArgumentException.class)
     public void encryptStructured_Invalid_LEN_2() {
         UbiqCredentials ubiqCredentials= null;
         try {
@@ -588,7 +594,21 @@ public class UbiqStructuredEncryptTest
         } catch (Exception ex) {
         }
 
-        testCycleEncryption("SSN", " 12345678901234567890", ubiqCredentials);
+        String c = "1";
+        char [] a = new char[300];
+        Arrays.fill(a, '1');
+        testCycleEncryption("SSN", new String(a), ubiqCredentials);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void encryptStructured_Invalid_Char() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+          ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+        } catch (Exception ex) {
+        }
+
+        testCycleEncryption("SSN", "12345a6789", ubiqCredentials);
     }
 
 
@@ -602,6 +622,7 @@ public class UbiqStructuredEncryptTest
                                                             ubiqCredentials.getSecretCryptoAccessKey(),
                                                             ubiqCredentials.getHost() );
         } catch (Exception ex) {
+          System.out.println("encryptStructured_Invalid_specific_creds_1 e: " + ex.getClass().getName() + " " + ex.getMessage());
         }
 
         testCycleEncryption("ALPHANUM_SSN", " 123456789", ubiqCredentials);
@@ -704,16 +725,63 @@ public class UbiqStructuredEncryptTest
     }
 
 
-    @Test(expected = Exception.class)
-    public void encryptStructured_Error_handling_invalid_dataset() {
+    @Test(expected = RuntimeException.class)
+    public void encryptStructured_Error_handling_invalid_dataset_legacy() {
         UbiqCredentials ubiqCredentials= null;
+        try {
+          ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
+
+        testCycleEncryption("ERROR_MSG", " 01121231231231231& 1 &2311200 ", ubiqCredentials);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void encryptStructured_Error_handling_invalid_dataset_bubble_up() {
+        UbiqCredentials ubiqCredentials= null;
+        try {
+          ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
+        UbiqConfiguration ubiqConfiguration = UbiqFactory.createConfiguration(null, null, null, null, null,
+          null, null, null, null,
+          null, null,
+          true
+        );
+        assertTrue(ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions());
+
+
+        testCycleEncryption("ERROR_MSG", " 01121231231231231& 1 &2311200 ", ubiqCredentials, ubiqConfiguration);
+    }
+
+    @Test
+    public void encryptStructured_Error_handling_invalid_dataset_type() {
+        UbiqCredentials ubiqCredentials= null;
+        final byte[] tweak = null;
         try {
           ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
         } catch (Exception ex) {
         }
 
-        testCycleEncryption("ERROR_MSG", " 01121231231231231& 1 &2311200 ", ubiqCredentials);
+      try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+        Throwable exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.encrypt("INT32", "12354678", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.encryptForSearch("INT32", "12354678", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.encrypt("INT64", "12354678", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.encryptForSearch("INT64", "12354678", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.encrypt("DATE", "2000-01-01T00:00Z", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.encryptForSearch("DATE", "2000-01-01T00:00Z", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.encrypt("DATETIME", "2000-01-01T00:00Z", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.encryptForSearch("DATETIME", "2000-01-01T00:00Z", tweak));
+
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.decrypt("INT32", "12354678", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.decrypt("INT64", "12354678", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.decrypt("DATE", "2000-01-01T00:00Z", tweak));
+        exception = assertThrows(RuntimeException.class, () -> ubiqEncryptDecrypt.decrypt("DATETIME", "2000-01-01T00:00Z", tweak));
+      }
     }
+
 
     @Test
     public void addReportingUserDefinedMetadataTest() {
@@ -804,7 +872,7 @@ public class UbiqStructuredEncryptTest
        String name = ubiqEncryptDecrypt.loadDataset(obj.toString());
 
         obj = new JsonObject();
-        obj.addProperty("encrypted_private_key",encrypted_private_key);
+        obj.addProperty("encrypted_private_key",encrypted_private_key + "bad");
         obj.addProperty("key_number","1");
         String secretCryptoAccessKey = System.getenv(UBIQ_SECRET_CRYPTO_ACCESS_KEY);
         byte[] key = "1234567890123456".getBytes();
@@ -814,17 +882,123 @@ public class UbiqStructuredEncryptTest
         obj.addProperty("wrapped_data_key",wrappedDataKey);
 
         // LoadKeyDef requires the dataset to be loaded first
-         ubiqEncryptDecrypt.loadKeyDef(datasetName, obj.toString(), true);
-         assertEquals(true, true);
+         boolean ret = ubiqEncryptDecrypt.loadKeyDef(datasetName, obj.toString(), true);
+         assertEquals(ret, true);
 
       } catch (Exception ex) {
         assertEquals(false, true);
       }
     }
 
+    @Test
+    public void loadKeyDef_fail() {
+      final String datasetName = "SomeName";
+      UbiqCredentials ubiqCredentials= null;
+      String encrypted_private_key = System.getenv(UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY);
+      try {
+        ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+      } catch (Exception ex) {
+      }
+
+      try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials)) {
+
+        JsonObject obj = new JsonObject();
+        obj.addProperty("name", datasetName);
+        obj.addProperty("salt", "TgTgXcV10ZWaTSo1UgLPvIx29QWLF6A6jpq7MZJt24c=");
+        obj.addProperty("min_input_length",6);
+        obj.addProperty("max_input_length",255);
+        obj.addProperty("tweak_source","constant");
+        obj.addProperty("encryption_algorithm","FF1");
+        obj.addProperty("passthrough","-");
+        obj.addProperty("input_character_set","0123456789");
+        obj.addProperty("output_character_set","0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        obj.addProperty("msb_encoding_bits",0);
+        obj.addProperty("tweak_min_len",6);
+        obj.addProperty("tweak_max_len",32);
+        obj.addProperty("tweak","adBSmNHICAz4miOwJQaqWxdHn1TlPzPu3bs7ZTpBZ50=");
+        obj.addProperty("fpe_definable_type","EfpeDefinition");
+        obj.add("passthrough_rules", new JsonArray());
+
+       String name = ubiqEncryptDecrypt.loadDataset(obj.toString());
+
+        obj = new JsonObject();
+        obj.addProperty("encrypted_private_key", "bad");
+        obj.addProperty("key_number","1");
+        String secretCryptoAccessKey = System.getenv(UBIQ_SECRET_CRYPTO_ACCESS_KEY);
+        byte[] key = "1234567890123456".getBytes();
+
+        String wrappedDataKey = wrapDataKey2(key, encrypted_private_key, secretCryptoAccessKey);
+
+        obj.addProperty("wrapped_data_key",wrappedDataKey);
+        final String s = obj.toString();
+         // Bad data so will throw RuntimeException
+        Throwable exception = assertThrows(RuntimeException.class, ()-> ubiqEncryptDecrypt.loadKeyDef(datasetName, s, true));
+
+
+      } catch (Exception ex) {
+        assertEquals(false, true);
+      }
+    }
+
+        @Test
+    public void loadKeyDef_fail2() {
+      final String datasetName = "SomeName";
+      UbiqCredentials ubiqCredentials= null;
+      String encrypted_private_key = System.getenv(UBIQ_UNITTEST_ENCRYPTED_PRIVATE_KEY);
+      try {
+        ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
+      } catch (Exception ex) {
+      }
+      UbiqConfiguration ubiqConfiguration = UbiqFactory.createConfiguration(null, null, null, null, null,
+        null, null, null, null,
+        null, null,
+        true
+      );
+      assertTrue(ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions());
+
+      try (UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt = new UbiqStructuredEncryptDecrypt(ubiqCredentials, ubiqConfiguration)) {
+
+        JsonObject obj = new JsonObject();
+        obj.addProperty("name", datasetName);
+        obj.addProperty("salt", "TgTgXcV10ZWaTSo1UgLPvIx29QWLF6A6jpq7MZJt24c=");
+        obj.addProperty("min_input_length",6);
+        obj.addProperty("max_input_length",255);
+        obj.addProperty("tweak_source","constant");
+        obj.addProperty("encryption_algorithm","FF1");
+        obj.addProperty("passthrough","-");
+        obj.addProperty("input_character_set","0123456789");
+        obj.addProperty("output_character_set","0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        obj.addProperty("msb_encoding_bits",0);
+        obj.addProperty("tweak_min_len",6);
+        obj.addProperty("tweak_max_len",32);
+        obj.addProperty("tweak","adBSmNHICAz4miOwJQaqWxdHn1TlPzPu3bs7ZTpBZ50=");
+        obj.addProperty("fpe_definable_type","EfpeDefinition");
+        obj.add("passthrough_rules", new JsonArray());
+
+       String name = ubiqEncryptDecrypt.loadDataset(obj.toString());
+
+        obj = new JsonObject();
+        obj.addProperty("encrypted_private_key", "encrypted_private_key");
+        obj.addProperty("key_number","1");
+        String secretCryptoAccessKey = System.getenv(UBIQ_SECRET_CRYPTO_ACCESS_KEY);
+        byte[] key = "1234567890123456".getBytes();
+
+        String wrappedDataKey = wrapDataKey2(key, encrypted_private_key, secretCryptoAccessKey);
+
+        obj.addProperty("wrapped_data_key",wrappedDataKey);
+        final String s = obj.toString();
+        // Bad data so will throw RuntimeException -  Even though the configuration says to bubble up -
+        // it is an checked exception which is being changed to a runtime exception.
+        Throwable exception = assertThrows(RuntimeException.class, ()-> ubiqEncryptDecrypt.loadKeyDef(datasetName, s, true));
+      } catch (Exception ex) {
+        ex.printStackTrace();
+        assertEquals(false, true);
+      }
+    }
+
     String wrapDataKey(byte[] key, String encrypted_private_key, String secretCryptoAccessKey) {
       BouncyCastleProvider bcProvider;
-      
+
       String wrappedDataKey = null;
       bcProvider = new BouncyCastleProvider();
 
@@ -848,7 +1022,7 @@ public class UbiqStructuredEncryptTest
             if (!(privateKey instanceof BCRSAPrivateCrtKey)) {
                 throw new RuntimeException("Unrecognized Private Key format: " + privateKey.getClass().getName() + " " );
             }
-            
+
             BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
 
             // now that we've decrypted the server-provided empheral key, we can
@@ -916,11 +1090,11 @@ public class UbiqStructuredEncryptTest
         }
         return wrappedDataKey;
       }
-    
+
     private String wrapDataKey2(byte[] key, String encrypted_private_key, String secretCryptoAccessKey) throws Exception{
 
       BouncyCastleProvider bcProvider;
-      
+
       String base64Ciphertext = null;
       bcProvider = new BouncyCastleProvider();
 
@@ -945,7 +1119,7 @@ public class UbiqStructuredEncryptTest
             if (!(privateKey instanceof BCRSAPrivateCrtKey)) {
                 throw new RuntimeException("Unrecognized Private Key format: " + privateKey.getClass().getName() + " " );
             }
-            
+
             BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
 
             RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(
@@ -1096,5 +1270,5 @@ public class UbiqStructuredEncryptTest
             fail(ex.toString());
         }
     }
- */    
+ */
   }

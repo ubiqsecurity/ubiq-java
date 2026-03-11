@@ -44,6 +44,5 @@ public class UbiqUnstructuredDecryptSession implements AutoCloseable {
       this.byteQueue = new ByteQueue(null);
       this.cipherHeader = null;
     }
-    
 
 }
