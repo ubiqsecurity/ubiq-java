@@ -18,10 +18,17 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutionException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.Gson;
 
+class results {
+  String value;
+  Long duration;
+}
 
 public class TestHarness {
 
@@ -30,6 +37,8 @@ public class TestHarness {
     static final String UBIQ_MAX_AVG_DECRYPT = "UBIQ_MAX_AVG_DECRYPT";
     static final String UBIQ_MAX_TOTAL_ENCRYPT = "UBIQ_MAX_TOTAL_ENCRYPT";
     static final String UBIQ_MAX_TOTAL_DECRYPT = "UBIQ_MAX_TOTAL_DECRYPT";
+
+
 
     private String getEnv(String existing_value, String env_name) {
         String ret = null;
@@ -66,6 +75,11 @@ public class TestHarness {
 
         // making credentials object
         UbiqCredentials ubiqCredentials =  null;
+        UbiqConfiguration ubiqConfiguration = null;
+        UbiqWebServices ubiqWebServices =  null;
+        com.ubiqsecurity.FFS datasets = null;
+
+
         byte[] tweak = null;
         Boolean failed = false;
 
@@ -74,6 +88,13 @@ public class TestHarness {
         } else {
            ubiqCredentials = UbiqFactory.createCredentials(null,null,null,null);
         }
+
+        ubiqConfiguration = UbiqFactory.defaultConfiguration();
+
+        ubiqWebServices = new UbiqWebServices(ubiqCredentials, ubiqConfiguration);
+
+        datasets = new com.ubiqsecurity.FFS(ubiqWebServices, ubiqConfiguration);
+
 
         cmdArgs.inputFileName = getEnv(cmdArgs.inputFileName, UBIQ_TEST_DATA_FILE);
         cmdArgs.max_avg_encrypt = getEnv(cmdArgs.max_avg_encrypt, UBIQ_MAX_AVG_ENCRYPT);
@@ -110,26 +131,25 @@ public class TestHarness {
             for (JsonElement obj : test_data) {
               DataRecord data = gson.fromJson(obj, DataRecord.class);
 
+              com.ubiqsecurity.FFS_Record dataset = datasets.FFSCache.get(data.dataset);
+
               if (!dataset_counts.containsKey(data.dataset)) {
                 // Initialize the hashes for the datasets
                 dataset_counts.put(data.dataset, (long) 0);
                 timing_encrypt.put(data.dataset, (long) 0);
                 timing_decrypt.put(data.dataset, (long) 0);
-                String ct = ubiqEncryptDecrypt.encrypt(data.dataset, data.plaintext, tweak);
-                String pt = ubiqEncryptDecrypt.decrypt(data.dataset, data.ciphertext, tweak);
-                }
+                results o =  encrypt(ubiqEncryptDecrypt, dataset, data.plaintext, tweak);
+                o = decrypt(ubiqEncryptDecrypt, dataset, data.ciphertext, tweak);
+              }
 
-              Instant s = Instant.now();
-              String ct = ubiqEncryptDecrypt.encrypt(data.dataset, data.plaintext, tweak);
-              Instant e = Instant.now();
-              String pt = ubiqEncryptDecrypt.decrypt(data.dataset, data.ciphertext, tweak);
-              Instant d = Instant.now();
+              results ct =  encrypt(ubiqEncryptDecrypt, dataset, data.plaintext, tweak);
+              results pt =  decrypt(ubiqEncryptDecrypt, dataset, data.ciphertext, tweak);
 
-              timing_encrypt.put(data.dataset, timing_encrypt.get(data.dataset) + Duration.between(s, e).toNanos());
-              timing_decrypt.put(data.dataset, timing_decrypt.get(data.dataset) + Duration.between(e, d).toNanos());
+              timing_encrypt.put(data.dataset, timing_encrypt.get(data.dataset) + Long.valueOf(ct.duration));
+              timing_decrypt.put(data.dataset, timing_decrypt.get(data.dataset) + Long.valueOf(pt.duration));
               dataset_counts.put(data.dataset, dataset_counts.get(data.dataset) + 1);
 
-              if (!ct.equals(data.ciphertext) || !pt.equals(data.plaintext)) {
+              if (!data.ciphertext.equals(ct.value) || !data.plaintext.equals(pt.value)) {
                 System.out.println("Encrypt / Decrypt error");
                 errors.add(data);
               }
@@ -209,6 +229,130 @@ public class TestHarness {
       assertEquals(failed, false);
 
     }
+
+    private results encrypt(UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt, com.ubiqsecurity.FFS_Record dataset, String pt, byte[] tweak) 
+    throws ExecutionException {
+        boolean verbose = false;
+        results ret = new results();
+        try {
+            Instant s = null;
+            Instant e = null;
+            String ct = null;
+            switch (dataset.getDataType()) {
+            case "integer":
+              long ct_l = 0;
+              long pt_l = Long.valueOf(pt);
+              if (dataset.getDataTypeConfig().getSize() == 32) {
+                s = Instant.now();
+                ct_l = ubiqEncryptDecrypt.encryptInt(dataset.getName(), (int)pt_l, tweak);
+                e = Instant.now();
+              } else {
+                s = Instant.now();
+                ct_l = ubiqEncryptDecrypt.encryptLong(dataset.getName(), pt_l, tweak);
+                e = Instant.now();
+              }
+              ct = String.valueOf(ct_l);
+
+              if (verbose) System.out.println("dataset: " + dataset.getName() + "'\tpt: :'" + pt_l + "' ct:" + ct_l);
+
+              break;
+
+            case "date":
+              OffsetDateTime pt_d = OffsetDateTime.parse(pt);
+              s = Instant.now();
+              OffsetDateTime ct_d = ubiqEncryptDecrypt.encryptDate(dataset.getName(), pt_d, tweak);
+              e = Instant.now();
+
+              if (verbose) System.out.println("dataset: " + dataset.getName() + "'\tpt: :'" + pt_d + "' ct:" + ct_d);
+              ct = ct_d.toString();
+
+              break;
+            case "datetime":
+              OffsetDateTime pt_dt = OffsetDateTime.parse(pt);
+              s = Instant.now();
+              OffsetDateTime ct_dt = ubiqEncryptDecrypt.encryptDateTime(dataset.getName(), pt_dt, tweak);
+              e = Instant.now();
+
+              if (verbose) System.out.println("dataset: " + dataset.getName() + "'\tpt: :'" + pt_dt + "' ct:" + ct_dt);
+              ct = ct_dt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+              break;
+            default:
+              s = Instant.now();
+              ct = ubiqEncryptDecrypt.encrypt(dataset.getName(), pt, tweak);
+              e = Instant.now();
+              break;
+            }
+            ret.duration = Duration.between(s, e).toNanos();
+            ret.value = ct;
+          } catch(Exception e) {
+            // NOP
+          }
+          return ret;
+      }
+            
+    private results decrypt(UbiqStructuredEncryptDecrypt ubiqEncryptDecrypt, com.ubiqsecurity.FFS_Record dataset, String ct, byte[] tweak) 
+    throws ExecutionException {
+        boolean verbose = false;
+        results ret = new results();
+        try {
+
+            Instant s = null;
+            Instant e = null;
+            String pt = null;
+            switch (dataset.getDataType()) {
+            case "integer":
+              long pt_l = 0;
+              long ct_l = Long.valueOf(ct);
+              if (dataset.getDataTypeConfig().getSize() == 32) {
+                s = Instant.now();
+                pt_l = ubiqEncryptDecrypt.decryptInt(dataset.getName(), (int)ct_l, tweak);
+                e = Instant.now();
+              } else {
+                s = Instant.now();
+                pt_l = ubiqEncryptDecrypt.decryptLong(dataset.getName(), ct_l, tweak);
+                e = Instant.now();
+              }
+              pt = String.valueOf(pt_l);
+
+              if (verbose) System.out.println("dataset: " + dataset.getName() + "'\tpt: :'" + pt_l + "' ct:" + ct_l);
+
+              break;
+
+            case "date":
+              OffsetDateTime ct_d = OffsetDateTime.parse(ct);
+              s = Instant.now();
+              OffsetDateTime pt_d = ubiqEncryptDecrypt.decryptDate(dataset.getName(), ct_d, tweak);
+              e = Instant.now();
+
+              if (verbose) System.out.println("dataset: " + dataset.getName() + "'\tpt: :'" + pt_d + "' ct:" + ct_d);
+              pt = pt_d.toString();
+
+              break;
+            case "datetime":
+              OffsetDateTime ct_dt = OffsetDateTime.parse(ct);
+              s = Instant.now();
+              OffsetDateTime pt_dt = ubiqEncryptDecrypt.decryptDateTime(dataset.getName(), ct_dt, tweak);
+              e = Instant.now();
+
+              if (verbose) System.out.println("dataset: " + dataset.getName() + "'\tpt: :'" + pt_dt + "' ct:" + ct_dt);
+              pt = pt_dt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+              break;
+            default:
+              s = Instant.now();
+              pt = ubiqEncryptDecrypt.decrypt(dataset.getName(), ct, tweak);
+              e = Instant.now();
+              break;
+            }
+            ret.duration = Duration.between(s, e).toNanos();
+            ret.value = pt;
+          } catch(Exception e) {
+            // NOP
+          }
+          return ret;
+      }
+           
 
     @Test
     public void runTestHarness() {

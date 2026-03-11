@@ -23,7 +23,7 @@ public abstract class UbiqFactory {
       UbiqCredentials creds;
       try {
         creds = readCredentialsFromFile(null,null);
-      } catch (IllegalArgumentException| IOException e) {
+      } catch (IllegalArgumentException| IOException e) { // handle exception to use defaults
         creds = createCredentials(null,null,null,null,null,null);
       }
       return creds;
@@ -33,9 +33,9 @@ public abstract class UbiqFactory {
       UbiqConfiguration cfg;
       try {
         cfg = readConfigurationFromFile(null);
-      } catch (IllegalArgumentException e) {
+      } catch (IllegalArgumentException e) { // handle exception to create default
         cfg = createConfiguration(null,null,null,null,null);
-      } catch (IOException e) {
+      } catch (IOException e) { // handle exception to create default
         cfg = createConfiguration(null,null,null,null,null);
       }
       return cfg;
@@ -47,8 +47,8 @@ public abstract class UbiqFactory {
       Integer eventReportingFlushInterval,
       Boolean eventReportingTrapExceptions) {
         return createConfiguration(eventReportingWakeInterval, eventReportingMinimumCount,
-          eventReportingFlushInterval, eventReportingTrapExceptions, ChronoUnit.NANOS, 
-          null, null, null, null);
+          eventReportingFlushInterval, eventReportingTrapExceptions, ChronoUnit.NANOS,
+          null, null, null, null, null, null, null);
       }
 
     public static UbiqConfiguration createConfiguration(
@@ -57,10 +57,10 @@ public abstract class UbiqFactory {
       Integer eventReportingFlushInterval,
       Boolean eventReportingTrapExceptions,
       ChronoUnit eventReportingTimestampGranularity) {
-        
-      return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount, 
+
+      return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount,
           eventReportingFlushInterval, eventReportingTrapExceptions, eventReportingTimestampGranularity,
-          null, null, null, null, null, null);
+          null, null, null, null, null, null, null);
     }
 
     public static UbiqConfiguration createConfiguration(
@@ -72,9 +72,9 @@ public abstract class UbiqFactory {
       Boolean cacheEncryptKeys,
       Boolean cacheUnstructuredKeys,
       Integer cacheTtlSeconds ) {
-        return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount, 
+        return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount,
         eventReportingFlushInterval, eventReportingTrapExceptions, eventReportingTimestampGranularity,
-        cacheEncryptKeys, null, cacheUnstructuredKeys, cacheTtlSeconds, null, null);
+        cacheEncryptKeys, null, cacheUnstructuredKeys, cacheTtlSeconds, null, null, null);
       }
 
     public static UbiqConfiguration createConfiguration(
@@ -90,7 +90,7 @@ public abstract class UbiqFactory {
 
       return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount,
           eventReportingFlushInterval, eventReportingTrapExceptions, eventReportingTimestampGranularity,
-          cacheEncryptKeys, cacheStructuredKeys, cacheUnstructuredKeys, cacheTtlSeconds, null, null);
+          cacheEncryptKeys, cacheStructuredKeys, cacheUnstructuredKeys, cacheTtlSeconds, null, null, null);
     }
 
   public static UbiqConfiguration createConfiguration(
@@ -108,9 +108,27 @@ public abstract class UbiqFactory {
 
     return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount,
             eventReportingFlushInterval, eventReportingTrapExceptions, eventReportingTimestampGranularity,
-            cacheEncryptKeys, cacheStructuredKeys, cacheUnstructuredKeys, cacheTtlSeconds, proxyHost, proxyPort);
+            cacheEncryptKeys, cacheStructuredKeys, cacheUnstructuredKeys, cacheTtlSeconds, proxyHost, proxyPort, null);
   }
 
+  public static UbiqConfiguration createConfiguration(
+          Integer eventReportingWakeInterval,
+          Integer eventReportingMinimumCount,
+          Integer eventReportingFlushInterval,
+          Boolean eventReportingTrapExceptions,
+          ChronoUnit eventReportingTimestampGranularity,
+          Boolean cacheEncryptKeys,
+          Boolean cacheStructuredKeys,
+          Boolean cacheUnstructuredKeys,
+          Integer cacheTtlSeconds,
+          String proxyHost,
+          Integer proxyPort,
+          Boolean javaOptionsAlwaysBubbleExceptions) {
+
+    return new UbiqConfiguration(eventReportingWakeInterval, eventReportingMinimumCount,
+            eventReportingFlushInterval, eventReportingTrapExceptions, eventReportingTimestampGranularity,
+            cacheEncryptKeys, cacheStructuredKeys, cacheUnstructuredKeys, cacheTtlSeconds, proxyHost, proxyPort, javaOptionsAlwaysBubbleExceptions);
+  }
 
     public static UbiqConfiguration readConfigurationFromFile(String pathname) throws IOException {
         return new UbiqConfiguration(pathname);

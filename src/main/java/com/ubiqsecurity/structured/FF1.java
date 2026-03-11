@@ -34,10 +34,6 @@ public class FF1 extends FFX
       super(key, twk, (long)1 << 32, twkmin, twkmax, radix, alpha);
     }
 
-    public double log2(double x) {
-        return (double)(Math.log(x) / Math.log(2));
-    }
-
     static public int bitlen(BigInteger n) {
 
       int bits = 0;
@@ -206,7 +202,7 @@ public class FF1 extends FFX
             /* Step 6viii */
             A = B;
             /* Step 6vii, 6ix */
-            B = FFX.str(m, this.radix, this.alpha, c);
+            B = FFX.str(m, this.radix, this.alpha, c, false, true);
         }
 
         /* Step 7 */

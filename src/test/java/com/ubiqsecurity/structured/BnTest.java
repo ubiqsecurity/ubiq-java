@@ -12,11 +12,11 @@ public class BnTest
         assertThrows(RuntimeException.class, () -> {
             Bn.__bigint_set_str("109", "012345678");
         });
-        
+
         assertThrows(RuntimeException.class, () -> {
             Bn.__bigint_set_str("109", "");
         });
-        
+
         assertThrows(RuntimeException.class, () -> {
             Bn.__bigint_get_str("", BigInteger.valueOf(0));
         });
@@ -31,7 +31,7 @@ public class BnTest
 
         String output = Bn.__bigint_get_str("0123456789ABCDEF", r1);
         assertEquals(output, "0");
-        
+
         output = Bn.__bigint_get_str("0123456789ABCDEF", BigInteger.valueOf(0));
         assertEquals(output, "0");
     }

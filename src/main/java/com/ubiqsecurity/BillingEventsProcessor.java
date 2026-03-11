@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Runs the scheduler used to send billing data to the server periodically
- */ 
+ */
 class BillingEventsProcessor extends AbstractScheduledService
 {
     private boolean verbose= false;
@@ -35,8 +35,8 @@ class BillingEventsProcessor extends AbstractScheduledService
      * @param billing_events              the list of bills to process
      * @param ubiqConfiguration  Configuration object that can adjust the behavior of the library
      *
-     */    
-    public BillingEventsProcessor (UbiqWebServices ubiqWebServices, BillingEvents billing_events, 
+     */
+    public BillingEventsProcessor (UbiqWebServices ubiqWebServices, BillingEvents billing_events,
       UbiqConfiguration ubiqConfiguration) {
         this.ubiqWebServices= ubiqWebServices;
         this.billing_events= billing_events;
@@ -50,7 +50,7 @@ class BillingEventsProcessor extends AbstractScheduledService
     /**
      * Called during the startup phase.
      *
-     */        
+     */
     @Override
     protected void startUp() {
         if (verbose) System.out.println("--Job started at: " + new java.util.Date());
@@ -59,18 +59,18 @@ class BillingEventsProcessor extends AbstractScheduledService
     /**
      * Called periodically to process the specified task, e.g. executor.startAsync();
      *
-     */         
+     */
     @Override
     protected void runOneIteration() throws Exception {
       String csu = "runOneIteration";
       try {
         // perform periodic list processing here
         if (verbose) System.out.printf("%s   : %s  events(%d)\n", csu,new java.util.Date(), billing_events.getEventCount());
-        
-        // Wakes up periodically and if the flush time is reached 
+
+        // Wakes up periodically and if the flush time is reached
         // OR the number of billing events is above the threshold, send them
 
-        if ((nextFlushTime.compareTo(Instant.now()) < 0) || (billing_events.getEventCount() >= ubiqConfiguration.getEventReportingMinimumCount())) { 
+        if ((nextFlushTime.compareTo(Instant.now()) < 0) || (billing_events.getEventCount() >= ubiqConfiguration.getEventReportingMinimumCount())) {
 
           if (billing_events.getEventCount() > 0) {
             try {
@@ -89,7 +89,7 @@ class BillingEventsProcessor extends AbstractScheduledService
           if (verbose) System.out.printf("%s   : Else\n", csu);
           try {
             lock.lock();
-            existingCalls = trackingCalls; 
+            existingCalls = trackingCalls;
             trackingCalls = new ArrayList<RestCallFuture>();
           } finally {
             lock.unlock();
@@ -124,17 +124,17 @@ class BillingEventsProcessor extends AbstractScheduledService
           throw e;
         }
       }
-        
+
     }
 
     /**
      * Called when a new change is made to the processing schedule
      *
-     */          
+     */
     @Override
     protected Scheduler scheduler() {
         if (verbose) System.out.println("-- Running newFixedRateSchedule: " + new java.util.Date());
-    
+
         // execute every period
         return Scheduler.newFixedRateSchedule(0, ubiqConfiguration.getEventReportingWakeInterval(), TimeUnit.SECONDS);
     }
@@ -142,7 +142,7 @@ class BillingEventsProcessor extends AbstractScheduledService
     /**
      * Called when the scheduler is destroyed. e.g. executor.stopAsync();
      *
-     */          
+     */
     @Override
     protected void shutDown() {
       String csu = "shutDown";
@@ -165,7 +165,7 @@ class BillingEventsProcessor extends AbstractScheduledService
           // Wait until the events have been processed
           try {
             Integer res = (Integer) restResults.future.get(2, TimeUnit.SECONDS);
-            
+
             if (verbose) System.out.printf("%s -- shutDown: res (%d)\n", csu, res);
 
           } catch (InterruptedException | ExecutionException e) {
@@ -183,7 +183,7 @@ class BillingEventsProcessor extends AbstractScheduledService
       if (verbose) System.out.printf("%s -- shutDown: D\n", csu);
 
     }
-    
+
 }
 
 

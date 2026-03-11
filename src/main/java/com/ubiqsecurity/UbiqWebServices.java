@@ -120,7 +120,7 @@ class UbiqWebServices {
       sb.append("]");
       return sb.toString();
    }
-  
+
     UbiqWebServices(UbiqCredentials ubiqCredentials, UbiqConfiguration ubiqConfiguration) {
         this.bcProvider = new BouncyCastleProvider();
         this.ubiqCredentials = ubiqCredentials;
@@ -136,32 +136,24 @@ class UbiqWebServices {
         }
     }
 
-    public static String encode(String url)
+    public static String encode(String url) throws UnsupportedEncodingException
       {
-            try {
-                 String encodeURL=URLEncoder.encode( url, StandardCharsets.UTF_8.toString() );
-                 return encodeURL.replaceAll("\\+", "%20");
-            } catch (UnsupportedEncodingException e) {
-                 return "Issue while encoding: " +e.getMessage();
-            }
+        String encodeURL=URLEncoder.encode( url, StandardCharsets.UTF_8.toString() );
+        return encodeURL.replaceAll("\\+", "%20");
       }
 
 
-    byte[] getUnwrappedKey(String EncryptedPrivateKey, String WrappedDataKey) {
+    byte[] getUnwrappedKey(String EncryptedPrivateKey, String WrappedDataKey)
+    throws java.io.IOException, OperatorCreationException, PKCSException, InvalidCipherTextException {
         byte[] UnwrappedDataKey = {(byte)0x00};
         if (verbose) System.out.println("Unwrapping key");
-        try {
-            // decrypt the provided encryption key
-            UnwrappedDataKey = unwrapKey(
-                        EncryptedPrivateKey,
-                        WrappedDataKey,
-                        this.ubiqCredentials.getSecretCryptoAccessKey());
+        // decrypt the provided encryption key
+        UnwrappedDataKey = unwrapKey(
+                    EncryptedPrivateKey,
+                    WrappedDataKey,
+                    this.ubiqCredentials.getSecretCryptoAccessKey());
 
-            return UnwrappedDataKey;
-        } catch (Exception ex) {
-            System.out.println(String.format("getUnwrappedKey exception: %s", ex.getMessage()));
-            return UnwrappedDataKey;
-        }
+        return UnwrappedDataKey;
     }
 
 
@@ -200,11 +192,12 @@ class UbiqWebServices {
 
 
     // Get the search keys using the fpe/def_keys endpoint
-    JsonObject getFpeDefKeys(String[] datasets) {
+    JsonObject getFpeDefKeys(String[] datasets)
+    throws java.io.IOException, java.net.URISyntaxException, java.security.NoSuchAlgorithmException, java.lang.InterruptedException, java.security.InvalidKeyException {
 
       String jsonRequest="";
       String params = null;
-      
+
       // If no datasets passed in, retrieve ALL datasets for the api_key
       if (datasets.length > 0) {
         String names = String.join(",", datasets);
@@ -222,43 +215,36 @@ class UbiqWebServices {
       if (verbose) System.out.println("\n    urlString: " + urlString + "\n");
       if (verbose) System.out.println("\n    params: " + params + "\n");
 
-      try {
+      HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-        HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+      // submit HTTP request + expect HTTP response w/ status 'Created' (200)
+      String jsonResponse = submitHttpRequest(request, 200);
 
-        // submit HTTP request + expect HTTP response w/ status 'Created' (200)
-        String jsonResponse = submitHttpRequest(request, 200);
+      if (verbose) System.out.println("\n    getFpeDefKeys: " + jsonResponse + "\n");
 
-        if (verbose) System.out.println("\n    getFpeDefKeys: " + jsonResponse + "\n");
+      // deserialize the JSON response to POJO
+      JsonObject results = JsonParser.parseString(jsonResponse).getAsJsonObject();
 
-        // deserialize the JSON response to POJO
-        JsonObject results = JsonParser.parseString(jsonResponse).getAsJsonObject();
- 
-        // If this is IDP, then the 
-        if (ubiqCredentials.isIdp()) {
-          for (String name : datasets)
-          {
-            JsonObject element = results.getAsJsonObject(name);
-            if (!element.isJsonNull()) {
-              results.getAsJsonObject(name).addProperty("encrypted_private_key", this.ubiqCredentials.getEncryptedPrivateKey());
-            }
-          }
-          if (verbose) {
-            System.out.println(String.format("getFpeDefKeys results: %s", results.toString()));
-
+      // If this is IDP, then the
+      if (ubiqCredentials.isIdp()) {
+        for (String name : datasets)
+        {
+          JsonObject element = results.getAsJsonObject(name);
+          if (!element.isJsonNull()) {
+            results.getAsJsonObject(name).addProperty("encrypted_private_key", this.ubiqCredentials.getEncryptedPrivateKey());
           }
         }
+        if (verbose) {
+          System.out.println(String.format("getFpeDefKeys results: %s", results.toString()));
 
-        return results;
-      } catch (Exception ex) {
-          System.out.println(String.format("getFpeDefKeys exception: %s", ex.getMessage()));
-          return null;
+        }
       }
 
+      return results;
     }
 
-    FFS_Record getFFSDefinition(String ffs_name) {
-      // Boolean verbose = true;
+    FFS_Record getFFSDefinition(String ffs_name)
+    throws java.io.IOException, java.net.URISyntaxException, java.security.NoSuchAlgorithmException, java.lang.InterruptedException, java.security.InvalidKeyException {
         //String urlString = String.format("%s/%s/ffs/%s", this.baseUrl, this.restApiRoot, this.ubiqCredentials.getAccessKeyId());
         String jsonRequest="";
         String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));
@@ -267,28 +253,23 @@ class UbiqWebServices {
         if (verbose) System.out.println("\n    urlString: " + urlString + "\n");
         if (verbose) System.out.println("\n    params: " + params + "\n");
 
-        try {
+        HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-            HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+        // submit HTTP request + expect HTTP response w/ status 'Created' (200)
+        String jsonResponse = submitHttpRequest(request, 200);
 
-            // submit HTTP request + expect HTTP response w/ status 'Created' (200)
-            String jsonResponse = submitHttpRequest(request, 200);
+        if (verbose) System.out.println("\n    getFFSDefinition: " + jsonResponse + "\n");
 
-            if (verbose) System.out.println("\n    getFFSDefinition: " + jsonResponse + "\n");
+        // deserialize the JSON response to POJO
+        FFS_Record ffsRecord = FFS_Record.parse(jsonResponse);
+        if (verbose) System.out.println("\n    getFFSDefinition(ffsRecord): " + jsonResponse + "\n");
 
-            // deserialize the JSON response to POJO
-            FFS_Record ffsRecord = FFS_Record.parse(jsonResponse);
-            if (verbose) System.out.println("\n    getFFSDefinition(ffsRecord): " + jsonResponse + "\n");
-
-            return ffsRecord;
-        } catch (Exception ex) {
-            System.out.println(String.format("getFFSDefinition exception: %s", ex.getMessage()));
-            return null;
-        }
+        return ffsRecord;
     }
 
 
-    FPEKeyResponse getFPEEncryptionKey(String ffs_name) {
+    FPEKeyResponse getFPEEncryptionKey(String ffs_name)
+    throws java.io.IOException, java.net.URISyntaxException, java.security.NoSuchAlgorithmException, java.lang.InterruptedException, java.security.InvalidKeyException {
         String jsonRequest="";
         String params = String.format("ffs_name=%s&papi=%s", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()));
         if (this.ubiqCredentials.isIdp()) {
@@ -301,32 +282,28 @@ class UbiqWebServices {
         if (verbose) System.out.println("accessKeyId :" + this.ubiqCredentials.getAccessKeyId());
         if (verbose) System.out.println("secretSigningKey :" + this.ubiqCredentials.getSecretSigningKey());
 
-        try {
-            HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+        HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-            // submit HTTP request + expect HTTP response w/ status 'Created' (200)
-            String jsonResponse = submitHttpRequest(request, 200);
+        // submit HTTP request + expect HTTP response w/ status 'Created' (200)
+        String jsonResponse = submitHttpRequest(request, 200);
 
-            if (verbose) System.out.println("jsonResponse :" + jsonResponse);
+        if (verbose) System.out.println("jsonResponse :" + jsonResponse);
 
-            // deserialize the JSON response to POJO
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            FPEKeyResponse encryptionKeyResponse =
-                    gson.fromJson(jsonResponse, FPEKeyResponse.class);
-            if (this.ubiqCredentials.isIdp()) {
-              encryptionKeyResponse.EncryptedPrivateKey = this.ubiqCredentials.getEncryptedPrivateKey();
-            }
-
-            return encryptionKeyResponse;
-        } catch (Exception ex) {
-            System.out.println(String.format("getFPEEncryptionKey exception: %s", ex.getMessage()));
-            return null;
+        // deserialize the JSON response to POJO
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        FPEKeyResponse encryptionKeyResponse =
+                gson.fromJson(jsonResponse, FPEKeyResponse.class);
+        if (this.ubiqCredentials.isIdp()) {
+          encryptionKeyResponse.EncryptedPrivateKey = this.ubiqCredentials.getEncryptedPrivateKey();
         }
+
+        return encryptionKeyResponse;
     }
 
 
 
-    FPEKeyResponse getFPEDecryptionKey(String ffs_name, int key_number) {
+    FPEKeyResponse getFPEDecryptionKey(String ffs_name, int key_number)
+    throws java.io.IOException, java.net.URISyntaxException, java.security.NoSuchAlgorithmException, java.lang.InterruptedException, java.security.InvalidKeyException {
         String jsonRequest="";
         String params = String.format("ffs_name=%s&papi=%s&key_number=%d", encode(ffs_name), encode(this.ubiqCredentials.getAccessKeyId()), key_number);
         if (this.ubiqCredentials.isIdp()) {
@@ -338,32 +315,28 @@ class UbiqWebServices {
 
 
         if (verbose) System.out.println("getFPEDecryptionKey  params: " + params);
-        try {
 
-            HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+        HttpRequestBase request = buildSignedHttpRequest("GET", urlString, params, jsonRequest, this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-            // submit HTTP request + expect HTTP response w/ status 'OK' (200)
-            String jsonResponse = submitHttpRequest(request, 200);
-            if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");
+        // submit HTTP request + expect HTTP response w/ status 'OK' (200)
+        String jsonResponse = submitHttpRequest(request, 200);
+        if (verbose) System.out.println("\n    getFPEDecryptionKey: " + jsonResponse + "\n");
 
-            // deserialize the JSON response to POJO
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            FPEKeyResponse decryptionKeyResponse = gson.fromJson(jsonResponse, FPEKeyResponse.class);
-            if (this.ubiqCredentials.isIdp()) {
-              decryptionKeyResponse.EncryptedPrivateKey = this.ubiqCredentials.getEncryptedPrivateKey();
-            }
-
-            return decryptionKeyResponse;
-        } catch (Exception ex) {
-            System.out.println(String.format("getFPEDecryptionKey exception: %s", ex.getMessage()));
-            return null;
+        // deserialize the JSON response to POJO
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        FPEKeyResponse decryptionKeyResponse = gson.fromJson(jsonResponse, FPEKeyResponse.class);
+        if (this.ubiqCredentials.isIdp()) {
+          decryptionKeyResponse.EncryptedPrivateKey = this.ubiqCredentials.getEncryptedPrivateKey();
         }
+
+        return decryptionKeyResponse;
     }
 
 
 
 
-    EncryptionKeyResponse getEncryptionKey(int uses) {
+    EncryptionKeyResponse getEncryptionKey(int uses)
+    throws java.io.IOException, java.net.URISyntaxException, java.security.NoSuchAlgorithmException, java.lang.InterruptedException, java.security.InvalidKeyException, org.bouncycastle.operator.OperatorCreationException, org.bouncycastle.pkcs.PKCSException, org.bouncycastle.crypto.InvalidCipherTextException {
         String urlString = String.format("%s/%s/encryption/key", this.baseUrl, this.restApiRoot);
 
         JsonObject data = new JsonObject();
@@ -377,39 +350,35 @@ class UbiqWebServices {
 
         if (verbose) System.out.println("json: " + data.toString());
 
-        try {
-            HttpRequestBase request = buildSignedHttpRequest("POST", urlString, "", data.toString(), this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+        HttpRequestBase request = buildSignedHttpRequest("POST", urlString, "", data.toString(), this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-            // submit HTTP request + expect HTTP response w/ status 'Created' (201)
-            String jsonResponse = submitHttpRequest(request, 201);
-            if (verbose) System.out.println(jsonResponse);
+        // submit HTTP request + expect HTTP response w/ status 'Created' (201)
+        String jsonResponse = submitHttpRequest(request, 201);
+        if (verbose) System.out.println(jsonResponse);
 
-            // deserialize the JSON response to POJO
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            EncryptionKeyResponse encryptionKeyResponse =
-                    gson.fromJson(jsonResponse, EncryptionKeyResponse.class);
+        // deserialize the JSON response to POJO
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        EncryptionKeyResponse encryptionKeyResponse =
+                gson.fromJson(jsonResponse, EncryptionKeyResponse.class);
 
-            if (this.ubiqCredentials.isIdp()) {
-              encryptionKeyResponse.EncryptedPrivateKey = this.ubiqCredentials.getEncryptedPrivateKey();
-            }
-
-            // decrypt the server-provided encryption key
-            encryptionKeyResponse.UnwrappedDataKey = unwrapKey(
-                        encryptionKeyResponse.EncryptedPrivateKey,
-                        encryptionKeyResponse.WrappedDataKey,
-                        this.ubiqCredentials.getSecretCryptoAccessKey());
-
-            encryptionKeyResponse.EncryptedDataKeyBytes =
-                    Base64.getDecoder().decode(encryptionKeyResponse.EncryptedDataKey);
-
-            return encryptionKeyResponse;
-        } catch (Exception ex) {
-            System.out.println(String.format("getEncryptionKey exception: %s", ex.getMessage()));
-            return null;
+        if (this.ubiqCredentials.isIdp()) {
+          encryptionKeyResponse.EncryptedPrivateKey = this.ubiqCredentials.getEncryptedPrivateKey();
         }
+
+        // decrypt the server-provided encryption key
+        encryptionKeyResponse.UnwrappedDataKey = unwrapKey(
+                    encryptionKeyResponse.EncryptedPrivateKey,
+                    encryptionKeyResponse.WrappedDataKey,
+                    this.ubiqCredentials.getSecretCryptoAccessKey());
+
+        encryptionKeyResponse.EncryptedDataKeyBytes =
+                Base64.getDecoder().decode(encryptionKeyResponse.EncryptedDataKey);
+
+        return encryptionKeyResponse;
     }
 
-    DecryptionKeyResponse getDecryptionKey(byte[] encryptedDataKey) {
+    DecryptionKeyResponse getDecryptionKey(byte[] encryptedDataKey)
+    throws java.io.IOException, java.net.URISyntaxException, java.security.NoSuchAlgorithmException, java.lang.InterruptedException, java.security.InvalidKeyException {
         String urlString = String.format("%s/%s/decryption/key", this.baseUrl, this.restApiRoot);
 
         // convert binary key bytes to Base64
@@ -423,40 +392,35 @@ class UbiqWebServices {
           data.addProperty("payload_cert", this.ubiqCredentials.getApiCertBase64());
         }
 
-        try {
-            HttpRequestBase request = buildSignedHttpRequest("POST", urlString, "", data.toString(), this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
+        HttpRequestBase request = buildSignedHttpRequest("POST", urlString, "", data.toString(), this.ubiqCredentials.getAccessKeyId(), this.ubiqCredentials.getSecretSigningKey());
 
-            // submit HTTP request + expect HTTP response w/ status 'OK' (200)
-            String jsonResponse = submitHttpRequest(request, 200);
+        // submit HTTP request + expect HTTP response w/ status 'OK' (200)
+        String jsonResponse = submitHttpRequest(request, 200);
 
-            // deserialize the JSON response to POJO
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            DecryptionKeyResponse decryptionKeyResponse = gson.fromJson(jsonResponse, DecryptionKeyResponse.class);
+        // deserialize the JSON response to POJO
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        DecryptionKeyResponse decryptionKeyResponse = gson.fromJson(jsonResponse, DecryptionKeyResponse.class);
 
-            if (this.ubiqCredentials.isIdp()) {
-              decryptionKeyResponse.EncryptedPrivateKey = this.ubiqCredentials.getEncryptedPrivateKey();
-            }
-
-            // To make sure it isn't null and length will be 0.
-            decryptionKeyResponse.UnwrappedDataKey = new byte[0];
-
-            return decryptionKeyResponse;
-        } catch (Exception ex) {
-            System.out.println(String.format("getDecryptionKey exception: %s", ex.getMessage()));
-            return null;
+        if (this.ubiqCredentials.isIdp()) {
+          decryptionKeyResponse.EncryptedPrivateKey = this.ubiqCredentials.getEncryptedPrivateKey();
         }
+
+        // To make sure it isn't null and length will be 0.
+        decryptionKeyResponse.UnwrappedDataKey = new byte[0];
+
+        return decryptionKeyResponse;
     }
-  
+
     String GetOAuthToken() {
       HttpResponse response = null;
-      
+
       try (CloseableHttpClient client = createHttpClientWithProxy()) {
         HttpPost post = new HttpPost(new URI(this.ubiqConfiguration.getIdpTokenEndpointUrl()));
 
         post.setHeader("Accept", ContentType.APPLICATION_JSON.toString());
         post.setHeader("Cache-Control", "no-cache");
         post.setHeader("Content-Type", ContentType.APPLICATION_FORM_URLENCODED.toString());
-        
+
         Map<String, String> params = new HashMap<>();
         params.put("client_id", this.ubiqConfiguration.getIdpTenantId());
         params.put("client_secret", this.ubiqConfiguration.getIdpClientSecret());
@@ -464,10 +428,10 @@ class UbiqWebServices {
         params.put("password", this.ubiqCredentials.getIdpPassword());
         params.put("grant_type", "password");
         params.put("scope", "okta.users.read okta.groups.manage");
-  
+
         if (this.ubiqConfiguration.getIdpType().equals("okta")) {
           params.put("scope", "openid offline_access okta.users.read okta.groups.read");
-  
+
         } else if (this.ubiqConfiguration.getIdpType().equals("entra")) {
           params.put("scope", "api://" + this.ubiqConfiguration.getIdpTenantId() + "/.default");
         }
@@ -498,11 +462,11 @@ class UbiqWebServices {
       } catch (Exception e) {
         throw new RuntimeException("{\"status\" : " + 400 + ", \"message\" : \"" + e.getMessage() + "\"}");
       }
-    }    
+    }
 
 String getSso(String access_token, String csr) {
   HttpResponse response = null;
-      
+
   String responseString = null;
       try (CloseableHttpClient client = createHttpClientWithProxy()) {
         HttpPost post = new HttpPost(new URI(String.format("%s/%s/%s/scim/sso", this.baseUrl, this.ubiqConfiguration.getIdpCustomerId(), this.restApiV3Root)));
@@ -514,7 +478,7 @@ String getSso(String access_token, String csr) {
         post.setHeader("Authorization", String.format("Bearer %s", access_token));
         post.setHeader("Cache-Control", "no-cache");
         post.setHeader("Content-Type", ContentType.APPLICATION_JSON.toString());
-        
+
         post.setEntity(new StringEntity(jsonObject.toString()));
         response = client.execute(post);
         responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
@@ -616,19 +580,23 @@ String getSso(String access_token, String csr) {
     private byte[] unwrapKey(String encryptedPrivateKey,
                 String wrappedDataKey, String secretCryptoAccessKey)
             throws IOException, OperatorCreationException, PKCSException, InvalidCipherTextException {
+        String csu = "unwrapKey";
 
         byte[] unwrappedDataKey = null;
 
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(this.bcProvider);
-        } 
+        }
 
+        if (verbose) System.out.println(String.format("%s before StringReader encryptedPrivateKey(%s)", csu, encryptedPrivateKey));
         try (PEMParser pemParser = new PEMParser(new StringReader(encryptedPrivateKey))) {
 
+            if (verbose) System.out.println(String.format("%s after PEMParser", csu));
             Object object = pemParser.readObject();
             if (!(object instanceof PKCS8EncryptedPrivateKeyInfo)) {
                 throw new RuntimeException("Unrecognized Encrypted Private Key format");
             }
+            if (verbose) System.out.println(String.format("%s after object instanceof PKCS8EncryptedPrivateKeyInfo", csu));
 
             JceOpenSSLPKCS8DecryptorProviderBuilder builder = new JceOpenSSLPKCS8DecryptorProviderBuilder().setProvider(this.bcProvider);
 
@@ -645,7 +613,7 @@ String getSso(String access_token, String csr) {
             if (!(privateKey instanceof BCRSAPrivateCrtKey)) {
                 throw new RuntimeException("Unrecognized Private Key format: " + privateKey.getClass().getName() + " " );
             }
-            
+
             BCRSAPrivateKey rsaPrivateKey = (BCRSAPrivateKey)privateKey;
 
             // now that we've decrypted the server-provided empheral key, we can
@@ -669,6 +637,7 @@ String getSso(String access_token, String csr) {
             unwrappedDataKey = rsaEngine.processBlock(wrappedDataKeyBytes, 0, wrappedDataKeyBytes.length);
 
         }
+        if (verbose) System.out.println(String.format("%s end unwrappedDataKey is null (%b)", csu, (unwrappedDataKey == null)));
 
         return unwrappedDataKey;
     }
@@ -678,18 +647,18 @@ String getSso(String access_token, String csr) {
 
         CloseableHttpClient httpclient = createHttpClientWithProxy();
         HttpResponse response = httpclient.execute(httpRequest);
-      
+
         BufferedReader reader = new BufferedReader(new InputStreamReader(
           response.getEntity().getContent()));
-  
+
         String inputLine;
         StringBuffer r = new StringBuffer();
-      
+
           while ((inputLine = reader.readLine()) != null) {
             r.append(inputLine);
           }
           reader.close();
-      
+
           String responseString = r.toString();
 
         if (response.getStatusLine().getStatusCode() != successCode) {

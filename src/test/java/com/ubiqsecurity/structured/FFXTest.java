@@ -14,25 +14,25 @@ public class FFXTest
         String s;
         BigInteger i;
 
-        s = FFX.str(5, 10, new BigInteger("12345", 10));
+        s = FFX.str(5, 10, new BigInteger("12345", 10), false, true);
         assertEquals("12345", s);
 
-        s = FFX.str(5, "0123456789", new BigInteger("12345", 10));
+        s = FFX.str(5, "0123456789", new BigInteger("12345", 10), false, true);
         assertEquals("12345", s);
 
-        s = FFX.str(5, 10, FFX.DEFAULT_ALPHABET, new BigInteger("12345", 10));
+        s = FFX.str(5, 10, FFX.DEFAULT_ALPHABET, new BigInteger("12345", 10), false, true);
         assertEquals("12345", s);
 
-        s = FFX.str(6, 10, new BigInteger("12345", 10));
+        s = FFX.str(6, 10, new BigInteger("12345", 10), false, true);
         assertEquals("012345", s);
 
-        s = FFX.str(6, "0123456789", new BigInteger("12345", 10));
+        s = FFX.str(6, "0123456789", new BigInteger("12345", 10), false, true);
         assertEquals("012345", s);
 
-        s = FFX.str(6, 10, FFX.DEFAULT_ALPHABET, new BigInteger("12345", 10));
+        s = FFX.str(6, 10, FFX.DEFAULT_ALPHABET, new BigInteger("12345", 10), false, true);
         assertEquals("012345", s);
 
-        s = FFX.str(6, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", new BigInteger("62", 10));
+        s = FFX.str(6, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", new BigInteger("62", 10), false, true);
         assertEquals("000010", s);
 
         i = FFX.number("100", 10);
@@ -53,12 +53,12 @@ public class FFXTest
         i = FFX.number("zz1", "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
         assertEquals(i.compareTo(BigInteger.valueOf(1 + (61 * 62) + (61 * 62 * 62))), 0);
 
-        s = FFX.str(3, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", i);
+        s = FFX.str(3, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", i, false, true);
         assertEquals(s, "zz1");
 
 
         assertThrows(RuntimeException.class, () -> {
-                FFX.str(4, 10, new BigInteger("12345", 10));
+                FFX.str(4, 10, new BigInteger("12345", 10), false, true);
             });
     }
 

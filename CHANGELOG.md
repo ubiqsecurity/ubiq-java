@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.0 - 2026-02-26
+* Updated to include capabilities for new dataset types including integers, dates, datetime
+* Improved exception handling by adding a configuration setting to allow some 
+  exceptions to bubble up to the caller rather than being caught and simply 
+  returning a null or empty object.
+
 ## 2.2.9 - 2025-10-16
 * Updated code to use latest methods from referenced libraries.  This included remove calls to deprecated functions
 

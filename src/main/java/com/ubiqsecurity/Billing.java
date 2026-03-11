@@ -20,7 +20,7 @@ import java.time.temporal.ChronoUnit;
 
 /**
  * Has Billing Events (usage) summed by unique key (dataset, API Key, dataset group, encrypt / decrypt)
- * These are then serialized into an array and sent to the server at an interval or when there are a 
+ * These are then serialized into an array and sent to the server at an interval or when there are a
  * predetermied quantity
  */
 class BillingEvents {
@@ -36,35 +36,35 @@ class BillingEvents {
     }
 
     public enum BillingAction {
-      ENCRYPT ("encrypt"), 
+      ENCRYPT ("encrypt"),
       DECRYPT ("decrypt");
-    
+
       private final String value;
-      
+
       BillingAction(String value) {
         this.value = value;
       }
-    
+
       String to_s() {
         return value;
       }
-    
+
     }
 
     public enum DatasetType {
-      STRUCTURED ("structured"), 
+      STRUCTURED ("structured"),
       UNSTRUCTURED ("unstructured");
-    
+
       private final String value;
-      
+
       DatasetType(String value) {
         this.value = value;
       }
-    
+
       String to_s() {
         return value;
       }
-    
+
     }
 
 
@@ -77,16 +77,16 @@ class BillingEvents {
     }
 
     /**
-     * Send billing events to the server.  
+     * Send billing events to the server.
      * @param ubiqWebServices   the UbiqWebServices object
      * @param events            the tracking event payload to send to the server
      * @return the HTTP status code of the request
      */
 
     /**
-     * Has to be thread safe so payload has to be passed in.  Any reseting of the 
+     * Has to be thread safe so payload has to be passed in.  Any reseting of the
      * billing_events element has to be done outside of this function.
-     * 
+     *
      */
 
     public static Integer processBillingEvents(UbiqWebServices ubiqWebServices, String events) {
@@ -97,10 +97,10 @@ class BillingEvents {
         FPEBillingResponse fpeBillingResponse;
 
         if (verbose) System.out.printf("%s : events: %s\n", csu, events);
-        
+
         fpeBillingResponse= ubiqWebServices.sendTrackingEvents(events);
         // Just need to report response to caller - Let them figure out how to handle success // failure
-      
+
         if (verbose) System.out.printf("%s: %d \n", csu, fpeBillingResponse.status);
         return fpeBillingResponse.status;
       } catch (Exception e) {
@@ -120,7 +120,7 @@ class BillingEvents {
      * has been submitted.
      *
      * @param ubiqWebServices   the UbiqWebServices object
-     * @return the object that contains the future object to track the Rest call, the payload, and the 
+     * @return the object that contains the future object to track the Rest call, the payload, and the
      * number of times the request has been submitted
      *
      */
@@ -156,7 +156,7 @@ class BillingEvents {
 
     /**
      * Get the list of billing events AND reset the billing events structure
-     * so we can capture next set of events and 
+     * so we can capture next set of events and
      * only send an event once.
      */
     public String getAndResetSerializedData() {
@@ -221,7 +221,7 @@ class BillingEvents {
 
         try {
           this.lock.lock();
-    
+
           BillingEvent b = billing_events.get(key);
           if (b == null) {
             b = new BillingEvent(api_key, dataset_name, dataset_group_name, billing_action, dataset_type, key_number, count);
@@ -328,7 +328,7 @@ class BillingEvent {
         this.last_call_timestamp = this.first_call_timestamp;
 
         // TODO - Add metadata for the first call and most recent call.
-        // These are needed since a billing event can span a long time period and it would be good to know when the first and last 
+        // These are needed since a billing event can span a long time period and it would be good to know when the first and last
         // call are made
     }
 
@@ -364,7 +364,7 @@ class BillingEvent {
 
 
      String serialize(String userMetadata, ChronoUnit timestampGranularity) {
-        // TODO - Consider String.format("") or creating actual JsonObject 
+        // TODO - Consider String.format("") or creating actual JsonObject
         String metadata = "";
         if (userMetadata != null) {
           metadata = "\"user_defined\" : " + userMetadata + ",";
@@ -375,7 +375,7 @@ class BillingEvent {
           "\"key_number\":" + key_number + ",  \"action\":\"" + billing_action.to_s() + "\"," +
           "\"product\":\"" + "ubiq-java" + "\", \"product_version\":\"" + Version.VERSION + "\", \"user-agent\":\"" + "ubiq-java/" + Version.VERSION + "\", \"api_version\":\"" + "V3" + "\"," +
           "\"last_call_timestamp\":\"" + last_call_timestamp.truncatedTo(timestampGranularity).toString() + "\"," +
-          metadata + 
+          metadata +
           "\"first_call_timestamp\":\"" + first_call_timestamp.truncatedTo(timestampGranularity).toString() + "\"}";
     }
 

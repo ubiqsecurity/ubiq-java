@@ -14,11 +14,25 @@ import java.util.Base64;
 import java.util.UUID;
 import java.time.Instant;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+
+import com.ubiqsecurity.pipeline.*;
+import com.ubiqsecurity.*;
+
+import org.bouncycastle.pkcs.PKCSException;
+import org.bouncycastle.operator.OperatorCreationException;
+import java.security.NoSuchAlgorithmException;
+import java.security.InvalidKeyException;
 
 /**
  * Provides Format Preserving Encryption capability for a variety of field format models (aka FFS models)
@@ -26,13 +40,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
     private boolean verbose= false;
-    private UbiqWebServices ubiqWebServices; // null when closed
-    private FFS ffs;
-    private FFXCache ffxCache;
-    private BillingEventsProcessor executor;
-    private BillingEvents billing_events;
-    private UbiqCredentials ubiqCredentials;
-    private UbiqConfiguration ubiqConfiguration;
+    private UbiqWebServices ubiqWebServices = null; // null when closed
+    private FFS ffs = null;
+    private FFXCache ffxCache = null;
+    private BillingEventsProcessor executor = null;
+    private BillingEvents billing_events = null;
+    private UbiqCredentials ubiqCredentials = null;
+    private UbiqConfiguration ubiqConfiguration = null;
 
 
     class ParsedData {
@@ -97,9 +111,12 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
               if (executor != null) {
                 executor.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
               }
-            } catch (Exception e) {
-               System.out.printf("%s   : %s Exception %s  messasge: %s\n", csu,new java.util.Date(),  e.getClass().getName(), e.getMessage());
-            }            
+            } catch (Exception e) { // has getJavaOptionsAlwaysBubbleExceptions
+              if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+                throw new RuntimeException(e.getMessage(), e.getCause());
+              }
+              System.out.printf("%s   : %s Exception %s  messasge: %s\n", csu,new java.util.Date(),  e.getClass().getName(), e.getMessage());
+            }
             // executor.shutDown();
 
             // Perform a final billing_events  processing for items that may not have been done by the async executor
@@ -134,242 +151,6 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
 
 
     /**
-    * Search a String to find the first index of any
-    * character not in the given set of characters.
-    *
-    * @param str  the String to check, may be null
-    * @param searchChars  the chars to search for, may be null
-    * @return the index of any of the chars, -1 if no match or null input
-    */
-    public int findFirstIndexExclusive(String str, String searchChars) {
-      if (isEmpty(str)) {
-          return -1;
-      }
-      for (int i = 0; i < str.length(); i++) {
-          if (searchChars.indexOf(str.charAt(i)) < 0) {
-              return i;
-          }
-      }
-      return -1;
-    }
-
-
-    /**
-    * Performs encoding operation within a str at a position. Uses the
-    * output character set found in the model.
-    *
-    * @param ffs  The FFS record model
-    * @param key_number  The value to be encoded
-    * @param str  The given string to receive the encoding
-    *
-    * @return the updated string
-    */
-    public String encode_keynum(FFS_Record ffs, int key_number, String str) {
-        String buf= "";
-
-        char charBuf = str.charAt(0);
-
-        int ct_value = ffs.getOutputCharacterSet().indexOf(charBuf);
-        if (verbose) System.out.println("ct_value: " + ct_value);
-
-        //int key_number = ffs.getCurrent_key();
-        long msb_encoding_bits = ffs.getMsbEncodingBits();
-
-        ct_value =  ct_value + (key_number << msb_encoding_bits);
-
-        char ch= ffs.getOutputCharacterSet().charAt(ct_value);
-        buf= Parsing.replaceChar(str, ch, 0);
-
-        return buf;
-    }
-
-
-    /**
-    * Performs decoding operation of a str at a position. Uses the
-    * output character set found in the model.
-    *
-    * @param ffs  The FFS record model
-    * @param parsed_data  The given string to decode
-    * @param position  The location within the string for the decode
-    *
-    * @return the value decoded
-    */
-    public int decode_keynum(final FFS_Record ffs, ParsedData parsed_data, final int position) {
-        int key_num = 0;
-        if (position < 0) {
-            // if caller passed an invalid position
-            throw new RuntimeException("Bad String decoding position for: " + parsed_data.trimmed);
-        }
-
-        char charBuf = parsed_data.trimmed.charAt(position);
-        int encoded_value = ffs.getOutputCharacterSet().indexOf(charBuf);
-
-        long msb_encoding_bits = ffs.getMsbEncodingBits();
-        key_num =  encoded_value >> msb_encoding_bits;
-
-        char ch= ffs.getOutputCharacterSet().charAt(encoded_value - (key_num << msb_encoding_bits));
-        parsed_data.trimmed = Parsing.replaceChar(parsed_data.trimmed, ch, position);
-
-        return key_num;
-    }
-
-
-    /**
-    * Parses a given string using the FFS model. Handles the case where the first chraracter
-    * may be "0". The results of the operation will be recorded in the class variables
-    * "trimmed" which is the new string and "formatted_dest" which is the destination
-    * pattern for the string to be eventually applied to.
-    *
-    * @param ffs  The FFS record model
-    * @param conversion_direction  Positive (1) means input to output, negative (-1) means output to input
-    * @param source_string  The string to parse
-    *
-    * @return A parsed data structured containing the trimmed string and the formatted output string
-    */
-    public ParsedData ubiq_platform_fpe_string_parse(
-        FFS_Record ffs,
-        long conversion_direction,
-        String source_string)
-    {
-        boolean verbose = false;
-        String src_char_set= "";
-        char dest_zeroth_char= '0';
-
-        ParsedData ret = null;
-
-        if (conversion_direction > 0) { // input to output
-            src_char_set= ffs.getInputCharacterSet();
-            dest_zeroth_char = ffs.getOutputCharacterSet().charAt(0);
-        } else {
-            src_char_set= ffs.getOutputCharacterSet();
-            dest_zeroth_char = ffs.getInputCharacterSet().charAt(0);
-        }
-
-        try (Parsing parsing = new Parsing(source_string, src_char_set, 
-          ffs.getPassthroughCharacterSet(), dest_zeroth_char)) {
-
-          for (FFS.PASSTHROUGH_RULES_TYPE priority : ffs.getPassthrough_rules_priority()) {
-            if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.PASSTHROUGH)) {
-              int status = parsing.ubiq_platform_efpe_parsing_parse_input();
-              if (verbose) System.out.println("Passthrough Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output());
-            } else if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.PREFIX)) {
-              parsing.process_prefix(ffs.getPrefixPassthroughLength());
-              if (verbose) System.out.println("PREFIX Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + ffs.getPrefixPassthroughLength());
-            }else if (priority.equals(FFS.PASSTHROUGH_RULES_TYPE.SUFFIX)) {
-              parsing.process_suffix(ffs.getSuffixPassthroughLength());
-              if (verbose) System.out.println("SUFFIX Processed: \n\t" + parsing.get_trimmed_characters() + "\n\t" + parsing.get_formatted_output() + "\n\t" + ffs.getSuffixPassthroughLength());
-            }
-          }
-
-          ret = new ParsedData(parsing.get_formatted_output(), parsing.get_trimmed_characters(), parsing.get_prefix_string(), parsing.get_suffix_string());
-         }
-         return ret;
-    }
-
-
-
-    /*
-    * Merges the given string into the  "formatted_dest" pattern using the
-    * set of provided characters.
-    *
-    * @param ffs  The FFS record model
-    * @param formatted_dest The formatted destination string 
-    + @param first_empty_idx The first empty location in formatted string
-    * @param convertedToRadix  The string to be placed in the formatted_dest
-    * @param passthrough_character_set  The set of characters to use in the final formatted_dest
-    *
-    * @return the correctly formatted output string
-    */
-    public String merge_to_formatted_output(FFS_Record ffs, ParsedData parsed_data, final String convertedToRadix, final String passthrough_character_set) {
-      StringBuilder ret = new StringBuilder(parsed_data.formatted_dest);
-
-      // Format the encrypted section and then add the prefix and suffix strings, which could be empty or also include formatted output
-      int d = 0;
-      for (int i = 0; i < convertedToRadix.length(); i++) {
-        while (d < ret.length() && -1 != passthrough_character_set.indexOf(ret.charAt(d))) {
-          d++;
-        }
-        if (d >= ret.length()) {
-          System.out.println("Throw Exception");
-          break;
-        }
-        ret.setCharAt(d, convertedToRadix.charAt(i));
-        d++;
-      }
-      ret.insert(0, parsed_data.prefix);
-      ret.append(parsed_data.suffix);
-
-      return ret.toString();
-    }
-
-    /**
-    * Converts a given string using input/output radix conversion
-    *
-    * @param rawtext  The original string
-    * @param input_radix  The set of radix characters used on the input conversion
-    * @param output_radix  The set of radix characters used on the output conversion
-    *
-    * @return the converted string
-    *
-    */
-    public String str_convert_radix(final String rawtext, final String input_radix, final String output_radix) {
-      boolean verbose = false;
-      if (verbose) System.out.println("rawtext: '" + rawtext + "'");
-      if (verbose) System.out.println("input_radix: '" + input_radix + "'");
-      if (verbose) System.out.println("output_radix: '" + output_radix + "'");
-
-        // convert a given string to a numerical location based on a given Input_character_set
-        BigInteger r1 = FF1.number(rawtext, input_radix);
-
-        if (verbose) System.out.println("r1: '" + r1.toString(10) + "'");
-
-
-        // Convert to output string - making sure to pad to original length
-        String output = FF1.str(rawtext.length(), output_radix, r1);
-
-        return output;
-    }
-
-
-
-    /**
-    * Pads a given string with 0 characters at least as long as specified length
-    *
-    * @param inputString  The original string
-    * @param length  The desired length of the new string
-    *
-    * @return the padded string
-    *
-    */
-    public String pad_text(String inputString, double length) {
-        if (inputString.length() >= length) {
-            return inputString;
-        }
-        StringBuilder sb = new StringBuilder();
-        while (sb.length() < length - inputString.length()) {
-            sb.append('0');
-        }
-        sb.append(inputString);
-
-        return sb.toString();
-    }
-
-
-    /**
-    * Performs a log base 2 operation
-    *
-    * @param x  The input value
-    *
-    * @return the output value
-    *
-    */
-    public double log2(int x) {
-        return (double)(Math.log(x) / Math.log(2));
-    }
-
-
-
-    /**
     * Clears the encryption key and FFS model cache
     *
     */
@@ -384,106 +165,116 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
       }
   }
 
+    String encryptPipeline(FFS_Record dataset, Integer keyNumber, FFXCache ffxCache, String plaintext, byte[] tweak)
+     throws ExecutionException {
+      OperationContext context = new OperationContext();
+      context.setDataset(dataset);
+      context.setKeyNumber(keyNumber);
+      context.setOriginalValue(plaintext);
+      context.setCurrentValue(plaintext);
+      context.setIsEncrypt(true);
+      context.setUserSuppliedTweak(tweak);
+      context.setFfxCache(ffxCache);
 
+      StructuredPipeline pipeline = new EncryptionPipeline(dataset);
+      String results = pipeline.Invoke(context);
+
+      billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), dataset.getName(), "", BillingEvents.BillingAction.ENCRYPT, BillingEvents.DatasetType.STRUCTURED, context.getKeyNumber(),1);
+
+      return results;
+    }
+
+    String decryptPipeline(FFS_Record dataset, FFXCache ffxCache, String ciphertext, byte[] tweak)
+     throws ExecutionException {
+      OperationContext context = new OperationContext();
+      context.setDataset(dataset);
+      context.setKeyNumber(null);
+      context.setOriginalValue(ciphertext);
+      context.setCurrentValue(ciphertext);
+      context.setIsEncrypt(false);
+      context.setUserSuppliedTweak(tweak);
+      context.setFfxCache(ffxCache);
+
+      StructuredPipeline pipeline = new DecryptionPipeline(dataset);
+      String results = pipeline.Invoke(context);
+
+      billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), dataset.getName(), "", BillingEvents.BillingAction.DECRYPT, BillingEvents.DatasetType.STRUCTURED, context.getKeyNumber(),1);
+
+      return results;
+    }
     /**
     * Performs an FPE encryption for a given string based on a given FFS model
     *
     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
-    * @param PlainText  the plain text to be encrypted
+    * @param plainText  the plain text to be encrypted
     * @param tweak  the tweak bytes which are only applied if not already overriden by the FFS model
     *
     * @return the encrypted output string
     *
     */
-    public String encrypt(String ffs_name, String PlainText, byte[] tweak)
+    public String encrypt(String ffs_name, String plainText, byte[] tweak)
         throws IllegalStateException  {
-            if (verbose) System.out.println("\nEncrypting PlainText: " + PlainText);
+            if (verbose) System.out.println("\nEncrypting plainText: " + plainText);
             String cipher = "";
-
             try {
 
-              FFS_Record FFScaching = getFFS(ffs_name);
-              if (!FFScaching.canEncrypt()) {
+              FFS_Record dataset = getFFS(ffs_name);
+              if (!dataset.canEncrypt()) {
                 throw new RuntimeException("API Key does not have encrypt rights for dataset '" + ffs_name + "'");
               }
-              FFX_Ctx ctx = getCtx(FFScaching, null);
 
-              cipher = encryptData(FFScaching, ctx, PlainText, tweak);
+              // Fatal out if this is not specifically a String type.
+              switch (dataset.getDataType()) {
+                case "integer":
+                case "date":
+                case "datetime":
+                  // Unchecked exception
+                  throw new RuntimeException("Dataset '" + ffs_name + "' is for '" + dataset.getDataType() + "' and not Strings.  Use the appropriate method for this type");
+                default:
+                  cipher = encryptPipeline(dataset, null, ffxCache, plainText, tweak);
+              }
 
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+            } catch (ExecutionException e) { // has getJavaOptionsAlwaysBubbleExceptions
+              if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+                throw new RuntimeException(e.getMessage(), e.getCause());
+              }
             }
 
         return cipher;
     }
 
-    /**
-     * Local encrypt function where the FFS and the CTX are loaded.
-     * TODO - Need to change to make skip any instance variables.
-     */
-    private String encryptData(final FFS_Record FFScaching, final FFX_Ctx cfx, final String PlainText, byte[] tweak)
-      throws IllegalStateException, ExecutionException  {
-        boolean verbose = false;
-        if (verbose) System.out.println("\nEncrypting PlainText: " + PlainText);
-        String convertedToRadix = "";
-        String cipher = "";
-        String formatted_dest = "";
-
-        // attempt to load the FPEAlgorithm from the local cache
-        ParsedData parsedData = ubiq_platform_fpe_string_parse(FFScaching, 1, PlainText);
-
-        if (verbose) System.out.println("parsedData.trimmed.length(): " + parsedData.trimmed.length());
-        if (verbose) System.out.println("getMinInputLength: " + FFScaching.getMinInputLength());
-        if (verbose) System.out.println("getMaxInputLength: " + FFScaching.getMaxInputLength());
-
-        // Make sure the trimmed string is valid for the FFS
-        if ((parsedData.trimmed.length() < FFScaching.getMinInputLength()) ||
-            (parsedData.trimmed.length() > FFScaching.getMaxInputLength())) {
-            throw new RuntimeException("Input length does not match FFS parameters.");
-        }
-
-        // Encrypt the data
-        switch(FFScaching.getEncryptionAlgorithm()) {
-            case "FF1":
-                cipher = cfx.getFF1().encrypt(parsedData.trimmed, tweak);
-            break;
-            default:
-                throw new RuntimeException("Unknown FPE Algorithm: " + FFScaching.getEncryptionAlgorithm());
-        }
-
-        // Convert to output character set
-        convertedToRadix = str_convert_radix(cipher, FFScaching.getInputCharacterSet(), FFScaching.getOutputCharacterSet());
-        if (verbose) System.out.println("    converted to output char set= " + convertedToRadix);
-        if (verbose) System.out.println("    formatted destination= " + parsedData.formatted_dest);
-
-        // Encode the key number since it will be the first character.
-        int key_number = cfx.getKeyNumber();
-        if (verbose) System.out.println("   KeyNumber= " + key_number);
-        String encoded_value = encode_keynum(FFScaching, key_number, convertedToRadix);
-
-        formatted_dest = merge_to_formatted_output(FFScaching, parsedData, encoded_value, FFScaching.getPassthroughCharacterSet());
-        if (verbose) System.out.println("    encrypted and formatted= " + formatted_dest);
-
-        // create the billing record
-        billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), FFScaching.getName(), "", BillingEvents.BillingAction.ENCRYPT, BillingEvents.DatasetType.STRUCTURED, key_number,1);
-
-        return formatted_dest;
-    }
-
     // Get latest information from the server for the dataset
     // Does not resets the TTL for all the cache elements
+    // These are external and should make sure exceptions are more general than specific to bouncy castle or similar
     public void loadCache(final String dataset_name)
-      throws IllegalStateException, ExecutionException, Exception  {
+      throws IllegalStateException, ExecutionException {
       String csu = "loadCache";
 
       String[] names = {dataset_name};
 
       loadCache(names);
+    }
+
+    // These are external and should resolve some of the library specific
+    // exceptions to more generic ones
+    public void loadCache(final String[] dataset_names)
+      throws IllegalStateException, ExecutionException {
+      String csu = "loadCache";
+
+      // Load the search keys for this Dataset (FFS)
+      try {
+        loadCacheEx(dataset_names);
+        // Convert very obscure dependent library exceptions to a more generic one for public use
+      } catch (org.bouncycastle.operator.OperatorCreationException | org.bouncycastle.pkcs.PKCSException | org.bouncycastle.crypto.InvalidCipherTextException e) {
+        throw new ExecutionException(e.getMessage(), e.getCause());
+      } catch (IOException | URISyntaxException | InterruptedException | NoSuchAlgorithmException | InvalidKeyException e) {
+        throw new ExecutionException(e.getMessage(), e.getCause());
+      }
 
     }
 
-    public void loadCache(final String[] dataset_names)
-      throws IllegalStateException, ExecutionException, Exception  {
+    private void loadCacheEx(final String[] dataset_names)
+      throws IllegalStateException, ExecutionException, IOException, URISyntaxException, InterruptedException, org.bouncycastle.operator.OperatorCreationException, org.bouncycastle.pkcs.PKCSException, org.bouncycastle.crypto.InvalidCipherTextException, java.security.NoSuchAlgorithmException, InvalidKeyException {
       String csu = "loadCache";
 
       // Load the search keys for this Dataset (FFS)
@@ -507,111 +298,95 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
 
             // Get the FFS for the FFS_Name and the CTX which will have the current key_number - Everything should
             // already be loaded into the cache because of the load search keys function above.
-            FFS_Record FFScaching = getFFS(ffs_name);
-            if (verbose) System.out.println("\n after getFFS: " + FFScaching.getName());
-            if (!FFScaching.canEncrypt()) {
+            FFS_Record dataset = getFFS(ffs_name);
+            if (verbose) System.out.println("\n after getFFS: " + dataset.getName());
+            if (!dataset.canEncrypt()) {
               throw new RuntimeException("API Key does not have encrypt rights for dataset '" + ffs_name + "'");
             }
 
-            FFX_Ctx ctx = getCtx(FFScaching, null);
+            // Fatal out if this is not specifically a String type.
+            switch (dataset.getDataType()) {
+              case "integer":
+              case "date":
+              case "datetime":
+                // Unchecked exception
+                throw new RuntimeException("Dataset '" + ffs_name + "' is for '" + dataset.getDataType() + "' and not Strings.  Use the appropriate method for this type");
+              default:
+                break;
+            }
+
+            FFX_Ctx ctx = getCtx(dataset, null);
             if (verbose) System.out.println("\n after getCtx: ");
-            
+
             int current_key_number = ctx.getKeyNumber();
             if (verbose) System.out.println("\n after getKeyNumber" + current_key_number);
             ret = new String[current_key_number + 1];
 
             for (int key = 0; key <= current_key_number; key++) {
-              ctx = ffxCache.FFXCache.get(new FFS_KeyId(FFScaching, key));
-              if (verbose) System.out.println("\n after ffxCache.FFXCache.get key: " + key);
 
-              ret[key] = encryptData(FFScaching, ctx, PlainText, tweak);
-              if (verbose) System.out.println("\n after encryptData: " + ret[key]);
-
+              ret[key] = encryptPipeline(dataset, key, ffxCache, PlainText, tweak);
             }
 
-          } catch (ExecutionException e) {
-            System.out.println("ExecutionException: " + e.getMessage());
-          } catch (Exception e) {
-            System.out.println("ExecutionException: " + e.getMessage());
-            e.printStackTrace();
+          } catch (RuntimeException e) {  // Has check for getJavaOptionsAlwaysBubbleExceptions
+            throw e;
+          } catch (Exception e) { // Has check for getJavaOptionsAlwaysBubbleExceptions
+            // Bubble up all other exception as a Runtime exception
+            if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+              throw new RuntimeException(e.getMessage(), e.getCause());
+            }
           }
 
           return ret;
     }
 
-    
+
     /**
     * Performs an FPE decryption for a given string based on a given FFS model
     *
     * @param ffs_name  the name of the FFS model, for example "ALPHANUM_SSN"
-    * @param CipherText  the encrypted text to be decrypted
+    * @param cipherText  the encrypted text to be decrypted
     * @param tweak  the tweak bytes which are only applied if not already overriden by the FFS model
     *
     * @return the decrypted output string
     *
     */
-    public String decrypt(final String ffs_name, final String CipherText, byte[] tweak)
-        throws IllegalStateException {
+    public String decrypt(final String ffs_name, final String cipherText, byte[] tweak)
+      throws IllegalStateException {
+          String plainText = "";
+        try {
           boolean verbose = false;
-            String PlainText = "";
-            String restoredFromRadix = "";
-            String formatted_dest = "";
+          String restoredFromRadix = "";
+          String formatted_dest = "";
 
-            if (verbose) System.out.println("\nDecrypting CipherText: " + CipherText);
+          if (verbose) System.out.println("\nDecrypting CipherText: " + cipherText);
 
+          FFS_Record dataset = getFFS(ffs_name);
+          if (!dataset.canDecrypt()) {
+            throw new RuntimeException("API Key does not have decrypt rights for dataset '" + ffs_name + "'");
+          }
+          // Fatal out if this is not specifically a String type.
+          switch (dataset.getDataType()) {
+            case "integer":
+            case "date":
+            case "datetime":
+              // Unchecked exception
+              throw new RuntimeException("Dataset '" + ffs_name + "' is for '" + dataset.getDataType() + "' and not Strings.  Use the appropriate method for this type");
+            default:
+              plainText = decryptPipeline(dataset, ffxCache, cipherText, tweak);
+          }
 
-            // attempt to load the FPEAlgorithm from the local cache
-            try {
+        } catch (ExecutionException e) { // Has check for getJavaOptionsAlwaysBubbleExceptions
+          if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+            throw new RuntimeException(e.getMessage(), e.getCause());
+          }
+          // e.printStackTrace();
+          } catch (RuntimeException e) {
+              throw e;
+          } catch (Exception e) {
+              throw new RuntimeException(e.getMessage(), e.getCause());
+          }
 
-                FFS_Record FFScaching = getFFS(ffs_name);
-                if (!FFScaching.canDecrypt()) {
-                  throw new RuntimeException("API Key does not have decrypt rights for dataset '" + ffs_name + "'");
-                }
-
-                // Parse the cipher text into trimmed and formatted output
-                ParsedData parsed_data = ubiq_platform_fpe_string_parse(FFScaching, -1, CipherText);
-                if (verbose) System.out.println("    parsed_data.trimmed= " + parsed_data.trimmed);
-                if (verbose) System.out.println("    parsed_data.formatted_dest= " + parsed_data.formatted_dest);
-
-                // Make sure the trimmed string is valid for the FFS
-                if ((parsed_data.trimmed.length() < FFScaching.getMinInputLength()) ||
-                    (parsed_data.trimmed.length() > FFScaching.getMaxInputLength())) {
-                    throw new RuntimeException("Input length does not match FFS parameters.");
-                }
-
-                // Get the key number from the cipher text
-                int key_number = decode_keynum(FFScaching, parsed_data, 0);
-                if (verbose) System.out.println("    decode_keynum returns key_number= " + key_number);
-
-                FFX_Ctx cfx = getCtx(FFScaching, key_number);
-
-                if (verbose) System.out.println("    cachingKey= " + FFScaching.getName() + " " + cfx.getKeyNumber());
-
-                restoredFromRadix = str_convert_radix(parsed_data.trimmed, FFScaching.getOutputCharacterSet(), FFScaching.getInputCharacterSet());
-                if (verbose) System.out.println("    converted to input character set= " + restoredFromRadix);
-
-                // Encrypt the data
-                switch(FFScaching.getEncryptionAlgorithm()) {
-                  case "FF1":
-                    PlainText = cfx.getFF1().decrypt(restoredFromRadix, tweak);
-                  break;
-                  default:
-                      throw new RuntimeException("Unknown FPE Algorithm: " + FFScaching.getEncryptionAlgorithm());
-                }
-
-                formatted_dest = merge_to_formatted_output(FFScaching, parsed_data, PlainText, FFScaching.getPassthroughCharacterSet());
-                if (verbose) System.out.println("    decrypted and formatted= " + formatted_dest);
-
-                // create the billing record
-
-                billing_events.addBillingEvent(ubiqCredentials.getAccessKeyId(), ffs_name, "", BillingEvents.BillingAction.DECRYPT, BillingEvents.DatasetType.STRUCTURED, key_number,1);
-
-
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-
-        return formatted_dest;
+      return plainText;
     }
 
     // Dataset and Keys - Same payload as api/v0/fpe/def_keys
@@ -627,8 +402,12 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
           this.ffxCache);
 
         return dataset_name;
-      } catch (Exception e) {
-        System.out.println("loadDatsetDef Exception: " + e.getMessage());
+      } catch (Exception e) { // Has check for getJavaOptionsAlwaysBubbleExceptions
+        if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+          throw new RuntimeException(e.getMessage(), e.getCause());
+        } else {
+          System.out.println("loadDatsetDef Exception: " + e.getMessage());
+        }
         return "";
       }
     }
@@ -645,30 +424,41 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
           this.ffs);
 
         return dataset_name;
-      } catch (Exception e) {
-        System.out.println("loadDatsetDef Exception: " + e.getMessage());
+      } catch (Exception e) { // Has check for getJavaOptionsAlwaysBubbleExceptions
+        if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+          throw new RuntimeException(e.getMessage(), e.getCause());
+        }
         return "";
       }
     }
 
 
       // FPE Key - same payload as api/v0/fpe/key which includes key number
-      public void loadKeyDef(final String dataset_name, final String key_def, final Boolean current_key_flag) {
+    public boolean loadKeyDef(final String dataset_name, final String key_def, final Boolean current_key_flag) {
       JsonObject key_data =  JsonParser.parseString(key_def).getAsJsonObject();
 
-      LoadSearchKeys.loadKeyDef(
-        this.ubiqCredentials,
-        this.ubiqWebServices,
-        key_data,
-        current_key_flag,
-        dataset_name,
-        this.ffs,
-        this.ffxCache);
+      boolean ret = false;
+      try {
+        ret = LoadSearchKeys.loadKeyDef(
+          this.ubiqCredentials,
+          this.ubiqWebServices,
+          key_data,
+          current_key_flag,
+          dataset_name,
+          this.ffs,
+          this.ffxCache);
+      } catch (IOException | InvalidCipherTextException | OperatorCreationException | PKCSException e) {
+        if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+          throw new RuntimeException(e.getMessage(), e.getCause());
+        }
+      }
+      return ret;
     }
 
     // Returns base64 encoded key
 
-    public String decryptKey(final String key_def) {
+    public String decryptKey(final String key_def)
+      throws IOException, InvalidCipherTextException, OperatorCreationException, PKCSException {
       JsonObject key_data =  JsonParser.parseString(key_def).getAsJsonObject();
 
       return LoadSearchKeys.unwrapKey(
@@ -677,24 +467,33 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
     }
 
     // data is in base 64, encryption key is in base 64
+    // Used by Apigee - no configuration so need to catch exceptions
     public static JsonObject encryptData(final byte[] data, final String encryption_key) {
 
-      return LoadSearchKeys.encryptKey(
-        data,
-        encryption_key);
+      try {
+        return LoadSearchKeys.encryptKey(
+          data,
+          encryption_key);
+        } catch (org.bouncycastle.crypto.InvalidCipherTextException e) {
+          return new JsonObject();
+        }
     }
 
     private FFS_Record getFFS(final String ffs_name)
-      throws IllegalStateException, ExecutionException {
+     throws ExecutionException {
         if (this.ffs == null || this.ffs.FFSCache == null) {
+          System.out.println("Objects null");
           throw new IllegalStateException("object closed");
         }
 
-        // Get the FFS definition based on the supplied name.
-        return this.ffs.FFSCache.get(ffs_name);
+        // The google LoadCache object will catch and convert some exceptions
+        // Therefore our code where this is called, catches and processes some
+        // checked exceptions and converts to runtimeException first.
+        FFS_Record ret = this.ffs.FFSCache.get(ffs_name);
+        return ret;
     }
 
-    private FFX_Ctx getCtx(final FFS_Record ffsRecord, final Integer key_number) 
+    private FFX_Ctx getCtx(final FFS_Record ffsRecord, final Integer key_number)
       throws IllegalStateException, ExecutionException {
         if (this.ffxCache == null || this.ffxCache.FFXCache == null) {
           throw new IllegalStateException("object closed");
@@ -710,4 +509,720 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
     public String getCopyOfUsage() {
      return billing_events.getSerializedData();
     }
-  }
+
+    /***
+     * Encrypt a date time value
+     *
+     * @param datasetName used to specify the dataset for encrypting date time values
+     * @param plainDate the date time to encrypt
+     * @param tweak the tweak to use when encrypting the data.  Pass empty array to use the dataset specific tweak
+     *
+     * @return the encrypted date time value
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+    public OffsetDateTime encryptDateTime(final String datasetName, OffsetDateTime plainDate, byte[] tweak)
+       throws ExecutionException {
+
+      OffsetDateTime ret = null;
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canEncrypt()) {
+        throw new RuntimeException("API Key does not have encrypt rights for dataset '" + datasetName + "'");
+      }
+      ret = encryptDateTimePipeline(dataset, null, ffxCache, plainDate, tweak);
+      return ret;
+    }
+
+    /***
+     * Decrypt a date time value
+     *
+     * @param datasetName used to specify the dataset for decrypting date times
+     * @param cipherDate the date time to decrypt
+     * @param tweak the tweak to use when decrypting the data.  Must be the same tweak that was used to encrypt the value.
+     * Pass empty array to use the dataset specific tweak
+     *
+     * @return the decrypted date time value
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+
+    public OffsetDateTime decryptDateTime(final String datasetName, OffsetDateTime cipherDate, byte[] tweak)
+      throws ExecutionException {
+
+      OffsetDateTime ret = null;
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canDecrypt()) {
+        throw new RuntimeException("API Key does not have decrypt rights for dataset '" + datasetName + "'");
+      }
+      ret = decryptDateTimePipeline(dataset, ffxCache, cipherDate, tweak);
+      return ret;
+
+    }
+
+   /***
+     * Encrypt a date time value for all previously used keys
+     *
+     * @param datasetName used to specify the dataset for encrypting date time values
+     * @param plainDate the date time to encrypt
+     * @param tweak the tweak to use when encrypting the data.  Pass empty array to use the dataset specific tweak
+     *
+     * @return an array of encrypted date time values for all the previously used keys
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+
+   public OffsetDateTime[] encryptDateTimeForSearch(final String datasetName, OffsetDateTime plainDate, byte[] tweak)
+      throws ExecutionException {
+
+      OffsetDateTime[] ret = null;
+
+      loadCache(datasetName);
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canEncrypt()) {
+        throw new RuntimeException("API Key does not have encrypt rights for dataset '" + datasetName + "'");
+      }
+
+      FFX_Ctx ctx = getCtx(dataset, null);
+      int current_key_number = ctx.getKeyNumber();
+      if (verbose) System.out.println("\n after getKeyNumber" + current_key_number);
+      ret = new OffsetDateTime[current_key_number + 1];
+
+      for (int key = 0; key <= current_key_number; key++) {
+        ret[key] = encryptDateTimePipeline(dataset, key, ffxCache, plainDate, tweak);
+      }
+
+      return ret;
+
+    }
+
+
+    private OffsetDateTime encryptDateTimePipeline(final FFS_Record dataset, Integer keyNumber, FFXCache ffxCache, final OffsetDateTime plainDate, byte[] tweak)
+     throws ExecutionException {
+      final String csu = "encryptDateTimePipeline";
+
+      boolean verbose = false;
+      DataTypeConfig cfg = null;
+
+      if (!dataset.getDataType().equals("datetime")) {
+        throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not a 'datetime' dataset.");
+      }
+
+      cfg = dataset.getDataTypeConfig();
+      if (cfg == null) {
+        throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not a 'datetime' dataset.");
+      }
+
+      OffsetDateTime utcPlainDateTime = plainDate.atZoneSameInstant(ZoneId.of("UTC")).toOffsetDateTime();
+
+      if (plainDate.isAfter(cfg.getMaxInputDateValue())) {
+        throw new IllegalArgumentException(plainDate + " plainDateTime must be <= " + cfg.getMaxInputDateValue());
+      }
+      if (plainDate.isBefore(cfg.getMinInputDateValue())) {
+        throw new IllegalArgumentException(plainDate + " plainDateTime must be >= " + cfg.getMinInputDateValue());
+      }
+
+      ZoneOffset offset = plainDate.getOffset();
+
+      // Start, end # negative if end is AFTER start
+      long secondsOffset = ChronoUnit.SECONDS.between(utcPlainDateTime, plainDate);
+      if (verbose) System.out.printf("%s   : %s secondsOffset: %d\n", csu, new java.util.Date(), secondsOffset);
+
+      // positive Number of seconds utcPlainDateTime is AFTER epoch, negative if end is before epoch
+      Long secondsToEpoch = ChronoUnit.SECONDS.between(cfg.getEpoch(), utcPlainDateTime);
+      Boolean isNegative = secondsToEpoch < 0;
+      String plainText = String.valueOf(Math.abs(secondsToEpoch));
+      plainText = StringUtils.padLeft('0', dataset.getMinInputLength(), plainText);
+      if (isNegative) {
+        plainText = "-" + plainText;
+      }
+
+      String cipherText = encryptPipeline(dataset, keyNumber, ffxCache, plainText, tweak);
+
+      Long encryptedSecondsToEpoch = Long.parseLong(cipherText, dataset.getOutputCharacterSet().length());
+      if (verbose) System.out.printf("%s   : %s secondsToEpoch: %d plainText: %s   cipherText: %s  encryptedSecondsToEpoch: %d\n", csu,new java.util.Date(),  secondsToEpoch, plainText, cipherText, encryptedSecondsToEpoch);
+
+      ZonedDateTime r = cfg.getEpoch().toZonedDateTime().plusSeconds(encryptedSecondsToEpoch);
+
+      return r.toOffsetDateTime().withOffsetSameInstant(offset);
+    }
+
+    private OffsetDateTime decryptDateTimePipeline(final FFS_Record dataset, FFXCache ffxCache, final OffsetDateTime cipherDate, byte[] tweak)
+      throws ExecutionException {
+
+      final String csu = "decryptDateTimePipeline";
+
+
+      boolean verbose = false;
+      DataTypeConfig cfg = null;
+
+      if (!dataset.getDataType().equals("datetime")) {
+        throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not a 'datetime' dataset.");
+      }
+
+      cfg = dataset.getDataTypeConfig();
+      if (cfg == null) {
+        throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not a 'datetime' dataset.");
+      }
+
+      ZoneOffset offset = cipherDate.getOffset();
+
+      OffsetDateTime utcCipherDateTime = cipherDate.atZoneSameInstant(ZoneId.of("UTC")).toOffsetDateTime();
+      long secondsOffset = ChronoUnit.SECONDS.between(utcCipherDateTime, cipherDate);
+
+
+      Long encryptedSecondsToEpoch = ChronoUnit.SECONDS.between(cfg.getEpoch(), cipherDate);
+      Boolean isNegative = encryptedSecondsToEpoch < 0;
+      String cipherText = StringUtils.convertRadix(String.valueOf(Math.abs(encryptedSecondsToEpoch)), dataset.getInputCharacterSet(), dataset.getOutputCharacterSet(), true, false);
+
+      cipherText = StringUtils.padLeft('0', dataset.getMinInputLength(), cipherText);
+      if (isNegative) {
+        cipherText = "-" + cipherText;
+      }
+
+      String plainText = decryptPipeline(dataset, ffxCache, cipherText, tweak);
+
+      Long plainSecondsToEpoch = Long.parseLong(plainText);
+      if (verbose) System.out.printf("%s   : %s encryptedSecondsToEpoch: %d cipherText: %s  plainText: %s  plainSecondsToEpoch: %d \n", csu,new java.util.Date(), encryptedSecondsToEpoch, cipherText, plainText, plainSecondsToEpoch);
+
+      ZonedDateTime r = cfg.getEpoch().toZonedDateTime().plusSeconds(plainSecondsToEpoch);
+
+      return r.toOffsetDateTime().withOffsetSameInstant(offset);
+    }
+
+    /***
+     * Encrypt a date value
+     *
+     * @param datasetName used to specify the dataset for encrypting dates
+     * @param plainDate the date to encrypt
+     * @param tweak the tweak to use when encrypting the data.  Pass empty array to use the dataset specific tweak
+     *
+     * @return the encrypted date
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+    public OffsetDateTime encryptDate(final String datasetName, OffsetDateTime plainDate, byte[] tweak)
+      throws ExecutionException {
+
+      OffsetDateTime ret = null;
+
+      if (verbose) System.out.println("plainDate: " + plainDate);
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canEncrypt()) {
+        throw new RuntimeException("API Key does not have encrypt rights for dataset '" + datasetName + "'");
+      }
+      ret = encryptDatePipeline(dataset, null, ffxCache, plainDate, tweak);
+      return ret;
+    }
+
+    /***
+     * Decrypt a date value
+     *
+     * @param datasetName used to specify the dataset for decrypting dates
+     * @param cipherDate the date to decrypt
+     * @param tweak the tweak to use when decrypting the data.  Must be the same tweak that was used to encrypt the value.
+     * Pass empty array to use the dataset specific tweak
+     *
+     * @return the decrypted date
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+
+    public OffsetDateTime decryptDate(final String datasetName, OffsetDateTime cipherDate, byte[] tweak)
+      throws ExecutionException {
+
+      OffsetDateTime ret = null;
+
+      if (verbose) System.out.println("cipherDate: " + cipherDate);
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canDecrypt()) {
+        throw new RuntimeException("API Key does not have decrypt rights for dataset '" + datasetName + "'");
+      }
+      ret = decryptDatePipeline(dataset, ffxCache, cipherDate, tweak);
+      return ret;
+    }
+
+    /***
+     * Encrypt a date value for all previously used keys
+     *
+     * @param datasetName used to specify the dataset for encrypting dates
+     * @param plainDate the date to encrypt
+     * @param tweak the tweak to use when encrypting the data.  Pass empty array to use the dataset specific tweak
+     *
+     * @return an array of encrypted dates for all the previously used keys
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+
+    public OffsetDateTime[] encryptDateForSearch(final String datasetName, OffsetDateTime plainDate, byte[] tweak)
+       throws ExecutionException {
+
+      OffsetDateTime[] ret = null;
+
+      loadCache(datasetName);
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canEncrypt()) {
+        throw new RuntimeException("API Key does not have encrypt rights for dataset '" + datasetName + "'");
+      }
+
+      FFX_Ctx ctx = getCtx(dataset, null);
+      int current_key_number = ctx.getKeyNumber();
+      if (verbose) System.out.println("\n after getKeyNumber" + current_key_number);
+      ret = new OffsetDateTime[current_key_number + 1];
+
+      for (int key = 0; key <= current_key_number; key++) {
+        ret[key] = encryptDatePipeline(dataset, key, ffxCache, plainDate, tweak);
+      }
+
+      return ret;
+    }
+
+
+    private OffsetDateTime encryptDatePipeline(final FFS_Record dataset, Integer keyNumber, FFXCache ffxCache, final OffsetDateTime plainDate, byte[] tweak)
+      throws ExecutionException {
+      final String csu = "encryptDatePipeline";
+
+      boolean verbose = false;
+      DataTypeConfig cfg = null;
+
+      if (!dataset.getDataType().equals("date")) {
+        throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not a 'date' dataset.");
+      }
+
+      cfg = dataset.getDataTypeConfig();
+      if (cfg == null) {
+        throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is missing data_type_config.");
+      }
+
+      if (plainDate.getOffset().getTotalSeconds() != 0) {
+        throw new IllegalArgumentException("plainDate must be UTC but was passed in as " + plainDate.getOffset().getId());
+      }
+
+      if (plainDate.isAfter(cfg.getMaxInputDateValue())) {
+        throw new IllegalArgumentException(plainDate + " plainDate must be <= " + cfg.getMaxInputDateValue());
+      }
+      if (plainDate.isBefore(cfg.getMinInputDateValue())) {
+        throw new IllegalArgumentException(plainDate + " plainDate must be >= " + cfg.getMinInputDateValue());
+      }
+
+      // positive Number of seconds utcPlainDateTime is AFTER epoch, negative if end is before epoch
+      Long daysToEpoch = ChronoUnit.DAYS.between(cfg.getEpoch(), plainDate);
+      Boolean isNegative = daysToEpoch < 0;
+      String plainText = String.valueOf(Math.abs(daysToEpoch));
+      plainText = StringUtils.padLeft('0', dataset.getMinInputLength(), plainText);
+      if (isNegative) {
+        plainText = "-" + plainText;
+      }
+
+      if (verbose) System.out.printf("%s   : %s daysToEpoch: %d plainText: %s \n", csu, new java.util.Date(), daysToEpoch, plainText);
+
+      String cipherText = encryptPipeline(dataset, keyNumber, ffxCache, plainText, tweak);
+
+      Long encryptedDaysToEpoch = Long.parseLong(StringUtils.convertRadix(cipherText, dataset.getOutputCharacterSet(), dataset.getInputCharacterSet(), true, false ));
+      if (verbose) System.out.printf("%s   : %s daysaysToEpoch: %d plainText: %s   cipherText: %s  encryptedDaysToEpoch: %d\n", csu,new java.util.Date(),  daysToEpoch, plainText, cipherText, encryptedDaysToEpoch);
+
+      OffsetDateTime r = cfg.getEpoch().toZonedDateTime().plusDays(encryptedDaysToEpoch).toOffsetDateTime();
+
+      return r;
+    }
+
+    private OffsetDateTime decryptDatePipeline(final FFS_Record dataset, FFXCache ffxCache, final OffsetDateTime cipherDate, byte[] tweak)
+      throws ExecutionException {
+      final String csu = "decryptDatePipeline";
+
+      boolean verbose = false;
+      DataTypeConfig cfg = null;
+
+      if (!dataset.getDataType().equals("date")) {
+        throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not a 'date' dataset.");
+      }
+
+      cfg = dataset.getDataTypeConfig();
+      if (cfg == null) {
+        throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is missing data_type_config.");
+      }
+
+      if (cipherDate.getOffset().getTotalSeconds() != 0) {
+        throw new IllegalArgumentException("cipherDate must be UTC but was passed in as " + cipherDate.getOffset().getId());
+      }
+
+      // positive Number of days cipherDate is BEFORE epoch, negative if end is AFTER epoch
+      Long daysFromEpoch = ChronoUnit.DAYS.between(cfg.getEpoch(), cipherDate);
+
+      Boolean isNegative = daysFromEpoch < 0;
+      String cipherText = StringUtils.convertRadix(String.valueOf(Math.abs(daysFromEpoch)), dataset.getInputCharacterSet(), dataset.getOutputCharacterSet(), true, false);
+      // String.valueOf(Math.abs(daysFromEpoch));
+      cipherText = StringUtils.padLeft('0', dataset.getMinInputLength(), cipherText);
+      if (isNegative) {
+        cipherText = "-" + cipherText;
+      }
+
+      if (verbose) System.out.printf("%s   : %s daysFromEpoch: %d cipherText: %s \n", csu, new java.util.Date(), daysFromEpoch, cipherText);
+
+      String plainText = decryptPipeline(dataset, ffxCache, cipherText, tweak);
+
+      Long plainDaysFromEpoch = Long.parseLong(plainText);
+      if (verbose) System.out.printf("%s   : %s daysaysToEpoch: %d plainText: %s   cipherText: %s  plainDaysFromEpoch: %d\n", csu,new java.util.Date(),  daysFromEpoch, plainText, cipherText, plainDaysFromEpoch);
+
+      OffsetDateTime r = cfg.getEpoch().toZonedDateTime().plusDays(plainDaysFromEpoch).toOffsetDateTime();
+
+      return r;
+    }
+
+    /***
+     * Encrypt a integer 32 value
+     *
+     * @param datasetName used to specify the dataset for encrypting the value
+     * @param plainInt the value to encrypt
+     * @param tweak the tweak to use when encrypting the data.  Pass empty array to use the dataset specific tweak
+     *
+     * @return the encrypted integer 32 value
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+
+    public int encryptInt(final String datasetName, int plainInt, byte[] tweak)
+      throws ExecutionException {//}, java.io.IOException, java.net.URISyntaxException, java.security.NoSuchAlgorithmException, java.lang.InterruptedException, java.security.InvalidKeyException {
+
+      final String csu = "encryptInt";
+      Integer ret = null;
+      if (verbose) System.out.printf("%s   : %s  plainInt: '%d'\n",csu, new java.util.Date(), plainInt);
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canEncrypt()) {
+        throw new RuntimeException("API Key does not have encrypt rights for dataset '" + datasetName + "'");
+      }
+      ret = encryptIntPipeline(dataset, null, ffxCache, plainInt, tweak);
+      return ret.intValue();
+    }
+
+    /***
+     * Decrypt an integer 32 value
+     *
+     * @param datasetName used to specify the dataset for decrypting the value
+     * @param cipherInt the value to decrypt
+     * @param tweak the tweak to use when decrypting the data.  Must be the same tweak that was used to encrypt the value.
+     * Pass empty array to use the dataset specific tweak
+     *
+     * @return the decrypted integer 32 value
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+    public int decryptInt(final String datasetName, int cipherInt, byte[] tweak)
+      throws ExecutionException {
+
+      final String csu = "decryptInt";
+
+      Integer ret = null;
+      if (verbose) System.out.printf("%s   : %s  cipherInt: '%d'\n",csu, new java.util.Date(), cipherInt);
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canDecrypt()) {
+        throw new RuntimeException("API Key does not have decrypt rights for dataset '" + datasetName + "'");
+      }
+      ret = decryptIntPipeline(dataset, ffxCache, cipherInt, tweak);
+      return ret.intValue();
+    }
+
+     /***
+     * Encrypt an integer 32 value for all previously used keys
+     *
+     * @param datasetName used to specify the dataset for encrypting the value
+     * @param plainInt the value to encrypt
+     * @param tweak the tweak to use when encrypting the data.  Pass empty array to use the dataset specific tweak
+     *
+     * @return an array of encrypted integer 32 values for all the previously used keys
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+
+     */
+
+    public int[] encryptIntForSearch(final String datasetName, int plainInt, byte[] tweak)
+       throws  ExecutionException {
+
+      int[] ret = null;
+
+      loadCache(datasetName);
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canEncrypt()) {
+        throw new RuntimeException("API Key does not have encrypt rights for dataset '" + datasetName + "'");
+      }
+
+      FFX_Ctx ctx = getCtx(dataset, null);
+      int current_key_number = ctx.getKeyNumber();
+      if (verbose) System.out.println("\n after getKeyNumber" + current_key_number);
+      ret = new int[current_key_number + 1];
+
+      for (int key = 0; key <= current_key_number; key++) {
+        ret[key] = encryptIntPipeline(dataset, key, ffxCache, plainInt, tweak);
+      }
+
+      return ret;
+
+    }
+
+    private int encryptIntPipeline(final FFS_Record dataset, Integer keyNumber, FFXCache ffxCache, final int plainInt, byte[] tweak)
+      throws ExecutionException {
+        final String csu = "encryptIntPipelineAsync";
+
+        DataTypeConfig cfg = null;
+        boolean verbose = false;
+        if (!dataset.getDataType().equals("integer"))
+        {
+            throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not an 'integer' dataset.");
+        }
+
+        cfg = dataset.getDataTypeConfig();
+        if (cfg == null) {
+          throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is missing data_type_config.");
+        }
+
+        if (cfg.getSize() != 32) {
+            throw new IllegalArgumentException("dataset '" + dataset.getName() + "'' does not have a 32-bit DataSize");
+        }
+
+        if (plainInt > cfg.getMaxInputIntValue())
+        {
+            throw new IllegalArgumentException("Integer '" + plainInt + "'  <= " + cfg.getMaxInputIntValue());
+        }
+
+        if (plainInt < cfg.getMinInputIntValue())
+        {
+            throw new IllegalArgumentException("Integer '" + plainInt + "'  >= " + cfg.getMinInputIntValue());
+        }
+
+        // convert to string and pad to min_input_length after the negative sign
+        Boolean isNegative = plainInt < 0;
+        String plainText = String.valueOf(Math.abs(plainInt));
+        plainText = StringUtils.padLeft('0', dataset.getMinInputLength(), plainText);
+        if (verbose) System.out.printf("%s   : %s plainInt: %d plainText: %s \n", csu, new java.util.Date(), plainInt, plainText);
+
+        // encrypted output will contain base14 characters (0-9a-d)
+        String cipherText = encryptPipeline(dataset, keyNumber, ffxCache, plainText, tweak);
+        String tmp = StringUtils.convertRadix(cipherText, dataset.getOutputCharacterSet(), dataset.getInputCharacterSet(), true, false);
+        if (verbose) System.out.printf("%s   : %s cipherText: %s tmp: %s \n", csu, new java.util.Date(), cipherText, tmp);
+
+
+        int base10Int = (Integer.valueOf(StringUtils.convertRadix(cipherText, dataset.getOutputCharacterSet(), dataset.getInputCharacterSet(), true, false))).intValue();
+        if (isNegative) {
+          base10Int *= -1;
+        }
+        if (verbose) System.out.printf("%s   : %s cipherText: %s base10Int: %d \n", csu, new java.util.Date(), cipherText, base10Int);
+
+        return base10Int;
+    }
+
+    private int decryptIntPipeline(final FFS_Record dataset, FFXCache ffxCache, final int cipherInt, byte[] tweak)
+      throws ExecutionException {
+        final String csu = "decryptIntPipeline";
+
+        DataTypeConfig cfg = null;
+        boolean verbose = false;
+        if (!dataset.getDataType().equals("integer"))
+        {
+            throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not an 'integer' dataset.");
+        }
+
+        cfg = dataset.getDataTypeConfig();
+        if (cfg == null) {
+          throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is missing data_type_config.");
+        }
+
+        if (cfg.getSize() != 32) {
+            throw new IllegalArgumentException("dataset '" + dataset.getName() + "'' does not have a 32-bit DataSize");
+        }
+        if (verbose) System.out.printf("%s   : %s START: cipherInt: %d \n", csu, new java.util.Date(), cipherInt);
+
+        // convert to string and pad to min_input_length after the negative sign
+        Boolean isNegative = cipherInt < 0;
+        String cipherText = StringUtils.convertRadix(String.valueOf(Math.abs(cipherInt)), dataset.getInputCharacterSet(), dataset.getOutputCharacterSet(), true, false);
+        cipherText = StringUtils.padLeft('0', dataset.getMinInputLength(), cipherText);
+        if (isNegative) {
+          cipherText = "-" + cipherText;
+        }
+
+        // plain text output will contain base10 characters
+        if (verbose) System.out.printf("%s   : %s cipherText: %s \n", csu, new java.util.Date(), cipherText);
+        String plainText = decryptPipeline(dataset, ffxCache, cipherText, tweak);
+        int plainInt = (Integer.valueOf(plainText)).intValue();
+        if (verbose) System.out.printf("%s   : %s END: cipherInt: %d plainInt %d plainText: %s \n", csu, new java.util.Date(), cipherInt, plainInt, plainText);
+
+        return plainInt;
+    }
+
+   /***
+     * Encrypt a integer 64 value
+     *
+     * @param datasetName used to specify the dataset for encrypting the value
+     * @param plainLong the value to encrypt
+     * @param tweak the tweak to use when encrypting the data.  Pass empty array to use the dataset specific tweak
+     *
+     * @return the encrypted integer 64 value
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+
+    public long encryptLong(final String datasetName, long plainLong, byte[] tweak)
+      throws ExecutionException {
+      final String csu = "encryptLong";
+
+      Long ret = null;
+      if (verbose) System.out.printf("%s   : %s  plainLong: '%d'\n",csu, new java.util.Date(), plainLong);
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canEncrypt()) {
+        throw new RuntimeException("API Key does not have encrypt rights for dataset '" + datasetName + "'");
+      }
+      ret = encryptLongPipeline(dataset, null, ffxCache, plainLong, tweak);
+      return ret.longValue();
+    }
+
+    /***
+     * Decrypt an integer 64 value
+     *
+     * @param datasetName used to specify the dataset for decrypting the value
+     * @param cipherLong the value to decrypt
+     * @param tweak the tweak to use when decrypting the data.  Must be the same tweak that was used to encrypt the value.
+     * Pass empty array to use the dataset specific tweak
+     *
+     * @return the decrypted integer 64 value
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+    public long decryptLong(final String datasetName, long cipherLong, byte[] tweak)
+      throws ExecutionException {
+
+      final String csu = "decryptLong";
+
+      Long ret = null;
+      if (verbose) System.out.printf("%s   : %s  cipherLong: '%d'\n",csu, new java.util.Date(), cipherLong);
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canDecrypt()) {
+        throw new RuntimeException("API Key does not have decrypt rights for dataset '" + datasetName + "'");
+      }
+      ret = decryptLongPipeline(dataset, ffxCache, cipherLong, tweak);
+      return ret.longValue();
+    }
+
+    /***
+     * Encrypt an integer 64 value for all previously used keys
+     *
+     * @param datasetName used to specify the dataset for encrypting the value
+     * @param plainLong the value to encrypt
+     * @param tweak the tweak to use when encrypting the data.  Pass empty array to use the dataset specific tweak
+     *
+     * @return an array of encrypted integer 64 values for all the previously used keys
+     * @throws ExecutionException if errors are encountered during processing and are bubbled up from included libraries
+     */
+
+    public long[] encryptLongForSearch(final String datasetName, long plainLong, byte[] tweak)
+    throws ExecutionException {
+
+      long[] ret = null;
+
+      loadCache(datasetName);
+
+      FFS_Record dataset = getFFS(datasetName);
+      if (!dataset.canEncrypt()) {
+        throw new RuntimeException("API Key does not have encrypt rights for dataset '" + datasetName + "'");
+      }
+
+      FFX_Ctx ctx = getCtx(dataset, null);
+      int current_key_number = ctx.getKeyNumber();
+      if (verbose) System.out.println("\n after getKeyNumber" + current_key_number);
+      ret = new long[current_key_number + 1];
+
+      for (int key = 0; key <= current_key_number; key++) {
+          ret[key] = encryptLongPipeline(dataset, key, ffxCache, plainLong, tweak);
+        }
+
+      return ret;
+    }
+
+    private long encryptLongPipeline(final FFS_Record dataset, Integer keyNumber, FFXCache ffxCache, final long plainLong, byte[] tweak)
+      throws ExecutionException {
+        final String csu = "encryptLongPipeline";
+
+        DataTypeConfig cfg = null;
+        boolean verbose = false;
+        if (!dataset.getDataType().equals("integer"))
+        {
+            throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not an 'integer' dataset.");
+        }
+
+        cfg = dataset.getDataTypeConfig();
+        if (cfg == null) {
+          throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is missing data_type_config.");
+        }
+
+        if (cfg.getSize() != 64) {
+            throw new IllegalArgumentException("dataset '" + dataset.getName() + "'' does not have a 64-bit DataSize");
+        }
+
+        if (plainLong > cfg.getMaxInputIntValue())
+        {
+            throw new IllegalArgumentException("Long '" + plainLong + "'  <= " + cfg.getMaxInputIntValue());
+        }
+
+        if (plainLong < cfg.getMinInputIntValue())
+        {
+            throw new IllegalArgumentException("Long '" + plainLong + "'  >= " + cfg.getMinInputIntValue());
+        }
+
+        // convert to string and pad to min_input_length after the negative sign
+        Boolean isNegative = plainLong < 0;
+        String plainText = String.valueOf(Math.abs(plainLong));
+        plainText = StringUtils.padLeft('0', dataset.getMinInputLength(), plainText);
+        // if (isNegative) {
+        //   plainText = "-" + plainText;
+        // }
+        if (verbose) System.out.printf("%s   : %s plainLong: %d plainText: %s \n", csu, new java.util.Date(), plainLong, plainText);
+
+        // encrypted output will contain base14 characters (0-9a-d)
+        String cipherText = encryptPipeline(dataset, keyNumber, ffxCache, plainText, tweak);
+        String tmp = StringUtils.convertRadix(cipherText, dataset.getOutputCharacterSet(), dataset.getInputCharacterSet(), true, false);
+        if (verbose) System.out.printf("%s   : %s cipherText: %s tmp: %s \n", csu, new java.util.Date(), cipherText, tmp);
+
+
+        long base10Long = (Long.valueOf(StringUtils.convertRadix(cipherText, dataset.getOutputCharacterSet(), dataset.getInputCharacterSet(), true, false))).longValue();
+        if (isNegative) {
+          base10Long *= -1;
+        }
+        if (verbose) System.out.printf("%s   : %s cipherText: %s base10Long: %d \n", csu, new java.util.Date(), cipherText, base10Long);
+
+        return base10Long;
+    }
+
+    private long decryptLongPipeline(final FFS_Record dataset, FFXCache ffxCache, final long cipherLong, byte[] tweak)
+      throws ExecutionException {
+        final String csu = "decryptLongPipeline";
+
+        DataTypeConfig cfg = null;
+        boolean verbose = false;
+        if (!dataset.getDataType().equals("integer"))
+        {
+            throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is not an 'integer' dataset.");
+        }
+
+        cfg = dataset.getDataTypeConfig();
+        if (cfg == null) {
+          throw new IllegalArgumentException(dataset.getDataType() + " dataset '" + dataset.getName() + "' is missing data_type_config.");
+        }
+
+        if (cfg.getSize() != 64) {
+            throw new IllegalArgumentException("dataset '" + dataset.getName() + "'' does not have a 32-bit DataSize");
+        }
+
+
+        if (verbose) System.out.printf("%s   : %s  cipherLong(%d) Abs(%d)\n", csu, new java.util.Date(), cipherLong, Math.abs(cipherLong));
+        // convert to string and pad to min_input_length after the negative sign
+        Boolean isNegative = cipherLong < 0;
+        String cipherText = StringUtils.convertRadix(String.valueOf(Math.abs(cipherLong)), dataset.getInputCharacterSet(), dataset.getOutputCharacterSet(), true, false);
+        cipherText = StringUtils.padLeft('0', dataset.getMinInputLength(), cipherText);
+        if (isNegative) {
+          cipherText = "-" + cipherText;
+        }
+
+        // plain text output will contain base10 characters
+        String plainText = decryptPipeline(dataset, ffxCache, cipherText, tweak);
+        long plainLong = (Long.valueOf(plainText)).longValue();
+        if (verbose) System.out.printf("%s   : %s cipherLong: %d plainLong %d plainText: %s \n", csu, new java.util.Date(), cipherLong, plainLong, plainText);
+
+        return plainLong;
+    }
+
+}

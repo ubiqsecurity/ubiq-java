@@ -15,6 +15,11 @@ import java.util.Set;
 
 import java.util.ArrayList;
 
+import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.pkcs.PKCSException;
+import org.bouncycastle.operator.OperatorCreationException;
+import java.io.IOException;
+
 class LoadSearchKeys  {
     private static boolean verbose= false;
 
@@ -29,14 +34,16 @@ class LoadSearchKeys  {
       sb.append("]");
       return sb.toString();
    }
-  
+
     // Reset TTL means that if a Key already exists, then execute a Put(Get) to reset the cache TTL
     // This is a specific use case for UpdateCache
     public static void loadKeys(
       UbiqWebServices ubiqWebServices,
       FFS ffs,
       FFXCache ffxCache,
-      String[] datasets) throws Exception {
+      String[] datasets)
+      throws IOException, ExecutionException, java.net.URISyntaxException, org.bouncycastle.operator.OperatorCreationException, org.bouncycastle.pkcs.PKCSException, org.bouncycastle.crypto.InvalidCipherTextException, java.security.NoSuchAlgorithmException, java.lang.InterruptedException, java.security.InvalidKeyException
+      {
       String csu = "loadKeys";
       List<String> datasetsToRemove = new ArrayList<>();
 
@@ -55,15 +62,15 @@ class LoadSearchKeys  {
       if (datasets.length == 0) {
         // Pretend like all datasets were passed in
         datasets = fpe_search_keys.keySet().toArray(new String[0]);
-        
+
         if (verbose) {
           System.out.println(String.format("%s Found Datasets:", csu));
           for (String s : datasets) {
             System.out.println(String.format("\t %s", s));
           }
         }
-        // Get a list of all the existing cached dataset names since one of the 
-        // existing caches might need to be removed if it doesn't match the 
+        // Get a list of all the existing cached dataset names since one of the
+        // existing caches might need to be removed if it doesn't match the
         // name returned by the web call.
         Set<String> existingCachedNames = ffs.FFSCache.asMap().keySet();
         if (verbose) {
@@ -98,7 +105,7 @@ class LoadSearchKeys  {
         JsonObject top_level = element.getAsJsonObject();
 
         if (verbose) System.out.println(String.format("%s before dataset", csu));
-        
+
         JsonObject dataset = top_level.get("ffs").getAsJsonObject();
 
         FFS_Record ffsRecord = FFS_Record.parse(dataset);
@@ -120,7 +127,7 @@ class LoadSearchKeys  {
         JsonArray keys = top_level.get("keys").getAsJsonArray();
 
         if (verbose) System.out.println(String.format("%s arrayCount  %d", csu, keys.size()));
-        
+
         // Loop over the keys.  If not already
 
         for (int i = 0; i < keys.size(); i++) {
@@ -147,10 +154,10 @@ class LoadSearchKeys  {
 
             if (verbose) System.out.println(String.format("%s FFX_Ctx ctx %s", csu, "after"));
 
-            ctx.setFF1(new FF1(key, tweak, 
-                  keyId.ffs.getMinTweakLength(), 
-                  keyId.ffs.getMaxTweakLength(), 
-                  keyId.ffs.getInputCharacterSet().length(), keyId.ffs.getInputCharacterSet()), 
+            ctx.setFF1(new FF1(key, tweak,
+                  keyId.ffs.getMinTweakLength(),
+                  keyId.ffs.getMaxTweakLength(),
+                  keyId.ffs.getInputCharacterSet().length(), keyId.ffs.getInputCharacterSet()),
                   i);
 
             ffxCache.FFXCache.put(keyId, ctx);
@@ -165,11 +172,11 @@ class LoadSearchKeys  {
                 if (currentKey.ffs.getTweakSource().equals("constant")) {
                   tweak= Base64.getDecoder().decode(currentKey.ffs.getTweak());
                 }
-      
-                ctx2.setFF1(new FF1(key, tweak, 
-                      currentKey.ffs.getMinTweakLength(), 
-                      currentKey.ffs.getMaxTweakLength(), 
-                      currentKey.ffs.getInputCharacterSet().length(), currentKey.ffs.getInputCharacterSet()), 
+
+                ctx2.setFF1(new FF1(key, tweak,
+                      currentKey.ffs.getMinTweakLength(),
+                      currentKey.ffs.getMaxTweakLength(),
+                      currentKey.ffs.getInputCharacterSet().length(), currentKey.ffs.getInputCharacterSet()),
                       i);
 
                 ffxCache.FFXCache.put(currentKey, ctx2);
@@ -189,7 +196,7 @@ class LoadSearchKeys  {
 
       // In the case where datasets was empty, request all datasets, the datasets that were loaded but no longer in
       // the datasets retrieved will be in the datasetsToRemove list.
-      
+
       for (String dataset_name : datasetsToRemove)
       {
         if (verbose) System.out.println("Dataset to remove: " + dataset_name);
@@ -198,7 +205,7 @@ class LoadSearchKeys  {
         if (ffs.FFSCache.asMap().containsKey(dataset_name)) {
           if (verbose) System.out.println(String.format("%s  Found %s in FFS Cache", csu, dataset_name));
           FFS_Record ffsRecord = ffs.FFSCache.get(dataset_name);
-        
+
           FFS_KeyId currentKey = new FFS_KeyId(ffsRecord, null);
           if (ffxCache.FFXCache.asMap().containsKey(currentKey)) {
             FFX_Ctx currentCtx = ffxCache.FFXCache.get(currentKey);
@@ -234,7 +241,7 @@ class LoadSearchKeys  {
       // JsonObject top_level = fpe_search_keys.get(dataset_name).getAsJsonObject();
 
       if (verbose) System.out.println(String.format("%s before dataset  ", csu));
-      
+
       JsonObject dataset = fpe_search_keys.get("ffs").getAsJsonObject();
       String dataset_name = dataset.get("name").getAsString();
 
@@ -254,7 +261,7 @@ class LoadSearchKeys  {
 
       if (verbose) System.out.println(String.format("%s before encrypted_private_key  ", csu));
       String encrypted_private_key = fpe_search_keys.get("encrypted_private_key").getAsString();
-      
+
       if (verbose) System.out.println(String.format("%s encrypted_private_key  %s", csu, encrypted_private_key));
 
       Integer current_key_number =fpe_search_keys.get("current_key_number").getAsInt();
@@ -263,7 +270,7 @@ class LoadSearchKeys  {
       JsonArray keys = fpe_search_keys.get("keys").getAsJsonArray();
 
       if (verbose) System.out.println(String.format("%s arrayCount  %d", csu, keys.size()));
-      
+
       // Loop over the keys.  If not alraedy
 
       for (int i = 0; i < keys.size(); i++) {
@@ -290,10 +297,10 @@ class LoadSearchKeys  {
 
           if (verbose) System.out.println(String.format("%s FFX_Ctx ctx %s", csu, "after"));
 
-          ctx.setFF1(new FF1(key, tweak, 
-                keyId.ffs.getMinTweakLength(), 
-                keyId.ffs.getMaxTweakLength(), 
-                keyId.ffs.getInputCharacterSet().length(), keyId.ffs.getInputCharacterSet()), 
+          ctx.setFF1(new FF1(key, tweak,
+                keyId.ffs.getMinTweakLength(),
+                keyId.ffs.getMaxTweakLength(),
+                keyId.ffs.getInputCharacterSet().length(), keyId.ffs.getInputCharacterSet()),
                 i);
 
           ffxCache.FFXCache.put(keyId, ctx);
@@ -308,11 +315,11 @@ class LoadSearchKeys  {
               if (currentKey.ffs.getTweakSource().equals("constant")) {
                 tweak= Base64.getDecoder().decode(currentKey.ffs.getTweak());
               }
-    
-              ctx2.setFF1(new FF1(key, tweak, 
-                    currentKey.ffs.getMinTweakLength(), 
-                    currentKey.ffs.getMaxTweakLength(), 
-                    currentKey.ffs.getInputCharacterSet().length(), currentKey.ffs.getInputCharacterSet()), 
+
+              ctx2.setFF1(new FF1(key, tweak,
+                    currentKey.ffs.getMinTweakLength(),
+                    currentKey.ffs.getMaxTweakLength(),
+                    currentKey.ffs.getInputCharacterSet().length(), currentKey.ffs.getInputCharacterSet()),
                     i);
 
               ffxCache.FFXCache.put(currentKey, ctx2);
@@ -372,17 +379,18 @@ class LoadSearchKeys  {
       return ctx;
     }
 
-    public static void loadKeyDef(
+    public static boolean loadKeyDef(
       UbiqCredentials ubiqCredentials,
       UbiqWebServices ubiqWebServices,
       JsonObject key_data,
       Boolean current_key_flag,
       String dataset_name,
       FFS ffs,
-      FFXCache ffxCache) {
+      FFXCache ffxCache) throws IOException, InvalidCipherTextException, OperatorCreationException, PKCSException {
         String csu = "loadKeyDef";
         String unwrapped_data_key = null;
         JsonObject encrypted_data_key = null;
+        boolean ret = false;
 
         String encrypted_private_key = key_data.get("encrypted_private_key").getAsString();
 
@@ -392,7 +400,7 @@ class LoadSearchKeys  {
 
         Integer key_number = key_data.get("key_number").getAsInt();
         String wrapped_data_key = key_data.get("wrapped_data_key").getAsString();
-        
+
         JsonElement obj = key_data.get("decrypted_data_key");
         if (obj != null) {
           // Base 64 version of the decrypted data key
@@ -401,20 +409,25 @@ class LoadSearchKeys  {
         obj = key_data.get("encrypted_data_key");
         if (obj != null) {
           // Base 64 version of the data key encrypted using the SECRET_CRYPTO_ACCESS_KEY
-          
+
           encrypted_data_key = obj.getAsJsonObject();
+          if (verbose) System.out.println(String.format("%s found encrypted_data_key ", csu));
+
         }
         byte[] key = null;
 
         if (unwrapped_data_key != null) {
           key = Base64.getDecoder().decode(unwrapped_data_key);
-          
+          if (verbose) System.out.println(String.format("%s found unwrapped_data_key ", csu));
+
         } else if (encrypted_data_key != null) {
           key = Base64.getDecoder().decode(decryptKey(encrypted_data_key, ubiqCredentials.getSecretCryptoAccessKey()));
+          if (verbose) System.out.println(String.format("%s found key ", csu));
         } else {
-          key = ubiqWebServices.getUnwrappedKey(encrypted_private_key, wrapped_data_key);
-          // throw new IllegalStateException("Trying to decrypt data key");
+          if (verbose) System.out.println(String.format("%s encrypted_private_key %s ", csu, encrypted_private_key));
 
+          key = ubiqWebServices.getUnwrappedKey(encrypted_private_key, wrapped_data_key);
+          if (verbose) System.out.println(String.format("%s calling getUnwrappedKey key(%s)", csu, key));
         }
 
         FFS_Record ffsRecord = ffs.FFSCache.asMap().get(dataset_name);
@@ -439,12 +452,15 @@ class LoadSearchKeys  {
             if (verbose) System.out.println(String.format("%s FFXCache HIT %s %d ", csu, dataset_name, key_number));
           }
         }
+        ret = true;
+        return ret;
     }
 
     // Base 64 encoded string of decrypted data key
     static String unwrapKey(
       UbiqWebServices ubiqWebServices,
-      JsonObject key_data) {
+      JsonObject key_data)
+      throws IOException, InvalidCipherTextException, OperatorCreationException, PKCSException {
       String csu = "unwrapKey";
 
       String encrypted_private_key = key_data.get("encrypted_private_key").getAsString();
@@ -454,62 +470,53 @@ class LoadSearchKeys  {
       return new String(Base64.getEncoder().encode(key));
     }
 
-    static byte[] decryptKey(
-      final JsonObject data, final String encryption_key) {
+    static byte[] decryptKey (
+      final JsonObject data, final String encryption_key)
+      throws IOException, InvalidCipherTextException, OperatorCreationException, PKCSException {
+
       byte[] decrypted_data = null;
-      try {
 
-        // System.out.println("data: " + data);
-        if (verbose) System.out.println("encryption_key: " + encryption_key);
+      // System.out.println("data: " + data);
+      if (verbose) System.out.println("encryption_key: " + encryption_key);
 
-        AlgorithmInfo alg = new AlgorithmInfo(data.get("alg").getAsString());
-        byte[] initVector = Base64.getDecoder().decode(data.get("iv").getAsString());
-        byte[] encrypted_data = Base64.getDecoder().decode(data.get("encrypted_data").getAsString());
-        byte[] key = Base64.getDecoder().decode(encryption_key);
-        byte[] empty = null;
+      AlgorithmInfo alg = new AlgorithmInfo(data.get("alg").getAsString());
+      byte[] initVector = Base64.getDecoder().decode(data.get("iv").getAsString());
+      byte[] encrypted_data = Base64.getDecoder().decode(data.get("encrypted_data").getAsString());
+      byte[] key = Base64.getDecoder().decode(encryption_key);
+      byte[] empty = null;
 
-        if (verbose) System.out.println("alg: " + data.get("alg").getAsString());
+      if (verbose) System.out.println("alg: " + data.get("alg").getAsString());
 
-        if (key.length > alg.getKeyLength()) {
-          byte[] tmp = new byte[alg.getKeyLength()];
-          System.arraycopy(key, 0, tmp, 0, alg.getKeyLength());
-          key = tmp;
-        }
-
-
-        AesGcmBlockCipher aesGcmBlockCipher = new AesGcmBlockCipher(
-          false, alg, key,
-                  initVector, empty);
-
-
-        byte[] data1 = aesGcmBlockCipher.update(encrypted_data, 0, encrypted_data.length);
-        byte[] data2 = aesGcmBlockCipher.doFinal();
-        aesGcmBlockCipher = null;
-
-        decrypted_data = new byte[data1.length + data2.length];
-        System.arraycopy(data1,0, decrypted_data, 0, data1.length);
-        System.arraycopy(data2,0, decrypted_data, data1.length, data2.length);
-
-        // if (aesGcmBlockCipher == null) throw new IllegalStateException(String.format("decrypted_data.length(%d) encrypted_data.getKeyLength(%d)", decrypted_data.length, encrypted_data.length));
-
-      } catch (IllegalStateException e) {
-        System.out.println(String.format("Exception: %s",e.getMessage()));
-        throw e;
+      if (key.length > alg.getKeyLength()) {
+        byte[] tmp = new byte[alg.getKeyLength()];
+        System.arraycopy(key, 0, tmp, 0, alg.getKeyLength());
+        key = tmp;
       }
-        catch (Exception e) {
 
-        }
-      
+
+      AesGcmBlockCipher aesGcmBlockCipher = new AesGcmBlockCipher(
+        false, alg, key,
+                initVector, empty);
+
+
+      byte[] data1 = aesGcmBlockCipher.update(encrypted_data, 0, encrypted_data.length);
+      byte[] data2 = aesGcmBlockCipher.doFinal();
+      aesGcmBlockCipher = null;
+
+      decrypted_data = new byte[data1.length + data2.length];
+      System.arraycopy(data1,0, decrypted_data, 0, data1.length);
+      System.arraycopy(data2,0, decrypted_data, data1.length, data2.length);
+
       return decrypted_data;
 
     }
 
     static JsonObject encryptKey(
-      final byte[] data_bytes, final String encryption_key) {
+      final byte[] data_bytes, final String encryption_key)
+      throws org.bouncycastle.crypto.InvalidCipherTextException {
       String csu = "encryptKey";
       String algorithm_name = "AES-256-GCM";
       JsonObject results = new JsonObject();
-      try {
 
       if (verbose) System.out.println("data: " + data_bytes.toString() + "  encryption_key: " + encryption_key);
       AlgorithmInfo alg = new AlgorithmInfo(algorithm_name);
@@ -549,15 +556,10 @@ class LoadSearchKeys  {
 
       // Create JSON of results
 
-      
       results.addProperty("alg", alg.getName());
       results.addProperty("iv",  Base64.getEncoder().encodeToString(initVector));
       results.addProperty("encrypted_data", Base64.getEncoder().encodeToString(encrypted_data));
 
-      } catch (Exception e) {
-        System.out.println(String.format("Exception: %s",e.getMessage()));
-
-      }
       // Return string
       return(results);
 

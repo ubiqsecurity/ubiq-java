@@ -89,9 +89,10 @@ class Multithreading implements Runnable {
 
             }
             catch (Exception e) {
-                
+
                 // Throwing an exception
-                System.out.println("Exception is caught " + e.getMessage());
+                System.out.println("Exception is caught " + e.getClass().getName()); //getMessage());
+                e.printStackTrace();
             }
 
         }

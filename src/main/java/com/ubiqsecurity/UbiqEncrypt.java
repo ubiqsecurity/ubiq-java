@@ -22,9 +22,9 @@ public class UbiqEncrypt implements AutoCloseable {
     public UbiqEncrypt(UbiqCredentials ubiqCredentials, int usesRequested) {
       this(ubiqCredentials, usesRequested, UbiqFactory.defaultConfiguration());
     }
-   
 
     public UbiqEncrypt(UbiqCredentials ubiqCredentials, int usesRequested, UbiqConfiguration ubiqConfiguration) {
+      try {
         this.usesRequested = usesRequested;
         this.ubiqCredentials = ubiqCredentials;
         this.ubiqConfiguration = ubiqConfiguration;
@@ -36,18 +36,27 @@ public class UbiqEncrypt implements AutoCloseable {
         executor.startAsync();
 
         if (this.encryptionKey == null) {
-          // Get key at start to improve caching later.  Warm up can be done once and 
+          // Get key at start to improve caching later.  Warm up can be done once and
           // key reused later
           this.encryptionKey = this.ubiqWebServices.getEncryptionKey(this.usesRequested);
         }
         this.session = null;
-
+      } catch (RuntimeException e) { // has getJavaOptionsAlwaysBubbleExceptions
+        // Unchecked exception will continue up as it was before
+        throw e;
+      } catch (Exception e) { // has getJavaOptionsAlwaysBubbleExceptions
+        // All others would be an checked exception and we will either bubble up or
+        // ignore
+        if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+          throw new RuntimeException(e.getMessage(), e.getCause());
+        }
+      }
     }
 
     public UbiqUnstructuredEncryptSession initSession() {
       if (this.ubiqWebServices == null) {
           throw new IllegalStateException("object closed");
-      } 
+      }
       return new UbiqUnstructuredEncryptSession();
     }
 
@@ -62,20 +71,23 @@ public class UbiqEncrypt implements AutoCloseable {
             if (executor != null) {
               executor.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
             }
-          } catch (Exception e) {
+          } catch (Exception e) { // has getJavaOptionsAlwaysBubbleExceptions
+              if (this.ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+                throw new RuntimeException(e.getMessage(), e.getCause());
+              }
               System.out.printf("%s   : %s Exception %s  messasge: %s\n", csu,new java.util.Date(),  e.getClass().getName(), e.getMessage());
-          }            
+          }
 
           this.ubiqWebServices = null;
       }
     }
 
-    
+
     /**
      * Begin the encryption process and return encrypted bytes
      * @return - encrypted bytes
-     * 
-     * @deprecated use instance method begin(UbiqUnstructuredEncryptSession session) instead.  
+     *
+     * @deprecated use instance method begin(UbiqUnstructuredEncryptSession session) instead.
      */
     @Deprecated
     public byte[] begin() {
@@ -88,12 +100,12 @@ public class UbiqEncrypt implements AutoCloseable {
 
     }
 
-    
+
     /**
      * Begin the encryption process and return encrypted bytes
      * @param session Session object to manage state between begin, update, and end calls
      * @return - encrypted bytes
-     * 
+     *
      */
     public byte[] begin(UbiqUnstructuredEncryptSession session) {
 
@@ -137,8 +149,8 @@ public class UbiqEncrypt implements AutoCloseable {
      * @param offset Offset into the source data
      * @param count Number of bytes to use
      * @return - encrypted bytes
-     * 
-     * @deprecated use instance method update(UbiqUnstructuredEncryptSession session, ...) instead.  
+     *
+     * @deprecated use instance method update(UbiqUnstructuredEncryptSession session, ...) instead.
      */
     @Deprecated
     public byte[] update(byte[] plainBytes, int offset, int count) {
@@ -169,10 +181,10 @@ public class UbiqEncrypt implements AutoCloseable {
     /**
      * End the encryption process and return any remaining encrypted data
      * @return - encrypted bytes
-     * 
+     *
      * @throws IllegalStateException if the object have not been initialized correctly
      * @throws InvalidCipherTextException if an exception was encountered while encrypting the data
-     * @deprecated use instance method end(UbiqUnstructuredEncryptSession session instead.  
+     * @deprecated use instance method end(UbiqUnstructuredEncryptSession session instead.
      */
     @Deprecated
     public byte[] end() throws IllegalStateException, InvalidCipherTextException {
@@ -211,9 +223,12 @@ public class UbiqEncrypt implements AutoCloseable {
             cipherStream.write(ubiqEncrypt.end(session));
 
             return cipherStream.toByteArray();
-        } catch (IOException ex) {
-            System.out.println("stream exception");
-            return null;
+        } catch (IOException ex) { // has getJavaOptionsAlwaysBubbleExceptions
+          if (ubiqConfiguration.getJavaOptionsAlwaysBubbleExceptions()) {
+            throw new RuntimeException(ex.getMessage(), ex.getCause());
+          }
+          System.out.println("stream exception");
+          return null;
         }
     }
 
@@ -229,5 +244,5 @@ public class UbiqEncrypt implements AutoCloseable {
     public String getCopyOfUsage() {
       return billing_events.getSerializedData();
     }
- 
+
 }

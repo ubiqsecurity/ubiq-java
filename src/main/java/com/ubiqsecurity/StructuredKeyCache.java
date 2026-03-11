@@ -16,8 +16,8 @@ import java.util.Base64;
 
 /**
  * Caches structured key information to minimize access to the server.
- * This cache will typically only be used when the structured data encryption keys 
- * are being cached encrypted.  If they are being used decrypted, then the 
+ * This cache will typically only be used when the structured data encryption keys
+ * are being cached encrypted.  If they are being used decrypted, then the
  * FFXCache will already have what is needed and this cache may not be needed
  */
 class StructuredKeyCache  {
@@ -52,9 +52,19 @@ class StructuredKeyCache  {
             .expireAfterWrite(ttl, TimeUnit.SECONDS)        // cache will expire after 3 days
             .build(new CacheLoader<FFS_KeyId, FPEKeyResponse>() {  // build the cacheloader
                 @Override
-                public FPEKeyResponse load(FFS_KeyId keyId) throws Exception {
+                public FPEKeyResponse load(FFS_KeyId keyId) {
+                  FPEKeyResponse ret = null;
                    //make the expensive call
-                   return getFFSKeyFromCloudAPI(ubiqWebServices, configuration, keyId);   // <AccessKeyId>-<FFS Name>
+                  try {
+                      // Cachebuilder catches checked and unchecked exceptions and casts them
+                      // to specific types.  To avoid this issue, we will simply convert to a Runtime Exception
+                      ret = getFFSKeyFromCloudAPI(ubiqWebServices, configuration, keyId);   // <AccessKeyId>-<FFS Name>
+                  } catch (RuntimeException e) {
+                    throw e;
+                  } catch (Exception e) {
+                    throw new RuntimeException(e.getMessage(), e.getCause());
+                  }
+                  return ret;
                 }
          });
     }
@@ -76,9 +86,10 @@ class StructuredKeyCache  {
      * @param keyId  The dataset key identifier for the desired key
      *
      */
-    private  FPEKeyResponse getFFSKeyFromCloudAPI(UbiqWebServices ubiqWebServices, 
+    private  FPEKeyResponse getFFSKeyFromCloudAPI(UbiqWebServices ubiqWebServices,
         UbiqConfiguration configuration,
-        FFS_KeyId keyId) {
+        FFS_KeyId keyId)
+        throws java.io.IOException, org.bouncycastle.operator.OperatorCreationException, org.bouncycastle.pkcs.PKCSException, org.bouncycastle.crypto.InvalidCipherTextException, java.net.URISyntaxException,  java.security.NoSuchAlgorithmException, java.lang.InterruptedException, java.security.InvalidKeyException {
 
         FPEKeyResponse ffsKeyRecordResponse;
 

@@ -289,7 +289,7 @@ public class UbiqCredentials {
           this.accessKeyId = this.SsoResults.public_value;
           this.secretSigningKey = this.SsoResults.signing_value;
           this.api_cert_base64 =  Base64.getEncoder().encodeToString(this.SsoResults.api_cert.getBytes());
-        
+
           byte[] certBytes = this.SsoResults.api_cert.getBytes("UTF-8");
           CertificateFactory factory = CertificateFactory.getInstance("X.509");
           X509Certificate x509Certificate = (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(certBytes));

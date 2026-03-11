@@ -113,7 +113,7 @@ abstract class FFX
      */
     protected void prf(byte[] dst, final int doff,
                        final byte[] src, final int soff, final int len) {
-        
+
         // There were threadsafe issues by having a BlockCipher instance variable
         // Timing of creating and destroying this object is LESS in a large load
         // than using locking mechanisms.
@@ -210,16 +210,16 @@ abstract class FFX
      * length @m. If the string is longer than @m, the function fails.
      * if the string is shorter that @m, it is zero-padded to the left
      */
-    public static String str(final int m, final int r, final BigInteger i) {
-      return str(m, r, FFX.DEFAULT_ALPHABET, i);
+    public static String str(final int m, final int r, final BigInteger i, final Boolean skipLengthCheck, Boolean leftPad) {
+      return str(m, r, FFX.DEFAULT_ALPHABET, i, skipLengthCheck, leftPad);
     }
 
-    public static String str(final int m, final String alpha, final BigInteger i) {
+    public static String str(final int m, final String alpha, final BigInteger i, final Boolean skipLengthCheck, Boolean leftPad) {
       // String s = i.toString(r);
-      return str(m, alpha.length(), alpha, i);
+      return str(m, alpha.length(), alpha, i, skipLengthCheck, leftPad);
   }
 
-  public static String str(final int m, final int radix, final String alpha, final BigInteger i) {
+  public static String str(final int m, final int radix, final String alpha, final BigInteger i, final Boolean skipLengthCheck, Boolean leftPad) {
     // String s = i.toString(r);
     StringBuilder sb = new StringBuilder();
     BigInteger bi_radix = BigInteger.valueOf(radix);
@@ -229,11 +229,11 @@ abstract class FFX
         sb.insert(0, alpha.charAt(cvt.mod(bi_radix).intValue()));
         cvt = cvt.divide(bi_radix);
     }
-    if (sb.length() > m) 
+    if (skipLengthCheck == false && sb.length() > m)
     {
       throw new RuntimeException(String.format("Unable to convert biginteger into %d characters",m));
     }
-    while (sb.length() < m)
+    while (leftPad && sb.length() < m)
     {
         sb.insert(0, alpha.charAt(0));
     }

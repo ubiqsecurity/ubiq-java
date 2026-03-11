@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Base64;
 import java.nio.file.Files;
+import java.time.OffsetDateTime;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -57,6 +58,18 @@ public class UbiqSampleStructured {
 
             if (options.datasetName == null) {
                 throw new IllegalArgumentException("dataset name must be specified.");
+            }
+
+            if (options.integer32 && (options.integer64 || options.date || options.datetime)) {
+              throw new IllegalArgumentException("Integer32 can not be used with integer64, date, or datetime flags.");
+            }
+
+            if (options.integer64 && (options.date || options.datetime)) {
+              throw new IllegalArgumentException("Integer64 can not be used with date or datetime flags.");
+            }
+
+            if (options.date && options.datetime) {
+              throw new IllegalArgumentException("Date can not be used with datetime flags.");
             }
 
             UbiqCredentials ubiqCredentials = null;
@@ -113,22 +126,88 @@ public class UbiqSampleStructured {
                 if (options.encrypttext!= null) {
                     String plainText = options.encrypttext;
                     if (options.search) {
-                      String [] cipher = ubiqEncryptDecrypt.encryptForSearch(datasetName, plainText, tweakFF1);
-                      System.out.println("EncryptForSearch results:");
-                      for (String s : cipher) {
-                        System.out.println("\t" + s);
+                      if (options.integer32) {
+                        int pt_i = Integer.valueOf(options.encrypttext);
+                        int [] ct = ubiqEncryptDecrypt.encryptIntForSearch(datasetName, pt_i, tweakFF1);
+                        System.out.println("EncryptIntForSearch results:");
+                        for (int s : ct) {
+                          System.out.println("\t" + s);
+                        }
+                      } else if (options.integer64) {
+                        long pt_l = Long.valueOf(options.encrypttext);
+                        long [] ct = ubiqEncryptDecrypt.encryptLongForSearch(datasetName, pt_l, tweakFF1);
+                        System.out.println("EncryptLongForSearch results:");
+                        for (long s : ct) {
+                          System.out.println("\t" + s);
+                        }
+                      } else if (options.datetime) {
+                        OffsetDateTime pt_dt = OffsetDateTime.parse(options.encrypttext);
+                        OffsetDateTime [] ct = ubiqEncryptDecrypt.encryptDateTimeForSearch(datasetName, pt_dt, tweakFF1);
+                        System.out.println("EncryptDateTimeForSearch results:");
+                        for (OffsetDateTime s : ct) {
+                          System.out.println("\t" + s);
+                        }
+                      } else if (options.date) {
+                        OffsetDateTime pt_d = OffsetDateTime.parse(options.encrypttext);
+                        OffsetDateTime [] ct = ubiqEncryptDecrypt.encryptDateForSearch(datasetName, pt_d, tweakFF1);
+                        System.out.println("EncryptDateForSearch results:");
+                        for (OffsetDateTime s : ct) {
+                          System.out.println("\t" + s);
+                        }
+                      } else {
+                        String [] cipher = ubiqEncryptDecrypt.encryptForSearch(datasetName, plainText, tweakFF1);
+                        System.out.println("EncryptForSearch results:");
+                        for (String s : cipher) {
+                          System.out.println("\t" + s);
+                        }
                       }
                     } else {
-                      String cipher = ubiqEncryptDecrypt.encrypt(datasetName, plainText, tweakFF1);
-                      System.out.println("ENCRYPTED cipher= " + cipher + "\n");
+                      if (options.integer32) {
+                        int pt_i = Integer.valueOf(options.encrypttext);
+                        int ct_i = ubiqEncryptDecrypt.encryptInt(datasetName, pt_i, tweakFF1);
+                        System.out.println("Encrypted integer= " + ct_i);
+                      } else if (options.integer64) {
+                        long pt_l = Long.valueOf(options.encrypttext);
+                        long ct_l = ubiqEncryptDecrypt.encryptLong(datasetName, pt_l, tweakFF1);
+                        System.out.println("Encrypted long = " + ct_l);
+                      } else if (options.datetime) {
+                        OffsetDateTime pt_dt = OffsetDateTime.parse(options.encrypttext);
+                        OffsetDateTime ct_dt = ubiqEncryptDecrypt.encryptDateTime(datasetName, pt_dt, tweakFF1);
+                        System.out.println("Encrypted datetime = " + ct_dt);
+                      } else if (options.date) {
+                        OffsetDateTime pt_d = OffsetDateTime.parse(options.encrypttext);
+                        OffsetDateTime ct_d = ubiqEncryptDecrypt.encryptDate(datasetName, pt_d, tweakFF1);
+                        System.out.println("Encrypted date = " + ct_d);
+                      } else {
+                        String cipher = ubiqEncryptDecrypt.encrypt(datasetName, plainText, tweakFF1);
+                        System.out.println("ENCRYPTED cipher= " + cipher + "\n");
+                      }
                     }
 
 
                 } else if (options.decrypttext!= null) {
                     String cipher = options.decrypttext;
 
-                    String plaintext = ubiqEncryptDecrypt.decrypt(datasetName, cipher, tweakFF1);
-                    System.out.println("DECRYPTED plaintext= " + plaintext + "\n");
+                      if (options.integer32) {
+                        int ct_i = Integer.valueOf(cipher);
+                        int pt_i = ubiqEncryptDecrypt.decryptInt(datasetName, ct_i, tweakFF1);
+                        System.out.println("Decrypted integer= " + pt_i);
+                      } else if (options.integer64) {
+                        long ct_l = Long.valueOf(cipher);
+                        long pt_l = ubiqEncryptDecrypt.decryptLong(datasetName, ct_l, tweakFF1);
+                        System.out.println("Decrypted long = " + pt_l);
+                      } else if (options.datetime) {
+                        OffsetDateTime ct_dt = OffsetDateTime.parse(cipher);
+                        OffsetDateTime pt_dt = ubiqEncryptDecrypt.decryptDateTime(datasetName, ct_dt, tweakFF1);
+                        System.out.println("Decrypted datetime = " + pt_dt);
+                      } else if (options.date) {
+                        OffsetDateTime ct_d = OffsetDateTime.parse(cipher);
+                        OffsetDateTime pt_d = ubiqEncryptDecrypt.decryptDate(datasetName, ct_d, tweakFF1);
+                        System.out.println("Decrypted date = " + pt_d);
+                      } else {
+                        String plaintext = ubiqEncryptDecrypt.decrypt(datasetName, cipher, tweakFF1);
+                        System.out.println("DECRYPTED plaintext= " + plaintext + "\n");
+                      }
                 }
 
             }
@@ -203,6 +282,29 @@ class ExampleArgsStructured {
         help = true)
     boolean version = false;
 
+    @Parameter(
+        names = { "--datetime" },
+        description = "Treat input as a datetime",
+        help = true)
+    boolean datetime = false;
+
+    @Parameter(
+        names = { "--date" },
+        description = "Treat input as a date",
+        help = true)
+    boolean date = false;
+
+    @Parameter(
+        names = { "--integer32" },
+        description = "Treat input as an integer 32",
+        help = true)
+    boolean integer32 = false;
+
+    @Parameter(
+        names = { "--integer64" },
+        description = "Treat input as an integer 64",
+        help = true)
+    boolean integer64 = false;
 
     @Parameter(
         names = { "--search", "-s" },
