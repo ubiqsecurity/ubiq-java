@@ -39,7 +39,7 @@ import java.security.InvalidKeyException;
  * This capability must be enabled and configured with FFS models on a per-user account basis.
  */
 public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
-    private boolean verbose= false;
+    private boolean verbose = false;
     private UbiqWebServices ubiqWebServices = null; // null when closed
     private FFS ffs = null;
     private FFXCache ffxCache = null;
@@ -631,14 +631,19 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
       Long secondsToEpoch = ChronoUnit.SECONDS.between(cfg.getEpoch(), utcPlainDateTime);
       Boolean isNegative = secondsToEpoch < 0;
       String plainText = String.valueOf(Math.abs(secondsToEpoch));
-      plainText = StringUtils.padLeft('0', dataset.getMinInputLength(), plainText);
-      if (isNegative) {
-        plainText = "-" + plainText;
-      }
+      plainText = StringUtils.convertRadix(plainText, "0123456789", dataset.getInputCharacterSet(), true, false );
+      plainText = StringUtils.padLeft(dataset.getInputCharacterSet().charAt(0), dataset.getMinInputLength(), plainText);
 
       String cipherText = encryptPipeline(dataset, keyNumber, ffxCache, plainText, tweak);
 
-      Long encryptedSecondsToEpoch = Long.parseLong(cipherText, dataset.getOutputCharacterSet().length());
+      if (verbose) System.out.printf("%s   : %s plainText: %s  cipherText: %s\n", csu,new java.util.Date(),  plainText, cipherText);
+      if (verbose) System.out.printf("%s   : %s asBase10: %s\n", csu,new java.util.Date(),  StringUtils.convertRadix(cipherText, dataset.getOutputCharacterSet(), "0123456789", true, false ));
+      // Left pad since covert will return empty if string is considered zero
+      Long encryptedSecondsToEpoch = Long.parseLong(StringUtils.convertRadix(cipherText, dataset.getOutputCharacterSet(), "0123456789", true, true ));
+
+      if (isNegative) {
+        encryptedSecondsToEpoch *= -1;
+      }
       if (verbose) System.out.printf("%s   : %s secondsToEpoch: %d plainText: %s   cipherText: %s  encryptedSecondsToEpoch: %d\n", csu,new java.util.Date(),  secondsToEpoch, plainText, cipherText, encryptedSecondsToEpoch);
 
       ZonedDateTime r = cfg.getEpoch().toZonedDateTime().plusSeconds(encryptedSecondsToEpoch);
@@ -672,16 +677,19 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
 
       Long encryptedSecondsToEpoch = ChronoUnit.SECONDS.between(cfg.getEpoch(), cipherDate);
       Boolean isNegative = encryptedSecondsToEpoch < 0;
-      String cipherText = StringUtils.convertRadix(String.valueOf(Math.abs(encryptedSecondsToEpoch)), dataset.getInputCharacterSet(), dataset.getOutputCharacterSet(), true, false);
+      String cipherText = StringUtils.convertRadix(String.valueOf(Math.abs(encryptedSecondsToEpoch)), "0123456789", dataset.getOutputCharacterSet(), true, false);
 
-      cipherText = StringUtils.padLeft('0', dataset.getMinInputLength(), cipherText);
-      if (isNegative) {
-        cipherText = "-" + cipherText;
-      }
+      cipherText = StringUtils.padLeft(dataset.getOutputCharacterSet().charAt(0), dataset.getMinInputLength(), cipherText);
 
       String plainText = decryptPipeline(dataset, ffxCache, cipherText, tweak);
-
-      Long plainSecondsToEpoch = Long.parseLong(plainText);
+      // Left pad in case string is considered 0, which can return an empty string
+      String c = StringUtils.convertRadix(plainText, dataset.getInputCharacterSet(), "0123456789", true, true);
+      if (verbose) System.out.printf("%s   : %s plainText: %s dataset.getInputCharacterSet: %s convertRadix: '%s' %d\n", csu,new java.util.Date(), plainText, dataset.getInputCharacterSet(), c, c.length());
+      Long plainSecondsToEpoch = Long.parseLong(c);
+      if (verbose) System.out.printf("%s   : %s plainSecondsToEpoch: %d \n", csu,new java.util.Date(), plainSecondsToEpoch);
+      if (isNegative) {
+        plainSecondsToEpoch *= -1;
+      }
       if (verbose) System.out.printf("%s   : %s encryptedSecondsToEpoch: %d cipherText: %s  plainText: %s  plainSecondsToEpoch: %d \n", csu,new java.util.Date(), encryptedSecondsToEpoch, cipherText, plainText, plainSecondsToEpoch);
 
       ZonedDateTime r = cfg.getEpoch().toZonedDateTime().plusSeconds(plainSecondsToEpoch);
@@ -806,17 +814,25 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
       // positive Number of seconds utcPlainDateTime is AFTER epoch, negative if end is before epoch
       Long daysToEpoch = ChronoUnit.DAYS.between(cfg.getEpoch(), plainDate);
       Boolean isNegative = daysToEpoch < 0;
+
       String plainText = String.valueOf(Math.abs(daysToEpoch));
-      plainText = StringUtils.padLeft('0', dataset.getMinInputLength(), plainText);
-      if (isNegative) {
-        plainText = "-" + plainText;
-      }
+      plainText = StringUtils.convertRadix(plainText, "0123456789", dataset.getInputCharacterSet(), true, false );
+
+      plainText = StringUtils.padLeft(dataset.getInputCharacterSet().charAt(0), dataset.getMinInputLength(), plainText);
 
       if (verbose) System.out.printf("%s   : %s daysToEpoch: %d plainText: %s \n", csu, new java.util.Date(), daysToEpoch, plainText);
 
       String cipherText = encryptPipeline(dataset, keyNumber, ffxCache, plainText, tweak);
 
-      Long encryptedDaysToEpoch = Long.parseLong(StringUtils.convertRadix(cipherText, dataset.getOutputCharacterSet(), dataset.getInputCharacterSet(), true, false ));
+      // Need to convert from output character set (including encoding) to base 10 since that is a number that can be parsed and added to epoch.
+      // Dont need to run two steps on OCS -> ICS -> base 10, just go straight to base 10
+
+      // Left pad since covert will return empty if string is considered zero
+
+      Long encryptedDaysToEpoch = Long.parseLong(StringUtils.convertRadix(cipherText, dataset.getOutputCharacterSet(), "0123456789", true, true ));
+      if (isNegative) {
+        encryptedDaysToEpoch *= -1;
+      }
       if (verbose) System.out.printf("%s   : %s daysaysToEpoch: %d plainText: %s   cipherText: %s  encryptedDaysToEpoch: %d\n", csu,new java.util.Date(),  daysToEpoch, plainText, cipherText, encryptedDaysToEpoch);
 
       OffsetDateTime r = cfg.getEpoch().toZonedDateTime().plusDays(encryptedDaysToEpoch).toOffsetDateTime();
@@ -848,18 +864,22 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
       Long daysFromEpoch = ChronoUnit.DAYS.between(cfg.getEpoch(), cipherDate);
 
       Boolean isNegative = daysFromEpoch < 0;
-      String cipherText = StringUtils.convertRadix(String.valueOf(Math.abs(daysFromEpoch)), dataset.getInputCharacterSet(), dataset.getOutputCharacterSet(), true, false);
+      // Need to convert from base10 to OCS
+      String cipherText = StringUtils.convertRadix(String.valueOf(Math.abs(daysFromEpoch)), "0123456789", dataset.getOutputCharacterSet(), true, false);
       // String.valueOf(Math.abs(daysFromEpoch));
-      cipherText = StringUtils.padLeft('0', dataset.getMinInputLength(), cipherText);
-      if (isNegative) {
-        cipherText = "-" + cipherText;
-      }
+      cipherText = StringUtils.padLeft(dataset.getOutputCharacterSet().charAt(0), dataset.getMinInputLength(), cipherText);
 
       if (verbose) System.out.printf("%s   : %s daysFromEpoch: %d cipherText: %s \n", csu, new java.util.Date(), daysFromEpoch, cipherText);
 
       String plainText = decryptPipeline(dataset, ffxCache, cipherText, tweak);
 
-      Long plainDaysFromEpoch = Long.parseLong(plainText);
+      // plain text will be in ICS, not necessarily base 10
+      // Left pad since covert will return empty if string is considered zero
+
+      Long plainDaysFromEpoch = Long.parseLong(StringUtils.convertRadix(plainText, dataset.getInputCharacterSet(), "0123456789", true, true));
+      if (isNegative) {
+        plainDaysFromEpoch *= -1;
+      }
       if (verbose) System.out.printf("%s   : %s daysaysToEpoch: %d plainText: %s   cipherText: %s  plainDaysFromEpoch: %d\n", csu,new java.util.Date(),  daysFromEpoch, plainText, cipherText, plainDaysFromEpoch);
 
       OffsetDateTime r = cfg.getEpoch().toZonedDateTime().plusDays(plainDaysFromEpoch).toOffsetDateTime();
@@ -1167,9 +1187,6 @@ public class UbiqStructuredEncryptDecrypt implements AutoCloseable {
         Boolean isNegative = plainLong < 0;
         String plainText = String.valueOf(Math.abs(plainLong));
         plainText = StringUtils.padLeft('0', dataset.getMinInputLength(), plainText);
-        // if (isNegative) {
-        //   plainText = "-" + plainText;
-        // }
         if (verbose) System.out.printf("%s   : %s plainLong: %d plainText: %s \n", csu, new java.util.Date(), plainLong, plainText);
 
         // encrypted output will contain base14 characters (0-9a-d)

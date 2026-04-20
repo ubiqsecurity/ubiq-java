@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.3.1 - 2026-04-08
+* Enhanced support for date and datetime datasets that aren't dependent on base10 charactersets
+
 ## 2.3.0 - 2026-02-26
 * Updated to include capabilities for new dataset types including integers, dates, datetime
 * Improved exception handling by adding a configuration setting to allow some 
