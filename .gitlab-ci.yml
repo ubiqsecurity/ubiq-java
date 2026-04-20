@@ -36,6 +36,8 @@ build:
 .test_script:
     image: amazoncorretto:8-al2023
     stage: test
+    variables:
+        GIT_SUBMODULE_STRATEGY: recursive
     before_script:
       - yum -y update
       - yum -y install maven
