@@ -1,0 +1,3 @@
+# Treat all JSON files as binary so make merge / diff easier
+src/test/resources/** binary
+
