@@ -1,5 +1,4 @@
 
-
 # Ubiq Security Java Library
 
 The Ubiq Security Java library provides convenient interaction with the Ubiq Security Platform API from applications written in the Java language.  It includes a pre-defined set of classes that will provide simple interfaces to encrypt and decrypt data.
