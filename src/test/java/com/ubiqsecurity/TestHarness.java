@@ -59,6 +59,18 @@ public class TestHarness {
         return ret;
     }
 
+    private void collectFiles(File dir, List<String> names) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            if (f.isDirectory()) {
+                collectFiles(f, names);
+            } else {
+                names.add(f.getPath());
+            }
+        }
+    }
+
     public void runTest(String[] args) throws IOException, InterruptedException, IllegalStateException, ExecutionException{
         CmdArgs cmdArgs = new CmdArgs();
         JCommander jCommander = JCommander.
@@ -107,9 +119,7 @@ public class TestHarness {
         List<String> names = new ArrayList<String>();
         File file = new File(cmdArgs.inputFileName);
         if (file.isDirectory()) {
-          for (File f : file.listFiles()) {
-            names.add(f.getPath());
-          }
+          collectFiles(file, names);
         }
         else {
           names.add(cmdArgs.inputFileName);
